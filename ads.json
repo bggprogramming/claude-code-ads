@@ -1,0 +1,23 @@
+[
+  {
+    "id": "ad_cursor",
+    "text": "✦ Cursor — Accept the next line of code with Tab. Ships in half the time. cursor.com",
+    "url": "https://cursor.com",
+    "weight": 34,
+    "tags": ["javascript", "typescript", "python", "rust", "go"]
+  },
+  {
+    "id": "ad_warp",
+    "text": "⚡ Warp — Search 10,000 past commands in under a second. Never retype again. warp.dev",
+    "url": "https://warp.dev",
+    "weight": 33,
+    "tags": ["docker", "infra", "javascript", "python"]
+  },
+  {
+    "id": "ad_linear",
+    "text": "◆ Linear — Close issues 3× faster than Jira. Free for small teams. linear.app",
+    "url": "https://linear.app",
+    "weight": 33,
+    "tags": []
+  }
+]

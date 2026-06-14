@@ -1,0 +1,6 @@
+config.json
+analytics.db
+click_server.pid
+__pycache__/
+*.pyc
+/tmp/
