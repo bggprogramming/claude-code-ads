@@ -116,17 +116,27 @@ def init_db(conn):
     conn.execute("""
         CREATE TABLE IF NOT EXISTS events (
             id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            ad_id    TEXT    NOT NULL,
-            ad_text  TEXT    NOT NULL,
-            event    TEXT    NOT NULL CHECK(event IN ('impression','click')),
-            ts       TEXT    DEFAULT (datetime('now'))
+            ad_id    TEXT NOT NULL,
+            ad_text  TEXT NOT NULL,
+            event    TEXT NOT NULL CHECK(event IN ('impression','click')),
+            surface  TEXT DEFAULT 'unknown',
+            ts       TEXT DEFAULT (datetime('now'))
         )
     """)
+    try:
+        conn.execute("ALTER TABLE events ADD COLUMN surface TEXT DEFAULT 'unknown'")
+    except Exception:
+        pass
     conn.commit()
 
-def push_supabase(ad_id, ad_text, event_type, cfg):
+def push_supabase(ad_id, ad_text, event_type, surface, cfg):
     url     = f"{cfg['supabase_url']}/rest/v1/events"
-    payload = json.dumps({"ad_id": ad_id, "ad_text": ad_text, "event": event_type}).encode()
+    payload = json.dumps({
+        "ad_id":   ad_id,
+        "ad_text": ad_text,
+        "event":   event_type,
+        "surface": surface,
+    }).encode()
     req = urllib.request.Request(url, data=payload, headers={
         "apikey":        cfg["supabase_key"],
         "Authorization": f"Bearer {cfg['supabase_key']}",
@@ -138,13 +148,13 @@ def push_supabase(ad_id, ad_text, event_type, cfg):
     except Exception:
         pass
 
-def log_impression(ad, cfg):
+def log_impression(ad, cfg, surface="statusline"):
     try:
         conn = sqlite3.connect(DB_FILE)
         init_db(conn)
         conn.execute(
-            "INSERT INTO events (ad_id, ad_text, event) VALUES (?, ?, 'impression')",
-            (ad["id"], ad["text"])
+            "INSERT INTO events (ad_id, ad_text, event, surface) VALUES (?, ?, 'impression', ?)",
+            (ad["id"], ad["text"], surface)
         )
         conn.commit()
         conn.close()
@@ -154,7 +164,7 @@ def log_impression(ad, cfg):
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         t = threading.Thread(
             target=push_supabase,
-            args=(ad["id"], ad["text"], "impression", cfg),
+            args=(ad["id"], ad["text"], "impression", surface, cfg),
             daemon=True
         )
         t.start()

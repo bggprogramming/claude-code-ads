@@ -33,11 +33,29 @@ def load_config():
         return {}
 
 
+def init_db(conn):
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            ad_id    TEXT NOT NULL,
+            ad_text  TEXT NOT NULL,
+            event    TEXT NOT NULL CHECK(event IN ('impression','click')),
+            surface  TEXT DEFAULT 'unknown',
+            ts       TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    try:
+        conn.execute("ALTER TABLE events ADD COLUMN surface TEXT DEFAULT 'unknown'")
+    except Exception:
+        pass
+    conn.commit()
+
 def log_click(ad_id):
     try:
         conn = sqlite3.connect(DB_FILE)
+        init_db(conn)
         conn.execute(
-            "INSERT INTO events (ad_id, ad_text, event) VALUES (?, '', 'click')",
+            "INSERT INTO events (ad_id, ad_text, event, surface) VALUES (?, '', 'click', 'click')",
             (ad_id,)
         )
         conn.commit()
@@ -48,7 +66,7 @@ def log_click(ad_id):
     cfg = load_config()
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         url     = f"{cfg['supabase_url']}/rest/v1/events"
-        payload = json.dumps({"ad_id": ad_id, "ad_text": "", "event": "click"}).encode()
+        payload = json.dumps({"ad_id": ad_id, "ad_text": "", "event": "click", "surface": "click"}).encode()
         req = urllib.request.Request(url, data=payload, headers={
             "apikey":        cfg["supabase_key"],
             "Authorization": f"Bearer {cfg['supabase_key']}",
