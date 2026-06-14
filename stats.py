@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
 Ad analytics dashboard — run directly or ask Claude to run it.
-Shows impressions by surface (spinner / statusline), clicks, and CTR per ad.
+Shows impressions by surface (spinner / statusline), clicks, CTR per ad,
+and referral earnings summary.
 """
+import json
 import sqlite3
 from pathlib import Path
 
@@ -78,6 +80,31 @@ def main():
     print(f"\n  Total: {totals[0]} impressions · {totals[1]} clicks")
 
     conn.close()
+
+    # ── Earnings & referral summary ────────────────────────────────────────────
+    ef = Path(__file__).parent / "earnings.json"
+    cf = Path(__file__).parent / "config.json"
+    try:
+        earnings = json.loads(ef.read_text()) if ef.exists() else {}
+        cfg      = json.loads(cf.read_text()) if cf.exists() else {}
+        mc       = earnings.get("total_mc", 0)
+        dollars  = mc / 100_000
+        hit      = earnings.get("milestone_hit", False)
+        code     = cfg.get("referral_code")
+        if mc > 0 or code:
+            print("\n  ── Earnings ────────────────────────────────")
+            if mc > 0:
+                print(f"  Total earned:  ${dollars:.4f}", end="")
+                if hit:
+                    print("  (milestone hit!)")
+                else:
+                    remaining = max(0, (5.00 - dollars))
+                    print(f"  (${remaining:.4f} to $5 milestone)")
+            if code:
+                print(f"  Referral code: {code}")
+                print(f"  Run: python3 ~/.claude/ads/referral.py  for full referral stats")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

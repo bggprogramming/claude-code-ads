@@ -16,6 +16,7 @@ import urllib.request
 from pathlib import Path
 
 import certifi
+import earnings as _earnings
 
 BASE       = Path(__file__).parent
 ADS_FILE   = BASE / "ads.json"
@@ -86,13 +87,15 @@ def init_db(conn):
         pass
     conn.commit()
 
-def push_supabase(ad_id, ad_text, event_type, surface, cfg):
+def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
     url     = f"{cfg['supabase_url']}/rest/v1/events"
     payload = json.dumps({
-        "ad_id":   ad_id,
-        "ad_text": ad_text,
-        "event":   event_type,
-        "surface": surface,
+        "ad_id":               ad_id,
+        "ad_text":             ad_text,
+        "event":               event_type,
+        "surface":             surface,
+        "user_id":             cfg.get("user_id"),
+        "earnings_millicents": mc,
     }).encode()
     req = urllib.request.Request(url, data=payload, headers={
         "apikey":        cfg["supabase_key"],
@@ -106,27 +109,31 @@ def push_supabase(ad_id, ad_text, event_type, surface, cfg):
         pass
 
 def log_impression(ad, surface="spinner"):
+    cfg = load_config()
+    mc  = _earnings.impression_mc(ad, surface)
+
     try:
         conn = sqlite3.connect(DB_FILE)
         init_db(conn)
         conn.execute(
-            "INSERT INTO events (ad_id, ad_text, event, surface) VALUES (?, ?, 'impression', ?)",
-            (ad["id"], ad["text"], surface)
+            "INSERT INTO events (ad_id, ad_text, event, surface, user_id) VALUES (?, ?, 'impression', ?, ?)",
+            (ad["id"], ad["text"], surface, cfg.get("user_id"))
         )
         conn.commit()
         conn.close()
     except Exception:
         pass
 
-    cfg = load_config()
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         t = threading.Thread(
             target=push_supabase,
-            args=(ad["id"], ad["text"], "impression", surface, cfg),
+            args=(ad["id"], ad["text"], "impression", surface, cfg, mc),
             daemon=True
         )
         t.start()
         t.join(timeout=4)
+
+    _earnings.track(ad, surface)
 
 
 # ── Safely patch spinnerVerbs in settings.json ────────────────────────────────
