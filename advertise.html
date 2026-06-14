@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advertise — Claude Code Ads</title>
+  <meta name="description" content="Reach active developers where they work. Your ad in the Claude Code terminal — status bar and thinking spinner. $25 avg CPM, zero bot traffic.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080808;
+      --surface: #0f0f0f;
+      --border:  rgba(255,255,255,0.07);
+      --text:    #e2e2e2;
+      --muted:   #4a4a4a;
+      --hi:      #717171;
+      --accent:  #b4ff69;
+      --font:    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .logo { font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
+    .logo em { color: var(--accent); font-style: normal; }
+    .nav-link { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover { color: var(--text); }
+
+    /* ── Layout ── */
+    main { max-width: 600px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Hero ── */
+    .hero { padding: 96px 0 72px; }
+
+    .eyebrow {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 6vw, 48px);
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--hi);
+      max-width: 480px;
+      line-height: 1.55;
+    }
+    .hero-sub strong { color: var(--text); font-weight: 500; }
+
+    /* ── Stats ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 56px 0 72px;
+    }
+
+    .stat { padding: 24px 20px; text-align: center; border-right: 1px solid var(--border); }
+    .stat:last-child { border-right: none; }
+    .stat-val { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; color: #fff; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* ── Divider ── */
+    .div { border: none; border-top: 1px solid var(--border); margin: 0 0 60px; }
+
+    /* ── Terminal mockup ── */
+    .terminal {
+      background: #0b0b0b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+    .term-bar {
+      background: #131313;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .r { background: #ff5f57; } .y { background: #febc2e; } .g { background: #28c840; }
+    .term-title { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-family: var(--mono); margin-right: 29px; }
+    .term-body { padding: 18px 20px 22px; font-family: var(--mono); font-size: 13px; line-height: 1.9; }
+    .t-prompt { color: #333; }
+    .t-cmd    { color: #888; }
+
+    .t-preview-status {
+      color: var(--accent);
+      transition: opacity 0.2s;
+    }
+    .t-preview-status.empty { color: var(--muted); font-style: italic; }
+
+    .t-think  { color: #555; }
+    .t-resp   { color: #555; }
+
+    .term-note {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font);
+      padding: 10px 20px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Placements ── */
+    .placements { margin-bottom: 72px; }
+
+    .placement {
+      display: flex;
+      gap: 20px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .placement:last-child { border-bottom: none; }
+
+    .pl-icon {
+      font-size: 16px;
+      min-width: 20px;
+      padding-top: 1px;
+    }
+    .pl-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .pl-desc  { font-size: 14px; color: var(--muted); line-height: 1.5; }
+    .pl-meta  { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
+
+    /* ── Form ── */
+    .form-section { margin-bottom: 96px; }
+
+    .form-section h2 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .form-section > p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--hi);
+      margin-bottom: 7px;
+      letter-spacing: 0.01em;
+    }
+
+    .char-count {
+      float: right;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+    .char-count.warn { color: #ff9a3c; }
+    .char-count.over { color: #ff5f57; }
+
+    input, textarea, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--font);
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: rgba(255,255,255,0.18);
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+
+    textarea { resize: vertical; min-height: 80px; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+    select option { background: #111; }
+
+    .field-hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #0a0a0a;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      padding: 13px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+    .submit-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .success-msg {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      border: 1px solid rgba(180,255,105,0.15);
+      background: rgba(180,255,105,0.03);
+      border-radius: 10px;
+    }
+    .success-msg h3 { font-size: 18px; font-weight: 500; color: #fff; margin-bottom: 10px; }
+    .success-msg p  { font-size: 14px; color: var(--muted); }
+    .success-msg .accent { color: var(--accent); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    footer span { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">claude code <em>ads</em></a>
+  <a class="nav-link" href="index.html">← For developers</a>
+</nav>
+
+<main>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="eyebrow">Advertise</div>
+    <h1>Reach developers<br>where they work.</h1>
+    <p class="hero-sub">
+      Your message in the terminal of active developers using Claude Code.
+      <strong>Two placements per session. Zero bot traffic.</strong>
+    </p>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val">$25</div>
+      <div class="stat-label">Avg CPM</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">2×</div>
+      <div class="stat-label">Placements per session</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">0%</div>
+      <div class="stat-label">Bot traffic</div>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- Terminal preview -->
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <div class="term-title">Live preview</div>
+    </div>
+    <div class="term-body">
+      <div><span class="t-prompt">~ $ </span><span class="t-cmd">claude</span></div>
+      <div class="t-preview-status empty" id="preview-status">Your ad text will appear here</div>
+      <br>
+      <div class="t-think">⚡ Thinking with Warp...</div>
+      <br>
+      <div class="t-resp">Here's the implementation you asked for...</div>
+    </div>
+    <div class="term-note">statusLine placement · shown continuously while Claude Code is open</div>
+  </div>
+
+  <!-- Placements -->
+  <div class="placements">
+    <div class="placement">
+      <div class="pl-icon">━</div>
+      <div>
+        <div class="pl-title">Status bar</div>
+        <div class="pl-desc">Persistent one-line message shown at the top of every Claude Code session. Refreshes every 30 seconds with contextual targeting based on the developer's project type.</div>
+        <div class="pl-meta">surface: statusLine · 30s refresh · clickable OSC 8 link</div>
+      </div>
+    </div>
+    <div class="placement">
+      <div class="pl-icon">◌</div>
+      <div>
+        <div class="pl-title">Thinking spinner</div>
+        <div class="pl-desc">Replaces the "Thinking…" spinner text while Claude processes a response. Shown at peak developer attention — they're waiting and watching the screen.</div>
+        <div class="pl-meta">surface: spinnerVerbs · rotates per response · high attention</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- Form -->
+  <div class="form-section">
+    <h2>Get started</h2>
+    <p>Tell us about your ad. We'll reach out within 24 hours to confirm targeting, CPM, and launch date.</p>
+
+    <form id="lead-form">
+      <div class="field">
+        <label for="ad_text">
+          Ad text
+          <span class="char-count" id="char-count">0 / 80</span>
+        </label>
+        <textarea
+          id="ad_text"
+          name="ad_text"
+          placeholder="✦ Your Product — One outcome-focused sentence. yourproduct.com"
+          maxlength="100"
+          rows="2"
+          oninput="updatePreview(this)"
+          required
+        ></textarea>
+        <div class="field-hint">Keep it under 80 characters. Lead with your product name, one clear outcome, and your domain. No punctuation at the end.</div>
+      </div>
+
+      <div class="field">
+        <label for="url">Destination URL</label>
+        <input
+          type="url"
+          id="url"
+          name="url"
+          placeholder="https://yourproduct.com"
+          required
+        >
+        <div class="field-hint">Clicks route through our tracker before redirecting here.</div>
+      </div>
+
+      <div class="field">
+        <label for="budget">Monthly budget</label>
+        <select id="budget" name="budget" required>
+          <option value="" disabled selected>Select a range</option>
+          <option value="<500">Under $500</option>
+          <option value="500-2k">$500 – $2,000</option>
+          <option value="2k-10k">$2,000 – $10,000</option>
+          <option value="10k+">$10,000+</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="email">Work email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="you@company.com"
+          required
+        >
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">Submit →</button>
+    </form>
+
+    <div class="success-msg" id="success-msg">
+      <h3>You're in the queue.</h3>
+      <p>We'll reach out to <span class="accent" id="success-email"></span> within 24 hours to confirm targeting and get your ad live.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>Claude Code Ads</span>
+  <div class="footer-links">
+    <a href="index.html">For developers</a>
+    <a href="https://github.com/bggprogramming/claude-code-ads" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  const SUPABASE_URL = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
+
+  function updatePreview(el) {
+    const val = el.value.trim();
+    const len = val.length;
+    const counter = document.getElementById('char-count');
+    const preview = document.getElementById('preview-status');
+
+    counter.textContent = `${len} / 80`;
+    counter.className = 'char-count' + (len > 90 ? ' over' : len > 70 ? ' warn' : '');
+
+    if (val) {
+      preview.textContent = val;
+      preview.classList.remove('empty');
+    } else {
+      preview.textContent = 'Your ad text will appear here';
+      preview.classList.add('empty');
+    }
+  }
+
+  document.getElementById('lead-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    const ad_text = document.getElementById('ad_text').value.trim();
+    const url     = document.getElementById('url').value.trim();
+    const budget  = document.getElementById('budget').value;
+    const email   = document.getElementById('email').value.trim();
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/ad_leads`, {
+        method: 'POST',
+        headers: {
+          'apikey':        SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type':  'application/json',
+          'Prefer':        'return=minimal',
+        },
+        body: JSON.stringify({ ad_text, url, budget, email }),
+      });
+
+      if (!resp.ok) throw new Error(resp.status);
+
+      document.getElementById('lead-form').style.display = 'none';
+      document.getElementById('success-email').textContent = email;
+      document.getElementById('success-msg').style.display = 'block';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Submit →';
+      alert('Something went wrong. Email us directly: ads@gmail.com');
+    }
+  });
+</script>
+
+</body>
+</html>
