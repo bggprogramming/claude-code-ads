@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Analytics — Claude Code Ads</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080808;
+      --surface: #0f0f0f;
+      --border:  rgba(255,255,255,0.07);
+      --text:    #e2e2e2;
+      --muted:   #4a4a4a;
+      --hi:      #717171;
+      --accent:  #b4ff69;
+      --font:    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font);
+      font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px); z-index: 10;
+    }
+    .logo { font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
+    .logo em { color: var(--accent); font-style: normal; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-link { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover { color: var(--text); }
+
+    main { max-width: 720px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── Loading / Error ── */
+    .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; gap: 12px; }
+    .center-state h2 { font-size: 20px; font-weight: 500; color: #fff; }
+    .center-state p  { font-size: 14px; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Campaign Header ── */
+    .campaign-header { padding: 56px 0 40px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+    .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .campaign-company { font-size: clamp(24px, 4vw, 32px); font-weight: 600; letter-spacing: -0.04em; color: #fff; }
+    .campaign-meta { font-size: 13px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 500; padding: 5px 12px;
+      border-radius: 100px; border: 1px solid; flex-shrink: 0; margin-top: 4px;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-active  { color: var(--accent); border-color: rgba(180,255,105,0.3); background: rgba(180,255,105,0.05); }
+    .status-active .status-dot  { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 2s ease-in-out infinite; }
+    .status-pending { color: #febc2e; border-color: rgba(254,188,46,0.3); background: rgba(254,188,46,0.05); }
+    .status-pending .status-dot { background: #febc2e; }
+    .status-paused  { color: var(--hi); border-color: var(--border); }
+    .status-paused .status-dot  { background: var(--hi); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .campaign-details { display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+    .campaign-detail { font-size: 13px; color: var(--muted); }
+    .campaign-detail strong { color: var(--text); font-weight: 500; }
+
+    /* ── Stats Grid ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 40px; }
+    .stat-card { background: var(--bg); padding: 24px 20px; }
+    .stat-val { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; color: #fff; line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-sub { font-size: 12px; color: var(--hi); margin-top: 4px; }
+
+    /* ── Ad preview ── */
+    .section { margin-bottom: 40px; }
+    .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+    .terminal {
+      background: #0b0b0b; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .term-bar {
+      background: #131313; border-bottom: 1px solid var(--border);
+      padding: 10px 14px; display: flex; align-items: center; gap: 7px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .r { background: #ff5f57; } .y { background: #febc2e; } .g { background: #28c840; }
+    .term-title { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-family: var(--mono); margin-right: 29px; }
+    .term-body { padding: 18px 20px 22px; font-family: var(--mono); font-size: 13px; line-height: 1.9; }
+    .t-prompt { color: #333; }
+    .t-cmd    { color: #888; }
+    .t-ad     { color: var(--accent); }
+    .t-think  { color: #555; }
+    .term-note { font-size: 11px; color: var(--muted); font-family: var(--font); padding: 10px 20px 14px; border-top: 1px solid var(--border); }
+
+    /* ── Surface breakdown ── */
+    .surface-bars { display: flex; flex-direction: column; gap: 12px; }
+    .surface-row { display: flex; align-items: center; gap: 12px; }
+    .surface-label { font-size: 13px; color: var(--hi); width: 90px; flex-shrink: 0; }
+    .bar-track { flex: 1; background: rgba(255,255,255,0.04); border-radius: 3px; height: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.6s ease; }
+    .surface-count { font-size: 13px; color: var(--text); font-family: var(--mono); width: 80px; text-align: right; flex-shrink: 0; }
+
+    /* ── Daily table ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--muted);
+      text-align: left; padding: 0 0 12px; border-bottom: 1px solid var(--border);
+    }
+    .data-table th:not(:first-child) { text-align: right; }
+    .data-table td {
+      font-size: 13px; color: var(--text); padding: 14px 0;
+      border-bottom: 1px solid var(--border); font-family: var(--mono);
+    }
+    .data-table td:first-child { color: var(--hi); font-family: var(--font); }
+    .data-table td:not(:first-child) { text-align: right; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .empty-row td { color: var(--muted); font-style: italic; text-align: center !important; padding: 32px 0; font-family: var(--font); }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid var(--border); padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; }
+    footer span { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .campaign-details { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">claude code <em>ads</em></a>
+  <div class="nav-right">
+    <a class="nav-link" href="advertise.html">New campaign</a>
+  </div>
+</nav>
+
+<div id="app">
+  <main>
+    <div class="center-state" id="loading-state">
+      <div class="spinner"></div>
+      <p>Loading campaign…</p>
+    </div>
+
+    <div class="center-state" id="error-state" style="display:none">
+      <h2>Campaign not found.</h2>
+      <p>Check that you have the correct dashboard link.</p>
+    </div>
+
+    <div id="dashboard" style="display:none">
+
+      <div class="campaign-header">
+        <div class="header-top">
+          <div>
+            <div class="campaign-company" id="h-company">—</div>
+            <div class="campaign-meta" id="h-meta">—</div>
+          </div>
+          <div class="status-badge" id="h-status-badge">
+            <div class="status-dot"></div>
+            <span id="h-status-label">—</span>
+          </div>
+        </div>
+        <div class="campaign-details">
+          <div class="campaign-detail">CPM <strong id="h-cpm">—</strong></div>
+          <div class="campaign-detail">Daily budget <strong id="h-budget">—</strong></div>
+          <div class="campaign-detail">Created <strong id="h-created">—</strong></div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="s-impressions">—</div>
+          <div class="stat-label">Impressions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-clicks">—</div>
+          <div class="stat-label">Clicks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-ctr">—</div>
+          <div class="stat-label">CTR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-spend">—</div>
+          <div class="stat-label">Est. Spend</div>
+          <div class="stat-sub" id="s-budget-pct"></div>
+        </div>
+      </div>
+
+      <!-- Ad preview -->
+      <div class="section">
+        <div class="section-title">Your ad</div>
+        <div class="terminal">
+          <div class="term-bar">
+            <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+            <div class="term-title">statusLine placement</div>
+          </div>
+          <div class="term-body">
+            <div><span class="t-prompt">~ $ </span><span class="t-cmd">claude</span></div>
+            <div class="t-ad" id="ad-preview-text">…</div>
+          </div>
+          <div class="term-note">Shown in the status bar continuously while Claude Code is open</div>
+        </div>
+      </div>
+
+      <!-- Surface breakdown -->
+      <div class="section">
+        <div class="section-title">Impressions by placement</div>
+        <div class="surface-bars">
+          <div class="surface-row">
+            <div class="surface-label">Status bar</div>
+            <div class="bar-track"><div class="bar-fill" id="bar-statusline" style="width:0%"></div></div>
+            <div class="surface-count" id="cnt-statusline">0</div>
+          </div>
+          <div class="surface-row">
+            <div class="surface-label">Spinner</div>
+            <div class="bar-track"><div class="bar-fill" id="bar-spinner" style="width:0%"></div></div>
+            <div class="surface-count" id="cnt-spinner">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily breakdown -->
+      <div class="section">
+        <div class="section-title">Daily breakdown</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Impressions</th>
+              <th>Clicks</th>
+              <th>CTR</th>
+              <th>Spend</th>
+            </tr>
+          </thead>
+          <tbody id="daily-tbody">
+            <tr class="empty-row"><td colspan="5">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- #dashboard -->
+  </main>
+</div>
+
+<footer>
+  <span>Claude Code Ads</span>
+  <div class="footer-links">
+    <a href="index.html">For developers</a>
+    <a href="advertise.html">Advertise</a>
+    <a href="https://github.com/bggprogramming/claude-code-ads" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  const SUPABASE_URL = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
+
+  const HEADERS = {
+    'apikey':        SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+  };
+
+  async function apiFetch(path) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: HEADERS });
+    if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+    return r.json();
+  }
+
+  function fmt(n, decimals = 0) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  }
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function fmtDateShort(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function statusBadge(status) {
+    const badge = document.getElementById('h-status-badge');
+    const label = document.getElementById('h-status-label');
+    badge.className = 'status-badge status-' + status;
+    label.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  async function loadDashboard(key) {
+    // Fetch advertiser record
+    let advRows;
+    try {
+      advRows = await apiFetch(`advertisers?dashboard_key=eq.${encodeURIComponent(key)}&select=*`);
+    } catch (e) {
+      showError();
+      return;
+    }
+
+    if (!advRows || advRows.length === 0) {
+      showError();
+      return;
+    }
+
+    const adv = advRows[0];
+
+    // Fetch events for this ad (last 90 days, up to 10k rows)
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    let events = [];
+    try {
+      events = await apiFetch(
+        `events?ad_id=eq.${encodeURIComponent(adv.ad_id)}&select=event,surface,ts,earnings_millicents` +
+        `&ts=gte.${encodeURIComponent(since)}&order=ts.desc&limit=10000`
+      );
+    } catch (e) {
+      // Show dashboard with 0 events rather than failing
+      events = [];
+    }
+
+    render(adv, events);
+  }
+
+  function render(adv, events) {
+    // Campaign header
+    document.getElementById('h-company').textContent = adv.company;
+    document.getElementById('h-meta').textContent = `ad_id: ${adv.ad_id}  ·  ${adv.url}`;
+    statusBadge(adv.status);
+    document.getElementById('h-cpm').textContent = `$${(adv.cpm_cents / 100).toFixed(2)}`;
+    document.getElementById('h-budget').textContent = `$${(adv.daily_budget_cents / 100).toFixed(0)}/day`;
+    document.getElementById('h-created').textContent = fmtDate(adv.created_at);
+
+    // Ad preview
+    document.getElementById('ad-preview-text').textContent = adv.ad_text;
+    document.title = `${adv.company} Analytics — Claude Code Ads`;
+
+    // Aggregate
+    const impressions = events.filter(e => e.event === 'impression');
+    const clicks      = events.filter(e => e.event === 'click');
+    const totalImp    = impressions.length;
+    const totalClk    = clicks.length;
+    const ctr         = totalImp > 0 ? (totalClk / totalImp * 100) : 0;
+    const spendDollars = (adv.cpm_cents / 100) * totalImp / 1000;
+    const monthlyBudget = adv.daily_budget_cents / 100 * 30;
+    const budgetPct   = monthlyBudget > 0 ? Math.min(100, spendDollars / monthlyBudget * 100) : 0;
+
+    // Stats
+    document.getElementById('s-impressions').textContent = fmt(totalImp);
+    document.getElementById('s-clicks').textContent      = fmt(totalClk);
+    document.getElementById('s-ctr').textContent         = fmt(ctr, 2) + '%';
+    document.getElementById('s-spend').textContent       = '$' + fmt(spendDollars, 2);
+    if (monthlyBudget > 0) {
+      document.getElementById('s-budget-pct').textContent =
+        fmt(budgetPct, 1) + '% of monthly budget';
+    }
+
+    // Surface breakdown
+    const bySurface = {};
+    impressions.forEach(e => {
+      const s = e.surface || 'unknown';
+      bySurface[s] = (bySurface[s] || 0) + 1;
+    });
+    const statuslineCount = bySurface['statusline'] || 0;
+    const spinnerCount    = bySurface['spinner']    || 0;
+    const maxSurface = Math.max(statuslineCount, spinnerCount, 1);
+
+    document.getElementById('cnt-statusline').textContent = fmt(statuslineCount);
+    document.getElementById('cnt-spinner').textContent    = fmt(spinnerCount);
+    document.getElementById('bar-statusline').style.width = (statuslineCount / maxSurface * 100) + '%';
+    document.getElementById('bar-spinner').style.width    = (spinnerCount    / maxSurface * 100) + '%';
+
+    // Daily breakdown
+    const byDay = {};
+    events.forEach(e => {
+      const day = e.ts.slice(0, 10);
+      if (!byDay[day]) byDay[day] = { impressions: 0, clicks: 0 };
+      if (e.event === 'impression') byDay[day].impressions++;
+      if (e.event === 'click')      byDay[day].clicks++;
+    });
+
+    const days = Object.keys(byDay).sort().reverse().slice(0, 30);
+    const tbody = document.getElementById('daily-tbody');
+    if (days.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No impressions yet — your ad enters rotation once the campaign is activated.</td></tr>';
+    } else {
+      tbody.innerHTML = days.map(day => {
+        const d = byDay[day];
+        const dayCtr = d.impressions > 0 ? (d.clicks / d.impressions * 100).toFixed(2) : '0.00';
+        const daySpend = ((adv.cpm_cents / 100) * d.impressions / 1000).toFixed(2);
+        return `<tr>
+          <td>${fmtDateShort(day)}</td>
+          <td>${fmt(d.impressions)}</td>
+          <td>${fmt(d.clicks)}</td>
+          <td>${dayCtr}%</td>
+          <td>$${daySpend}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Show dashboard
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard').style.display     = 'block';
+  }
+
+  function showError() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'flex';
+  }
+
+  // Entry point
+  const params = new URLSearchParams(window.location.search);
+  const key    = params.get('key');
+  if (!key) {
+    showError();
+  } else {
+    loadDashboard(key);
+  }
+</script>
+
+</body>
+</html>
