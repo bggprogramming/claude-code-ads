@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your campaigns — Claude Code Ads</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#080809;--surface:#0f0f11;--border:rgba(255,255,255,0.08);--text:#e7e7e9;--muted:#6a6a72;--hi:#9a9aa2;--accent:#b4ff69;--green:#28c840;--blue:#5b8cff;--amber:#febc2e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--mono:'SF Mono','Fira Code','Cascadia Code',monospace}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5;-webkit-font-smoothing:antialiased;background-image:radial-gradient(110% 70% at 100% 0%, rgba(91,140,255,0.06), transparent 55%)}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,8,9,0.92);backdrop-filter:blur(12px);z-index:10}
+    .logo{font-size:13px;font-weight:500;color:var(--text);text-decoration:none}.logo em{color:var(--accent);font-style:normal}
+    .nav-link{font-size:13px;color:var(--muted);text-decoration:none}.nav-link:hover{color:var(--text)}
+    main{max-width:880px;margin:0 auto;padding:48px 22px 80px}
+    .eyebrow{font-size:12px;font-family:var(--mono);color:var(--blue);letter-spacing:0.1em;text-transform:uppercase;font-weight:600;margin-bottom:12px}
+    h1{font-size:34px;font-weight:800;letter-spacing:-0.04em;color:#fff;margin-bottom:8px}
+    .sub{font-size:15px;color:var(--hi);margin-bottom:30px}
+    .codebar{display:flex;gap:10px;margin-bottom:14px;max-width:560px}
+    .codebar input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:var(--mono);padding:13px 15px;outline:none}
+    .codebar input:focus{border-color:rgba(255,255,255,0.22)}
+    .codebar button{background:var(--accent);border:none;border-radius:10px;color:#0a0c08;font-weight:700;font-size:14px;padding:0 22px;cursor:pointer}
+    .hint{font-size:12.5px;color:var(--muted);margin-bottom:36px;max-width:560px}
+    .hint a{color:var(--hi)}
+    #err{display:none;color:#ff7a6c;font-size:14px;margin:-22px 0 30px}
+    #panel{display:none}
+    .acct{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+    .acct .who{font-size:14px;color:var(--hi)} .acct .who b{color:var(--text)}
+    .new-btn{background:var(--accent);color:#0a0c08;font-weight:700;font-size:13px;text-decoration:none;border-radius:999px;padding:10px 18px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:30px}
+    .stat{border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface)}
+    .stat .v{font-size:23px;font-weight:700;color:#fff;letter-spacing:-0.03em;font-variant-numeric:tabular-nums}
+    .stat .l{font-size:11px;color:var(--muted);margin-top:3px}
+    .stat .v.acc{color:var(--accent)}
+    .clist{display:flex;flex-direction:column;gap:12px}
+    .camp{display:flex;gap:14px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--surface);text-decoration:none;color:inherit;transition:border-color .15s}
+    .camp:hover{border-color:rgba(255,255,255,0.18)}
+    .ico{width:40px;height:40px;border-radius:10px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);overflow:hidden}
+    .ico img{width:100%;height:100%;object-fit:contain}
+    .cmain{flex:1;min-width:0}
+    .ctitle{font-size:15px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cmeta{font-size:12px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+    .cnums{display:flex;gap:22px;flex-shrink:0;text-align:right}
+    .cnum .v{font-size:15px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+    .cnum .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+    .b-active{color:var(--green);background:rgba(40,200,64,0.12)}
+    .b-paused{color:var(--amber);background:rgba(254,188,46,0.12)}
+    .b-pending{color:var(--hi);background:rgba(255,255,255,0.06)}
+    .b-exhausted{color:var(--muted);background:rgba(255,255,255,0.05)}
+    .bar{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;margin-top:8px}
+    .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--green))}
+    .arrow{color:var(--muted);font-size:18px;flex-shrink:0}
+    .empty{color:var(--muted);text-align:center;padding:40px;border:1px dashed var(--border);border-radius:14px}
+    footer{border-top:1px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between}
+    footer span,footer a{font-size:13px;color:var(--muted);text-decoration:none}
+    @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}.cnums{display:none}}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="index.html">claude code <em>ads</em></a>
+  <a class="nav-link" href="advertise.html">+ New campaign</a>
+</nav>
+<main>
+  <div class="eyebrow">Advertiser portal</div>
+  <h1>Your campaigns</h1>
+  <p class="sub">Every campaign on your account, with live analytics.</p>
+
+  <div class="codebar">
+    <input id="key" type="text" placeholder="paste any of your dashboard links or keys" autocomplete="off" spellcheck="false">
+    <button id="go">View</button>
+  </div>
+  <div class="hint">Your dashboard key is in the link we showed when you created a campaign (or in your confirmation email). Entering one unlocks <b>all</b> campaigns billed to the same email.</div>
+  <div id="err"></div>
+
+  <div id="panel">
+    <div class="acct">
+      <div class="who">Signed in as <b id="acct-email">—</b></div>
+      <a class="new-btn" href="advertise.html">+ New campaign</a>
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="v" id="s-campaigns">0</div><div class="l">campaigns</div></div>
+      <div class="stat"><div class="v" id="s-imps">0</div><div class="l">impressions</div></div>
+      <div class="stat"><div class="v" id="s-clicks">0</div><div class="l">clicks · <span id="s-ctr">0%</span> CTR</div></div>
+      <div class="stat"><div class="v acc" id="s-spend">$0.00</div><div class="l">total spend</div></div>
+    </div>
+    <div class="clist" id="clist"></div>
+  </div>
+</main>
+<footer><span>Claude Code Ads</span><a href="index.html">For developers</a></footer>
+
+<script>
+  const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const ROOT = location.href.replace(/campaigns\.html.*$/, '');
+  const $ = id => document.getElementById(id);
+  const fmt = n => Number(n).toLocaleString();
+  const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+  function extractKey(s){ const m = String(s||'').match(UUID); return m ? m[0] : String(s||'').trim(); }
+
+  async function load(input){
+    const key = extractKey(input);
+    if(!key) return;
+    $('err').style.display='none';
+    try{
+      const d = await fetch(`${SUPA}/functions/v1/advertiser-portal?key=${encodeURIComponent(key)}`)
+        .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+      localStorage.setItem('cca_adv_key', key);
+      history.replaceState(null,'',`?key=${key}`);
+      $('acct-email').textContent = d.email_masked;
+      $('s-campaigns').textContent = `${d.campaign_count}`;
+      $('s-imps').textContent = fmt(d.totals.impressions);
+      $('s-clicks').textContent = fmt(d.totals.clicks);
+      $('s-ctr').textContent = d.totals.ctr.toFixed(2)+'%';
+      $('s-spend').textContent = '$'+d.totals.spend_dollars.toFixed(2);
+      $('clist').innerHTML = d.campaigns.length ? d.campaigns.map(card).join('')
+        : `<div class="empty">No campaigns yet. <a href="advertise.html" style="color:var(--accent)">Create your first →</a></div>`;
+      $('panel').style.display='block';
+    }catch(e){
+      $('panel').style.display='none';
+      $('err').style.display='block';
+      $('err').textContent = e.message==='404' ? "We couldn't find an account for that key. Double-check your dashboard link."
+                                               : 'Could not load — try again.';
+    }
+  }
+
+  function card(c){
+    const target = (c.blocks||1)*1000;
+    const pct = target ? Math.min(100, c.impressions_delivered/target*100) : 0;
+    const initial = (c.company||c.ad_text||'?').trim()[0]?.toUpperCase()||'?';
+    const ico = c.logo_path
+      ? `<span class="ico"><img src="${SUPA}/storage/v1/object/public/${c.logo_path}" alt=""></span>`
+      : `<span class="ico">${initial}</span>`;
+    const st = ['active','paused','pending','exhausted'].includes(c.status)?c.status:'pending';
+    const dash = `${ROOT}dashboard.html?key=${c.dashboard_key}`;
+    return `<a class="camp" href="${dash}">
+      ${ico}
+      <div class="cmain">
+        <div class="ctitle">${esc(c.ad_text || c.company || c.ad_id)}</div>
+        <div class="cmeta">$${(c.bid_per_block_cents/100).toFixed(2)}/1k · ${fmt(c.impressions_delivered)}/${fmt(target)} delivered</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="cnums">
+        <div class="cnum"><div class="v">${fmt(c.impressions)}</div><div class="l">imps</div></div>
+        <div class="cnum"><div class="v">${fmt(c.clicks)}</div><div class="l">clicks</div></div>
+        <div class="cnum"><div class="v">$${c.spend_dollars.toFixed(2)}</div><div class="l">spend</div></div>
+      </div>
+      <span class="badge b-${st}">${st}</span>
+      <span class="arrow">›</span>
+    </a>`;
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  $('go').addEventListener('click', ()=>load($('key').value));
+  $('key').addEventListener('keydown', e=>{ if(e.key==='Enter') load($('key').value); });
+  const initial = new URLSearchParams(location.search).get('key') || localStorage.getItem('cca_adv_key');
+  if(initial){ $('key').value = initial; load(initial); }
+</script>
+</body>
+</html>

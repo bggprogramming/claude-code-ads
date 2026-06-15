@@ -21,6 +21,7 @@ the function bodies (recipient/earnings always resolved server-side) and by RLS.
 | `stripe-webhook` | Marks a campaign paid+active on `checkout.session.completed` (verifies signature; 503 until `STRIPE_WEBHOOK_SECRET` set). |
 | `campaign-manage` | Advertiser self-service (pause/resume/set_bid/add_blocks), authed by `dashboard_key`. |
 | `dev-portal` | Developer earnings/referrals/payout data, keyed by referral code. |
+| `advertiser-portal` | Account-level advertiser view: all campaigns + analytics for the email behind a given `dashboard_key`. |
 | `badge` | Shields.io endpoint badge of a developer's lifetime earnings. |
 | `send-dashboard-email` | Emails an advertiser their dashboard link via Resend (requires `RESEND_API_KEY`). |
 

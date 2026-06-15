@@ -16,5 +16,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.dev-portal]
 verify_jwt = false
+[functions.advertiser-portal]
+verify_jwt = false
 [functions.send-dashboard-email]
 verify_jwt = false

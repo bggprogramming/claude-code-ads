@@ -150,7 +150,10 @@
 
 <nav>
   <a class="logo" href="index.html">claude code <em>ads</em></a>
-  <a class="nav-link" href="index.html">← For developers</a>
+  <span style="display:flex;gap:22px;align-items:center">
+    <a class="nav-link" href="campaigns.html">My campaigns</a>
+    <a class="nav-link" href="index.html">← For developers</a>
+  </span>
 </nav>
 
 <main>
@@ -254,6 +257,7 @@
         </div>
       </div>
       <a href="#" id="dash-open-btn" class="dash-open-btn">Open analytics dashboard →</a>
+      <div style="margin-top:16px"><a href="#" id="all-campaigns-link" style="font-size:13px;color:var(--muted);text-decoration:none">View all your campaigns →</a></div>
     </div>
   </div>
 
@@ -423,6 +427,7 @@
       // No Stripe configured: campaign auto-activates (live now). Otherwise pending.
       $('dash-link-url').textContent = dashUrl;
       $('dash-open-btn').href = dashUrl;
+      $('all-campaigns-link').href = `${base}campaigns.html?key=${rec.dashboard_key}`;
       $('success-sub').innerHTML = (co && co.activated)
         ? 'Your ad is <b>live</b> in the spinner rotation right now. '
           + `Watch the bid market below — and your dashboard tracks every impression.`

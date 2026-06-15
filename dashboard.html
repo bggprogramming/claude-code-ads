@@ -178,6 +178,8 @@
 
     <div id="dashboard" style="display:none">
 
+      <a id="all-campaigns-link" href="campaigns.html" style="display:inline-block;font-size:13px;color:var(--muted,#6a6a72);text-decoration:none;margin-bottom:18px">← All campaigns</a>
+
       <div class="campaign-header">
         <div class="header-top">
           <div class="header-identity">
@@ -605,6 +607,7 @@
   if (!key) {
     showError();
   } else {
+    document.getElementById('all-campaigns-link').href = 'campaigns.html?key=' + encodeURIComponent(key);
     loadDashboard(key);
   }
 </script>
