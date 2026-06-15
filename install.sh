@@ -77,7 +77,7 @@ mkdir -p "$ADS_DIR"
 FILES=(ad.py update_spinner.py click_server.py start_click_server.sh
        earnings.py setup.py referral.py stats.py ads.json
        context.py feed.py click_ad.py completion_ad.py record_tool_start.py
-       context_hook.py context_uploader.py optin.py)
+       context_hook.py context_uploader.py optin.py viewability.py)
 
 for f in "${FILES[@]}"; do
   if ! curl -fsSL "$REPO/$f" -o "$ADS_DIR/$f.part"; then
@@ -103,6 +103,13 @@ fi
 info "Installing certifi…"
 pip3 install --quiet certifi 2>/dev/null || python3 -m pip install --quiet certifi 2>/dev/null || \
   info "  (couldn't auto-install certifi; run: python3 -m pip install certifi)"
+
+# Optional (macOS): window-viewability so impressions only count when the
+# terminal is actually visible. Degrades gracefully if this can't install.
+if [[ "$(uname)" == "Darwin" ]]; then
+  pip3 install --quiet pyobjc-framework-Quartz 2>/dev/null \
+    || python3 -m pip install --quiet pyobjc-framework-Quartz 2>/dev/null || true
+fi
 
 # ── 4. Register account ───────────────────────────────────────────────────────
 info "Setting up your account…"

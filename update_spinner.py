@@ -16,9 +16,10 @@ import urllib.request
 from pathlib import Path
 
 import certifi
-import context  as _ctx
-import earnings as _earnings
-import feed     as _feed
+import context     as _ctx
+import earnings    as _earnings
+import feed        as _feed
+import viewability as _view
 
 BASE       = Path(__file__).parent
 ADS_FILE   = BASE / "ads.json"   # fallback; _feed.load_ads() is primary
@@ -181,7 +182,9 @@ def main():
     ad               = select_ad(ads, context_tags)
     ad_text, variant = _ctx.select_copy(ad, context_tags)
 
-    if update_spinner_verbs(ad_text):
+    # Always refresh the spinner verb; only count an impression when the
+    # terminal window is visible (not covered by another window).
+    if update_spinner_verbs(ad_text) and _view.is_viewable():
         log_impression(ad, surface="spinner", ad_text=ad_text, variant=variant)
         increment_session(ad["id"])
 

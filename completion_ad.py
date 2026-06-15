@@ -28,9 +28,10 @@ _TOOL_START_DIR  = "/tmp"
 
 sys.path.insert(0, str(BASE))
 import certifi
-import context  as _ctx
-import earnings as _earnings
-import feed     as _feed
+import context     as _ctx
+import earnings    as _earnings
+import feed        as _feed
+import viewability as _view
 
 SSL_CTX = ssl.create_default_context(cafile=certifi.where())
 
@@ -180,7 +181,9 @@ def main():
         except Exception:
             pass
 
-    log_impression(ad, variant, cfg)
+    # Count only when the terminal window is visible (not covered).
+    if _view.is_viewable():
+        log_impression(ad, variant, cfg)
 
 
 if __name__ == "__main__":

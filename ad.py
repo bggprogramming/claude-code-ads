@@ -16,9 +16,10 @@ import urllib.request
 from pathlib import Path
 
 import certifi
-import context  as _ctx
-import earnings as _earnings
-import feed     as _feed
+import context     as _ctx
+import earnings    as _earnings
+import feed        as _feed
+import viewability as _view
 
 BASE      = Path(__file__).parent
 ADS_FILE  = BASE / "ads.json"   # fallback; _feed.load_ads() is primary
@@ -162,10 +163,14 @@ def main():
     ad           = select_ad(ads, context_tags)
 
     ad_text, variant = _ctx.select_copy(ad, context_tags)
-    log_impression(ad, cfg, ad_text=ad_text, variant=variant)
-    increment_session(ad["id"])
 
+    # Always render the status line; only count it as an impression when the
+    # terminal window is actually visible (not covered by another window).
     print(make_clickable(ad_text, ad["id"], ad["url"]))
+
+    if _view.is_viewable():
+        log_impression(ad, cfg, ad_text=ad_text, variant=variant)
+        increment_session(ad["id"])
 
 
 if __name__ == "__main__":
