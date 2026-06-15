@@ -213,7 +213,7 @@ def _codex_hello(cfg):
 def _emit_codex(ad, ad_text, variant, cfg):
     """Codex Stop hook: return ONE clean sponsor line as JSON systemMessage, THEN
     count the impression (emit first so a slow network call can't delay the ad)."""
-    msg = f"Sponsored — {ad_text}"
+    msg = ad_text
     url = (ad.get("url") or "")
     dom = url.split("//")[-1].split("/")[0]
     if dom and dom not in ad_text:
