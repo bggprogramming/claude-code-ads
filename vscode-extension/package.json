@@ -9,12 +9,20 @@
     "type": "git",
     "url": "https://github.com/bggprogramming/claude-code-ads"
   },
+  "homepage": "https://bggprogramming.github.io/claude-code-ads/",
+  "bugs": {
+    "url": "https://github.com/bggprogramming/claude-code-ads/issues"
+  },
   "engines": {
     "vscode": "^1.70.0"
   },
   "categories": ["Other"],
   "keywords": ["ads", "earnings", "monetization", "passive income", "sponsored"],
   "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#080808",
+    "theme": "dark"
+  },
   "activationEvents": ["onStartupFinished"],
   "main": "./extension.js",
   "contributes": {

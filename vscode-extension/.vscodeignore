@@ -1,0 +1,7 @@
+.vscode/**
+.gitignore
+.cca-bak
+**/*.map
+install.sh
+node_modules/**
+**/.DS_Store

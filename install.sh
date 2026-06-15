@@ -234,6 +234,14 @@ for pair in "Cursor:$HOME/.cursor/extensions" "VS Code:$HOME/.vscode/extensions"
   [[ "$ok" == "1" ]] && info "✓ Status-bar extension installed into $ename (reload it to activate)"
 done
 
+# ── 5d. Inject the in-panel sponsor bar into the Codex editor extension (if present) ──
+# No-ops cleanly when the Codex VS Code extension isn't installed. Backed up +
+# reversible (install --uninstall, or inject_codex_panel.py --revert).
+if python3 "$ADS_DIR/inject_codex_panel.py" >/dev/null 2>&1; then
+  python3 "$ADS_DIR/inject_codex_panel.py" --status 2>/dev/null | grep -q "HTML injected: True" \
+    && info "✓ Codex panel sponsor bar installed (reload the editor to activate)"
+fi
+
 # ── Funnel: installed ─────────────────────────────────────────────────────────
 python3 "$ADS_DIR/funnel.py" installed >/dev/null 2>&1 || true
 

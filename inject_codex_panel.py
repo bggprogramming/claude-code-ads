@@ -50,11 +50,9 @@ INJECT_JS = r"""// claude-code-ads — injected Codex panel sponsor bar (remove 
       +"display:flex;align-items:center;gap:8px;padding:6px 10px;box-sizing:border-box;"
       +"font:12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
       +"background:rgba(10,10,12,.92);border-top:1px solid rgba(255,255,255,.08);color:#8a8a92";
-    var tag=document.createElement("span"); tag.textContent="ad";
-    tag.style.cssText="opacity:.5;font-size:10px;text-transform:uppercase;letter-spacing:.08em";
     var a=document.createElement("a"); a.target="_blank"; a.rel="noopener";
     a.style.cssText="color:#b4ff69;text-decoration:none;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
-    bar.appendChild(tag); bar.appendChild(a);
+    bar.appendChild(a);
     function mount(){ if(document.body && !bar.isConnected) document.body.appendChild(bar); }
     var cur=null;
     function track(ev,ad){ try{ fetch(TRACK,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},
