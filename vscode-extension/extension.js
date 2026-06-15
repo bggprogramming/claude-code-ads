@@ -88,25 +88,31 @@ function supabasePost(path, body) {
 // ── Ad feed ──────────────────────────────────────────────────────────────────
 
 async function loadAds() {
-  const today = new Date().toISOString().slice(0, 10);
-  const cache = path.join(os.tmpdir(), `claude-ads-feed-${today}.json`);
-
-  // Cache first
+  // Auction feed: built-in house ads + live paid campaigns, bid-ordered.
+  const cache = path.join(os.tmpdir(), 'claude-ads-feed.json');
   try {
-    const data = JSON.parse(fs.readFileSync(cache, 'utf8'));
-    if (Array.isArray(data) && data.length > 0) return data;
-  } catch {}
-
-  // Remote feed
-  try {
-    const raw  = await httpsGet(FEED_URL, 2000);
-    const data = JSON.parse(raw);
-    if (Array.isArray(data) && data.length > 0) {
-      try { fs.writeFileSync(cache, raw); } catch {}
-      return data;
+    const st = fs.statSync(cache);
+    if (Date.now() - st.mtimeMs < 60_000) {           // 60s cache
+      const data = JSON.parse(fs.readFileSync(cache, 'utf8'));
+      if (Array.isArray(data) && data.length > 0) return data;
     }
   } catch {}
 
+  try {
+    const raw  = await httpsGet(`${SUPABASE_URL}/functions/v1/ad-feed`, 2000);
+    const body = JSON.parse(raw);
+    const ads  = Array.isArray(body) ? body : body.ads;   // {ads, hash}
+    if (Array.isArray(ads) && ads.length > 0) {
+      try { fs.writeFileSync(cache, JSON.stringify(ads)); } catch {}
+      return ads;
+    }
+  } catch {}
+
+  // Fallbacks: legacy GitHub feed, then nothing.
+  try {
+    const data = JSON.parse(await httpsGet(FEED_URL, 2000));
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch {}
   return [];
 }
 
@@ -148,11 +154,23 @@ function selectCopy(ad, contextTags) {
 
 // ── Analytics ────────────────────────────────────────────────────────────────
 
+function shareLevel() {
+  for (const f of [CLAUDE_CFG, VSCODE_CFG]) {
+    try {
+      const c = JSON.parse(fs.readFileSync(f, 'utf8'));
+      if (typeof c.share_level === 'number') return c.share_level;
+      if (c.optin_enabled) return 1;
+    } catch {}
+  }
+  return 0;
+}
+
 function logImpression(adId, adText, userId, variant = 'default') {
   // Route through track-event — earnings are computed server-side.
   supabasePost('/functions/v1/track-event', {
     ad_id: adId, ad_text: adText, event: 'impression',
     surface: 'vscode_statusbar', user_id: userId, variant,
+    share_level: shareLevel(),
   }).catch(() => {});
 }
 
@@ -160,6 +178,7 @@ function logClick(adId, userId) {
   supabasePost('/functions/v1/track-event', {
     ad_id: adId, ad_text: '', event: 'click',
     surface: 'vscode_click', user_id: userId,
+    share_level: shareLevel(),
   }).catch(() => {});
 }
 
@@ -201,14 +220,15 @@ async function activate(context) {
 
   const showEarningsCmd = vscode.commands.registerCommand('claude-code-ads.showEarnings', async () => {
     const dollars = await fetchEarnings(userId);
-    const refLink = referralCode
-      ? `https://bggprogramming.github.io/claude-code-ads/?ref=${referralCode}`
+    const invite = referralCode
+      ? `https://bggprogramming.github.io/claude-code-ads/invite.html?ref=${referralCode}`
       : 'https://bggprogramming.github.io/claude-code-ads/';
     vscode.window.showInformationMessage(
-      `Claude Code Ads: $${dollars.toFixed(4)} earned · Referral: ${refLink}`,
-      'Open Dashboard'
+      `Claude Code Ads: $${dollars.toFixed(2)} earned. Invite a friend — you both get $10.`,
+      'Copy invite link', 'Open portal'
     ).then(sel => {
-      if (sel === 'Open Dashboard') vscode.env.openExternal(vscode.Uri.parse(refLink));
+      if (sel === 'Copy invite link') vscode.env.clipboard.writeText(invite);
+      else if (sel === 'Open portal') vscode.env.openExternal(vscode.Uri.parse('https://bggprogramming.github.io/claude-code-ads/portal.html'));
     });
   });
 
@@ -231,7 +251,11 @@ async function activate(context) {
     statusBar.text  = `$(megaphone) ${display}`;
     statusBar.show();
 
-    logImpression(currentAd.id, currentText, userId, currentVariant);
+    // Count an impression only when the window is actually on screen. VS Code's
+    // API exposes focus (not occlusion), so we use focus as the visibility proxy.
+    if (vscode.window.state.focused) {
+      logImpression(currentAd.id, currentText, userId, currentVariant);
+    }
   }
 
   await updateAd();

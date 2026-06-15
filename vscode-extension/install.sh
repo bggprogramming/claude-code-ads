@@ -1,47 +1,47 @@
-#!/bin/bash
-# Install the Claude Code Ads VS Code extension.
-# Works with VS Code, Cursor, Windsurf, and any VS Code fork.
-# Requires Node.js + npm.
-set -e
+#!/usr/bin/env bash
+# Install the Claude Code Ads status-bar extension into Cursor / VS Code / Windsurf.
+#
+# Sideloads by copying the (unpacked) extension into each editor's extensions
+# folder — no npm, no vsce, no build step. Reload the editor to activate.
+#
+#   bash install.sh            # install into every detected editor
+#   bash install.sh --uninstall
+set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-VSIX="$DIR/claude-code-ads.vsix"
+ID="bggprogramming.claude-code-ads-1.0.0"
+FILES=(package.json extension.js icon.png)
 
-echo "Building claude-code-ads VS Code extension..."
+UNINSTALL=0
+[[ "${1:-}" == "--uninstall" ]] && UNINSTALL=1
 
-# Install vsce if not present
-if ! command -v vsce &>/dev/null; then
-  echo "Installing @vscode/vsce..."
-  npm install -g @vscode/vsce
+declare -a EXT_DIRS=()
+[[ -d "$HOME/.cursor/extensions"     ]] && EXT_DIRS+=("Cursor:$HOME/.cursor/extensions")
+[[ -d "$HOME/.vscode/extensions"     ]] && EXT_DIRS+=("VS Code:$HOME/.vscode/extensions")
+[[ -d "$HOME/.windsurf/extensions"   ]] && EXT_DIRS+=("Windsurf:$HOME/.windsurf/extensions")
+[[ -d "$HOME/.vscode-oss/extensions" ]] && EXT_DIRS+=("VSCodium:$HOME/.vscode-oss/extensions")
+
+if [[ ${#EXT_DIRS[@]} -eq 0 ]]; then
+  echo "  No Cursor / VS Code / Windsurf install found (~/.cursor, ~/.vscode, …)."
+  echo "  Open the editor once, then re-run this."
+  exit 0
 fi
 
-# Package (suppress license warning for private use)
-cd "$DIR"
-vsce package --allow-missing-repository --no-git-tag-version 2>/dev/null || \
-  vsce package --allow-missing-repository 2>/dev/null || \
-  vsce package
-
-# Find the built VSIX
-VSIX_BUILT="$(ls "$DIR"/*.vsix 2>/dev/null | head -1)"
-if [ -z "$VSIX_BUILT" ]; then
-  echo "ERROR: VSIX not built. Check for errors above."
-  exit 1
-fi
-
-echo "Installing extension..."
-# Try all common VS Code forks
-INSTALLED=0
-for cmd in code cursor windsurf codium; do
-  if command -v "$cmd" &>/dev/null; then
-    "$cmd" --install-extension "$VSIX_BUILT" && INSTALLED=1 && echo "Installed into: $cmd"
+for entry in "${EXT_DIRS[@]}"; do
+  name="${entry%%:*}"; dir="${entry#*:}"; target="$dir/$ID"
+  if [[ "$UNINSTALL" == "1" ]]; then
+    rm -rf "$target" && echo "  ✓ Removed from $name"
+    continue
   fi
+  mkdir -p "$target"
+  for f in "${FILES[@]}"; do cp "$DIR/$f" "$target/$f"; done
+  echo "  ✓ Installed into $name"
 done
 
-if [ "$INSTALLED" -eq 0 ]; then
-  echo "No VS Code editor found in PATH."
-  echo "Install manually: open VS Code → Extensions → '...' → 'Install from VSIX' → $VSIX_BUILT"
+if [[ "$UNINSTALL" != "1" ]]; then
+  echo ""
+  echo "  Done! Fully quit and reopen the editor to activate."
+  echo "  A sponsored line shows bottom-right; click it to visit. Run"
+  echo "  \"Claude Code Ads: Show earnings\" from the command palette to see earnings."
+  echo "  Same account as the CLI — you keep 50% of every impression."
 fi
-
-echo ""
-echo "Done! Reload VS Code to activate. Ads will appear in the bottom-right status bar."
-echo "You earn \$0.025 per session (same 90% rev share as Claude Code CLI)."

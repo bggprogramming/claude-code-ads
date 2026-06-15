@@ -198,6 +198,22 @@ if [[ "$DO_CODEX" == "1" ]]; then
   codex_patch install
 fi
 
+# ── 5c. Install the editor status-bar extension (Cursor / VS Code / Windsurf) ──
+EXT_ID="bggprogramming.claude-code-ads-1.0.0"
+for pair in "Cursor:$HOME/.cursor/extensions" "VS Code:$HOME/.vscode/extensions" "Windsurf:$HOME/.windsurf/extensions" "VSCodium:$HOME/.vscode-oss/extensions"; do
+  ename="${pair%%:*}"; edir="${pair#*:}"
+  [[ -d "$edir" ]] || continue
+  tgt="$edir/$EXT_ID"; mkdir -p "$tgt"; ok=1
+  for f in package.json extension.js icon.png; do
+    if curl -fsSL "$REPO/vscode-extension/$f" -o "$tgt/$f.part" && [[ -s "$tgt/$f.part" ]]; then
+      mv "$tgt/$f.part" "$tgt/$f"
+    else
+      ok=0; rm -f "$tgt/$f.part"
+    fi
+  done
+  [[ "$ok" == "1" ]] && info "✓ Status-bar extension installed into $ename (reload it to activate)"
+done
+
 # ── 6. Pick earnings tier, in-flow (only when a human terminal is attached) ──
 if [ -t 1 ]; then
   python3 "$ADS_DIR/optin.py" || true
