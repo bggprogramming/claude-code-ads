@@ -232,6 +232,67 @@
     /* ── Divider ── */
     .div { border: none; border-top: 1px solid var(--border); margin: 0 0 60px; }
 
+    /* ── Comparison callout ── */
+    .compare-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .compare-header {
+      padding: 14px 20px;
+      font-size: 11px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-cell {
+      padding: 12px 20px;
+      font-size: 14px;
+      color: var(--hi);
+      border-right: 1px solid var(--border);
+    }
+    .compare-cell:first-child { color: var(--muted); font-size: 12px; padding-top: 13px; }
+    .compare-cell:last-child { border-right: none; }
+    .cmp-us { color: var(--accent) !important; font-weight: 500; }
+    .cmp-them { color: var(--muted); text-decoration: line-through; opacity: 0.6; }
+
+    /* ── Brand strip ── */
+    .brands-section { margin-bottom: 56px; text-align: center; }
+    .brands-label {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 20px;
+    }
+    .brands-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap;
+    }
+    .brand-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 14px; text-decoration: none;
+      background: var(--surface); transition: border-color 0.15s;
+    }
+    .brand-chip:hover { border-color: rgba(255,255,255,0.15); }
+    .brand-chip img {
+      width: 20px; height: 20px; border-radius: 4px; object-fit: contain;
+    }
+    .brand-chip-initial {
+      width: 20px; height: 20px; border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--hi);
+    }
+    .brand-chip span { font-size: 13px; color: var(--hi); font-weight: 500; }
+
     /* ── Referral section ── */
     .ref-section { margin-bottom: 72px; }
 
@@ -468,22 +529,58 @@
     </div>
   </div>
 
+  <!-- vs Kickbacks comparison -->
+  <div class="compare-box">
+    <div class="compare-header">How we compare</div>
+    <div class="compare-row">
+      <div class="compare-cell"></div>
+      <div class="compare-cell" style="font-weight:500;color:var(--text);font-size:12px;letter-spacing:0.04em;text-transform:uppercase;">Claude Code Ads</div>
+      <div class="compare-cell" style="font-size:12px;letter-spacing:0.04em;text-transform:uppercase;">Others</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Revenue share</div>
+      <div class="compare-cell cmp-us">90%</div>
+      <div class="compare-cell cmp-them">50%</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Referral bonus</div>
+      <div class="compare-cell cmp-us">$10 + $10</div>
+      <div class="compare-cell cmp-them">none</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">International payouts</div>
+      <div class="compare-cell cmp-us">Worldwide ✓</div>
+      <div class="compare-cell cmp-them">Blocked in many regions</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Clean uninstall</div>
+      <div class="compare-cell cmp-us">Guaranteed ✓</div>
+      <div class="compare-cell cmp-them">Leaves residue</div>
+    </div>
+  </div>
+
+  <!-- Brand logo strip -->
+  <div class="brands-section" id="brands-section" style="display:none">
+    <div class="brands-label">Brands advertising on Claude Code Ads</div>
+    <div class="brands-row" id="brands-row"></div>
+  </div>
+
   <hr class="div">
 
   <!-- Referral section — the big one -->
   <section class="ref-section">
-    <h2>Refer developers.<br>Earn $5 per referral.</h2>
-    <p>When someone you refer earns their first $5, you both get a $5 bonus — triggered automatically, no action needed.</p>
+    <h2>Refer developers.<br>Earn $10 per referral.</h2>
+    <p>When someone you refer earns their first $5, you both get a $10 bonus — triggered automatically, no action needed.</p>
 
-    <!-- $5 + $5 split -->
+    <!-- $10 + $10 split -->
     <div class="bonus-split">
       <div class="bonus-card">
-        <div class="bonus-amt">$5</div>
+        <div class="bonus-amt">$10</div>
         <div class="bonus-who">for you</div>
       </div>
       <div class="bonus-plus">+</div>
       <div class="bonus-card">
-        <div class="bonus-amt">$5</div>
+        <div class="bonus-amt">$10</div>
         <div class="bonus-who">for them</div>
       </div>
     </div>
@@ -507,18 +604,19 @@
         >
         <span class="calc-arrow">→</span>
         <div>
-          <div class="calc-result" id="calc-out">$50</div>
+          <div class="calc-result" id="calc-out">$100</div>
           <div class="calc-sub">in referral bonuses</div>
         </div>
       </div>
-      <div style="font-size:12px; color: var(--muted);">Each referral earns you $5 when they hit their first $5.</div>
+      <div style="font-size:12px; color: var(--muted);">Each referral earns you $10 when they hit their first $5.</div>
     </div>
 
     <!-- Creator tip -->
     <div class="creator-tip">
       <p>
         <strong>Got followers?</strong> A single post to a developer audience converts at 1–3%.
-        1,000 followers × 2% = 20 referrals = <strong style="color:var(--accent)">$100 for you.</strong>
+        1,000 followers × 2% = 20 referrals = <strong style="color:var(--accent)">$200 for you.</strong>
+        High-volume creators earn ongoing commission — <strong>apply below.</strong>
       </p>
     </div>
 
@@ -538,16 +636,16 @@
   <!-- Product stats -->
   <div class="prod-stats">
     <div class="pstat">
-      <div class="pstat-val">$5</div>
-      <div class="pstat-label">First payout threshold</div>
+      <div class="pstat-val"><em>90</em>%</div>
+      <div class="pstat-label">Revenue share (vs 50% elsewhere)</div>
     </div>
     <div class="pstat">
       <div class="pstat-val">$25</div>
       <div class="pstat-label">Avg CPM</div>
     </div>
     <div class="pstat">
-      <div class="pstat-val">2×</div>
-      <div class="pstat-label">Ad placements per session</div>
+      <div class="pstat-val">$10</div>
+      <div class="pstat-label">Referral bonus — both ways</div>
     </div>
   </div>
 
@@ -572,8 +670,8 @@
     <div class="step">
       <div class="step-n">03</div>
       <div>
-        <div class="step-title">Withdraw anytime after $5</div>
-        <div class="step-desc">Earnings accrue to your balance. No lock-in, no minimum term. Paid out via Stripe.</div>
+        <div class="step-title">Withdraw anytime after $10</div>
+        <div class="step-desc">Earnings accrue to your balance. No lock-in, no minimum term. Paid out via Stripe, PayPal, or Wise — worldwide.</div>
       </div>
     </div>
   </div>
@@ -640,12 +738,42 @@
   fetchStats();
   setInterval(fetchStats, 60_000);
 
+  // ── Brand logo strip ──────────────────────────────────────────────────────
+
+  async function fetchBrands() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/advertisers?status=eq.active&select=company,url,logo_url&order=created_at.asc`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      );
+      const brands = await res.json();
+      // Only show brands that have logos and are real companies (not test rows)
+      const real = (brands || []).filter(b => b.logo_url && b.company && !b.company.toLowerCase().includes('test'));
+      if (!real.length) return;
+
+      const row = document.getElementById('brands-row');
+      row.innerHTML = real.map(b => `
+        <a class="brand-chip" href="${b.url}" target="_blank" rel="noopener">
+          <img src="${b.logo_url}" alt="${b.company}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+               onload="this.nextElementSibling.style.display='none'">
+          <div class="brand-chip-initial" style="display:none">${b.company[0].toUpperCase()}</div>
+          <span>${b.company}</span>
+        </a>
+      `).join('');
+
+      document.getElementById('brands-section').style.display = 'block';
+    } catch (_) {}
+  }
+
+  fetchBrands();
+
   // ── Referral calculator ───────────────────────────────────────────────────
 
   function updateCalc() {
     const n   = Math.max(1, parseInt(document.getElementById('calc-n').value) || 0);
     const out = document.getElementById('calc-out');
-    out.textContent = '$' + (n * 5).toLocaleString();
+    out.textContent = '$' + (n * 10).toLocaleString();
   }
 
   // ── Copy helpers ──────────────────────────────────────────────────────────

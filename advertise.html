@@ -341,6 +341,18 @@
         </div>
 
         <div class="field">
+          <label for="logo_url">Brand logo URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input id="logo_url" type="url" placeholder="https://logo.clearbit.com/yourcompany.com" style="flex:1">
+            <div id="logo-preview" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--bg);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              <span id="logo-initial" style="font-size:16px;color:var(--muted)">?</span>
+              <img id="logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
+            </div>
+          </div>
+          <div class="field-hint">Shown in your analytics dashboard and on the advertiser marketplace. Use <code style="font-size:11px;color:var(--hi)">https://logo.clearbit.com/yourdomain.com</code> for instant logo lookup.</div>
+        </div>
+
+        <div class="field">
           <label for="ad_text">
             Ad text
             <span class="char-count" id="char-count">0 / 80</span>
@@ -467,6 +479,29 @@
   document.getElementById('daily_budget').addEventListener('input', updateReach);
   updateReach();
 
+  // Logo URL preview
+  document.getElementById('logo_url').addEventListener('input', function() {
+    const url = this.value.trim();
+    const img  = document.getElementById('logo-img');
+    const init = document.getElementById('logo-initial');
+    if (url) {
+      img.src = url;
+      img.style.display = 'block';
+      init.style.display = 'none';
+      img.onerror = () => { img.style.display = 'none'; init.style.display = ''; init.textContent = '?'; };
+    } else {
+      img.style.display = 'none';
+      init.style.display = '';
+      init.textContent = document.getElementById('company').value.trim()[0]?.toUpperCase() || '?';
+    }
+  });
+  document.getElementById('company').addEventListener('input', function() {
+    const init = document.getElementById('logo-initial');
+    if (!document.getElementById('logo_url').value.trim()) {
+      init.textContent = this.value.trim()[0]?.toUpperCase() || '?';
+    }
+  });
+
   // Live terminal preview
   function linkify(text) {
     const href = document.getElementById('url').value.trim() || '#';
@@ -524,12 +559,15 @@
       return;
     }
 
+    const logo_url = document.getElementById('logo_url').value.trim() || null;
+
     const payload = {
       ad_id:              genAdId(),
       company,
       email,
       ad_text,
       url,
+      logo_url,
       cpm_cents:          selectedCpm,
       daily_budget_cents: Math.round(daily_budget * 100),
       status:             'active',

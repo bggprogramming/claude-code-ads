@@ -4,7 +4,8 @@ Local earnings tracking and referral milestone detection.
 Imported by ad.py and update_spinner.py — keeps state in earnings.json.
 
 Units: millicents (1/1000 of a cent) to avoid float precision issues.
-  $5.00 = 500 cents = 500,000 millicents = MILESTONE_MC
+  $5.00  = 500,000 mc  = MILESTONE_MC  (referral unlock trigger)
+  $10.00 = 1,000,000 mc = REFERRAL_BONUS_MC  (bonus paid to both parties)
 
 CPM model:
   statusline impression = ad.cpm * 100 millicents  (e.g. $25 CPM → 2500 mc = $0.025/imp)
@@ -25,7 +26,8 @@ EARNINGS_FILE = BASE / "earnings.json"
 CFG_FILE      = BASE / "config.json"
 SSL_CTX       = ssl.create_default_context(cafile=certifi.where())
 
-MILESTONE_MC  = 500_000   # $5.00 in millicents
+MILESTONE_MC       = 500_000    # $5.00 — referral unlock trigger
+REFERRAL_BONUS_MC  = 1_000_000  # $10.00 — bonus paid to each party
 
 
 # ── Local state ───────────────────────────────────────────────────────────────
@@ -91,21 +93,27 @@ def _push_milestone(cfg, referral_code, referred_by):
     except Exception:
         pass
 
-    # Insert referral bonus for referrer (if they were referred)
+    # $10/$10 — insert bonus for referrer AND for the newly-milestoned user
     if referred_by:
         bonus_url = f"{url_base}/rest/v1/referral_bonuses"
-        payload   = json.dumps({
-            "referrer_code":    referred_by,
-            "referred_code":    referral_code,
-            "amount_millicents": MILESTONE_MC,
-        }).encode()
-        req = urllib.request.Request(
-            bonus_url, data=payload, headers=headers, method="POST"
-        )
-        try:
-            urllib.request.urlopen(req, timeout=4, context=SSL_CTX)
-        except Exception:
-            pass
+
+        bonuses = [
+            # referrer gets $10
+            {"referrer_code": referred_by,    "referred_code": referral_code, "amount_millicents": REFERRAL_BONUS_MC, "recipient": "referrer"},
+            # referred user also gets $10
+            {"referrer_code": referred_by,    "referred_code": referral_code, "amount_millicents": REFERRAL_BONUS_MC, "recipient": "referred"},
+        ]
+        for b in bonuses:
+            req = urllib.request.Request(
+                bonus_url,
+                data=json.dumps(b).encode(),
+                headers=headers,
+                method="POST",
+            )
+            try:
+                urllib.request.urlopen(req, timeout=4, context=SSL_CTX)
+            except Exception:
+                pass
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
