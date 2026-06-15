@@ -64,6 +64,11 @@ if mode == "install":
     # Codex surfaces the ad through the Stop hook's JSON systemMessage (click_ad
     # --codex). PostToolUse just feeds local context for better targeting.
     block = f'''{START}
+[[hooks.SessionStart]]
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = 'python3 "{ads}/click_ad.py" --codex'
+
 [[hooks.PostToolUse]]
 matcher = ".*"
 [[hooks.PostToolUse.hooks]]

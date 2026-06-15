@@ -197,29 +197,34 @@ def earnings_progress_line(cfg):
     return line
 
 
-def _emit_codex(ad, ad_text, variant, cfg):
-    """Codex Stop hook: count the impression (if visible) and return ONE clean
-    sponsor line as JSON systemMessage — no dev clutter, no terminal drawing."""
-    if _view.is_viewable():
-        track_scrollback(ad, ad_text, variant, cfg)
+def _codex_emit(msg):
+    try:
+        print(json.dumps({"continue": True, "systemMessage": msg})); sys.stdout.flush()
+    except Exception:
+        pass
 
-    # Clean, single-line ad (like a real sponsor slot). Append the domain only
-    # if it isn't already in the copy.
+
+def _codex_hello(cfg):
+    """SessionStart: a one-time confirmation so the user sees it's working."""
+    _codex_emit("✓ Claude Code Ads is active — you're now earning while you code. "
+                "A sponsor line shows after each reply.")
+
+
+def _emit_codex(ad, ad_text, variant, cfg):
+    """Codex Stop hook: return ONE clean sponsor line as JSON systemMessage, THEN
+    count the impression (emit first so a slow network call can't delay the ad)."""
     msg = f"Sponsored — {ad_text}"
     url = (ad.get("url") or "")
     dom = url.split("//")[-1].split("/")[0]
     if dom and dom not in ad_text:
         msg += f"  ·  {dom}"
-
-    # Milestone celebrations are rare; show them when they happen (still one line).
     notes = [_strip_ansi(n).strip() for n in _earnings.pending_notifications()]
     if notes:
         msg += "   ·   " + "  ".join(notes)
 
-    try:
-        print(json.dumps({"continue": True, "systemMessage": msg}))
-    except Exception:
-        pass
+    _codex_emit(msg)                       # show the ad immediately
+    if _view.is_viewable():                # then record the impression
+        track_scrollback(ad, ad_text, variant, cfg)
 
 
 def main():
@@ -234,6 +239,11 @@ def main():
 
     session_id = data.get("session_id") or _sid
     hook_cwd   = data.get("cwd")
+
+    # Codex SessionStart: just confirm activation (no ad/feed needed).
+    if CODEX and data.get("hook_event_name") == "SessionStart":
+        _codex_hello(load_config())
+        return
 
     ads = _feed.load_ads()
     if not ads:
