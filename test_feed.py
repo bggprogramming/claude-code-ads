@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """
-End-to-end test for the remote ad feed loader (feed.py).
+End-to-end test for the ad feed loader (feed.py).
+
+feed.py now fetches the ad-feed edge function (built-in house ads + live auction
+campaigns, bid-ordered, integrity-hashed), with a short /tmp cache and a
+GitHub-raw → local ads.json fallback chain.
 
 Tests:
-  1. load_ads() returns a non-empty list
-  2. Each ad has the required fields (id, text, url)
-  3. Remote fetch succeeds and cache file is created
-  4. Second call reads from cache (no second network request)
-  5. Cache is valid JSON with correct structure
-  6. Graceful fallback when given a bad URL (monkey-patched)
-  7. Local ads.json fallback works when remote is unavailable
-  8. Feed validation rejects malformed entries
+  1/2. load_ads() returns a valid non-empty list
+  3.   Cache file is created after a fetch
+  4.   Second call (within TTL) hits the cache — no network
+  5.   Falls back to local ads.json when the function + GitHub are unreachable
+  6.   _valid() rejects malformed entries
+  7.   _verify_hash() accepts a matching hash and rejects a bad one
 
 Run: python3 ~/.claude/ads/test_feed.py
 """
 import json
 import sys
-import tempfile
-import os
-from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
@@ -26,165 +25,105 @@ sys.path.insert(0, str(Path(__file__).parent))
 import feed as _feed
 
 SEP = "  " + "─" * 52
-TODAY = date.today().isoformat()
+CACHE = _feed.CACHE_FILE
 
 
 def check(label, condition, detail=""):
     mark = "PASS" if condition else "FAIL"
-    suffix = f"  →  {detail}" if detail else ""
-    print(f"  [{mark}] {label}{suffix}")
+    print(f"  [{mark}] {label}" + (f"  →  {detail}" if detail else ""))
     return condition
 
 
 def main():
     results = []
-
     print()
-    print("  Remote ad feed — E2E test")
+    print("  Ad feed loader — E2E test")
     print(SEP)
 
-    # Clear today's cache so we test a real fetch
-    cache_path = Path(f"/tmp/claude-ads-feed-{TODAY}.json")
-    if cache_path.exists():
-        cache_path.unlink()
+    if CACHE.exists():
+        CACHE.unlink()
 
-    # ── Test 1 & 2: load_ads() returns valid ads ──────────────────────────────
-    print()
-    print("  Test 1/2 — load_ads() returns valid ad list")
-    print()
-
+    # ── 1/2: valid ad list ────────────────────────────────────────────────────
+    print("\n  Test 1/2 — load_ads() returns valid ad list\n")
     ads = _feed.load_ads()
     results.append(check("load_ads() returns non-empty list",
                          isinstance(ads, list) and len(ads) > 0, f"{len(ads)} ads"))
-
     required = {"id", "text", "url"}
-    all_valid = all(required.issubset(a.keys()) for a in ads)
     results.append(check("All ads have required fields (id, text, url)",
-                         all_valid,
-                         "ok" if all_valid else f"missing fields in some ads"))
+                         all(required.issubset(a.keys()) for a in ads), "ok"))
 
-    # ── Test 3: Cache file was created ────────────────────────────────────────
-    print()
-    print("  Test 3 — Daily cache file created after fetch")
-    print()
-
-    cache_available = cache_path.exists()
-    results.append(check("Cache file exists at /tmp/claude-ads-feed-{today}.json",
-                         cache_available,
-                         str(cache_path) if cache_available else "remote unreachable (local fallback used)"))
-
-    if cache_available:
-        cached = json.loads(cache_path.read_text())
-        results.append(check("Cached file contains valid ad list",
-                             isinstance(cached, list) and len(cached) > 0,
-                             f"{len(cached)} ads"))
+    # ── 3: cache created ──────────────────────────────────────────────────────
+    print("\n  Test 3 — Cache file created after fetch\n")
+    cache_ok = CACHE.exists()
+    results.append(check(f"Cache file exists at {CACHE}", cache_ok,
+                         str(CACHE) if cache_ok else "remote unreachable (local fallback used)"))
+    if cache_ok:
+        cached = json.loads(CACHE.read_text())
+        results.append(check("Cached file is a valid ad list",
+                             isinstance(cached, list) and len(cached) > 0, f"{len(cached)} ads"))
     else:
-        results.append(check("Cache content check skipped (remote unavailable)", True, "SKIP"))
+        results.append(check("Cache content check skipped", True, "SKIP"))
 
-    # ── Test 4: Second call hits cache (no network) ───────────────────────────
-    print()
-    print("  Test 4 — Second call returns from cache")
-    print()
-
-    if cache_path.exists():
+    # ── 4: second call hits cache (no network) ────────────────────────────────
+    print("\n  Test 4 — Second call returns from cache (within TTL)\n")
+    if cache_ok:
         import urllib.request as _req
-        call_count = [0]
-        real_urlopen = _req.urlopen
-        def counting_urlopen(*args, **kwargs):
-            call_count[0] += 1
-            return real_urlopen(*args, **kwargs)
-
-        with patch.object(_req, 'urlopen', side_effect=counting_urlopen):
+        calls = [0]
+        real = _req.urlopen
+        def counting(*a, **k):
+            calls[0] += 1
+            return real(*a, **k)
+        with patch.object(_req, "urlopen", side_effect=counting):
             ads2 = _feed.load_ads()
-
-        results.append(check("No network call on second load (cache hit)",
-                             call_count[0] == 0,
-                             f"{call_count[0]} network call(s) made"))
-        results.append(check("Second load returns same ads",
-                             len(ads2) == len(ads),
+        results.append(check("No network call on cached second load", calls[0] == 0,
+                             f"{calls[0]} network call(s)"))
+        results.append(check("Second load returns same ads", len(ads2) == len(ads),
                              f"{len(ads2)} vs {len(ads)}"))
     else:
-        # Remote was unavailable — skip cache-hit test
-        results.append(check("Cache hit test skipped (remote unavailable)", True, "SKIP"))
+        results.append(check("Cache-hit test skipped", True, "SKIP"))
         results.append(check("Second load skipped", True, "SKIP"))
 
-    # ── Test 5: Graceful fallback on bad URL ──────────────────────────────────
-    print()
-    print("  Test 5 — Falls back to local ads.json on network failure")
-    print()
-
-    # Clear cache so it tries the network
-    if cache_path.exists():
-        cache_path.unlink()
-
-    original_url = _feed.FEED_URL
-    try:
-        _feed.FEED_URL = "https://invalid.example.invalid/ads.json"
-        ads_fallback  = _feed.load_ads()
-    finally:
-        _feed.FEED_URL = original_url
-
-    results.append(check("Returns non-empty list even when remote fails",
-                         isinstance(ads_fallback, list) and len(ads_fallback) > 0,
-                         f"{len(ads_fallback)} ads from fallback"))
-
+    # ── 5: fallback to local when function + GitHub fail ──────────────────────
+    print("\n  Test 5 — Falls back to local ads.json when remote is unreachable\n")
+    if CACHE.exists():
+        CACHE.unlink()
+    with patch.object(_feed, "_feed_fn_url", return_value="https://invalid.example.invalid/fn"), \
+         patch.object(_feed, "GITHUB_URL", "https://invalid.example.invalid/ads.json"):
+        ads_fb = _feed.load_ads()
+    results.append(check("Returns non-empty list when remote fails",
+                         isinstance(ads_fb, list) and len(ads_fb) > 0, f"{len(ads_fb)} ads"))
     local_ads = json.loads((Path(__file__).parent / "ads.json").read_text())
-    results.append(check("Fallback matches local ads.json content",
-                         len(ads_fallback) == len(local_ads),
-                         f"fallback={len(ads_fallback)} local={len(local_ads)}"))
+    results.append(check("Fallback matches local ads.json",
+                         len(ads_fb) == len(local_ads), f"fallback={len(ads_fb)} local={len(local_ads)}"))
 
-    # Restore cache for next tests
-    _feed.FEED_URL = original_url
-    _feed.load_ads()
-
-    # ── Test 6: _valid() rejects malformed entries ────────────────────────────
-    print()
-    print("  Test 6 — Feed validation rejects malformed entries")
-    print()
-
-    results.append(check("_valid([]) is False", not _feed._valid([]), "empty list"))
-    results.append(check("_valid([{'id':'x'}]) is False (missing text, url)",
-                         not _feed._valid([{"id": "x"}]), "missing fields"))
+    # ── 6: validation ─────────────────────────────────────────────────────────
+    print("\n  Test 6 — Feed validation rejects malformed entries\n")
+    results.append(check("_valid([]) is False", not _feed._valid([]), "empty"))
+    results.append(check("_valid([{'id':'x'}]) is False", not _feed._valid([{"id": "x"}]), "missing fields"))
     results.append(check("_valid('string') is False", not _feed._valid("string"), "not a list"))
-    results.append(check("_valid([{id, text, url}]) is True",
+    results.append(check("_valid([{id,text,url}]) is True",
                          _feed._valid([{"id": "x", "text": "t", "url": "u"}]), "valid"))
 
-    # ── Test 7: Cache integrity ───────────────────────────────────────────────
-    print()
-    print("  Test 7 — Cache file integrity")
-    print()
+    # ── 7: integrity hash (#6 feed signing) ───────────────────────────────────
+    print("\n  Test 7 — Payload integrity hash verification\n")
+    import hashlib
+    sample = [{"id": "a", "text": "t", "url": "u"}]
+    good = hashlib.sha256(json.dumps(sample, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    results.append(check("_verify_hash accepts a matching hash", _feed._verify_hash(sample, good), "match"))
+    results.append(check("_verify_hash rejects a wrong hash", not _feed._verify_hash(sample, "deadbeef"), "mismatch"))
+    results.append(check("_verify_hash passes when no hash provided", _feed._verify_hash(sample, None), "no-op"))
 
-    if cache_path.exists():
-        try:
-            data = json.loads(cache_path.read_text())
-            results.append(check("Cache file is valid JSON",
-                                 True, f"{len(data)} ads"))
-            results.append(check("Cache content matches load_ads() output",
-                                 data == _feed.load_ads(),
-                                 "content matches"))
-        except json.JSONDecodeError as e:
-            results.append(check("Cache file is valid JSON", False, str(e)))
-            results.append(check("Cache content matches", False, "skipped"))
-    else:
-        # Remote unavailable in this environment — verify local fallback is consistent
-        ads_a = _feed.load_ads()
-        ads_b = _feed.load_ads()
-        results.append(check("Cache integrity skipped (remote unavailable)", True, "SKIP"))
-        results.append(check("Repeated load_ads() returns same local fallback",
-                             ads_a == ads_b, f"{len(ads_a)} ads consistent"))
+    # restore a warm cache
+    _feed.load_ads()
 
-    # ── Summary ───────────────────────────────────────────────────────────────
     print()
     passed = sum(1 for r in results if r)
     total  = len(results)
     print(SEP)
     print()
-    if passed == total:
-        print(f"  All {total} checks passed. Remote ad feed is working correctly.")
-    else:
-        print(f"  {passed}/{total} checks passed — see FAIL lines above.")
+    print(f"  All {total} checks passed. Ad feed loader is working correctly."
+          if passed == total else f"  {passed}/{total} checks passed — see FAIL lines above.")
     print()
-
     sys.exit(0 if passed == total else 1)
 
 

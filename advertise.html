@@ -4,274 +4,146 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Advertise — Claude Code Ads</title>
-  <meta name="description" content="Reach active developers in their Claude Code terminal. Self-serve. $20–$35 CPM. Zero bot traffic.">
+  <meta name="description" content="Bid live for the most-watched spinner on Earth. Each block buys 1,000 impressions in the Claude Code spinner. Real-time auction, zero bot traffic.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:      #080808;
-      --surface: #0f0f0f;
-      --border:  rgba(255,255,255,0.07);
-      --text:    #e2e2e2;
-      --muted:   #4a4a4a;
-      --hi:      #717171;
-      --accent:  #b4ff69;
-      --font:    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --bg:#080808; --surface:#0f0f0f; --border:rgba(255,255,255,0.07);
+      --text:#e2e2e2; --muted:#4a4a4a; --hi:#717171; --accent:#b4ff69;
+      --green:#28c840; --blue:#5b8cff;
+      --font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --mono:'SF Mono','Fira Code','Cascadia Code',monospace;
     }
+    body { background:var(--bg); color:var(--text); font-family:var(--font); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+    nav { display:flex; align-items:center; justify-content:space-between; padding:18px 32px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(8,8,8,0.92); backdrop-filter:blur(12px); z-index:10; }
+    .logo { font-size:13px; font-weight:500; color:var(--text); text-decoration:none; letter-spacing:-0.01em; }
+    .logo em { color:var(--accent); font-style:normal; }
+    .nav-link { font-size:13px; color:var(--muted); text-decoration:none; transition:color 0.15s; }
+    .nav-link:hover { color:var(--text); }
+    main { max-width:760px; margin:0 auto; padding:0 24px; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 16px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
+    .hero { padding:80px 0 36px; }
+    .eyebrow { font-size:11px; font-family:var(--mono); color:var(--blue); letter-spacing:0.12em; text-transform:uppercase; font-weight:600; margin-bottom:18px; }
+    h1 { font-size:clamp(32px,5.5vw,46px); font-weight:700; letter-spacing:-0.04em; line-height:1.08; color:#fff; margin-bottom:18px; }
+    .hero-sub { font-size:16px; color:var(--hi); max-width:660px; line-height:1.6; }
+    .hero-sub strong { color:var(--text); font-weight:500; }
 
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 32px;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: rgba(8,8,8,0.92);
-      backdrop-filter: blur(12px);
-      z-index: 10;
-    }
-    .logo { font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
-    .logo em { color: var(--accent); font-style: normal; }
-    .nav-link { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
-    .nav-link:hover { color: var(--text); }
+    .div { border:none; border-top:1px solid var(--border); margin:48px 0; }
 
-    main { max-width: 600px; margin: 0 auto; padding: 0 24px; }
+    /* ── Form ── */
+    .form-section { margin-bottom:40px; }
+    .form-wrap { max-width:560px; margin:0 auto; }
+    .field { margin-bottom:22px; }
+    label { display:block; font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--hi); margin-bottom:9px; }
+    label .opt { color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; }
+    .char-count { float:right; font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:none; letter-spacing:0; }
+    .char-count.warn { color:#ff9a3c; } .char-count.over { color:#ff5f57; }
+    input[type=text], input[type=email], input[type=url], input[type=number] {
+      width:100%; background:var(--bg); border:1px solid var(--border); border-radius:10px;
+      color:var(--text); font-size:15px; font-family:var(--font); padding:13px 15px; outline:none; transition:border-color 0.15s;
+    }
+    input:focus { border-color:rgba(255,255,255,0.22); }
+    input::placeholder { color:var(--muted); }
+    .field-hint { font-size:12px; color:var(--muted); margin-top:7px; line-height:1.45; }
 
-    .hero { padding: 96px 0 72px; }
-    .eyebrow {
-      font-size: 11px; font-family: var(--mono); color: var(--muted);
-      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px;
+    /* Brand icon dropzone */
+    .dropzone {
+      border:1.5px dashed rgba(255,255,255,0.16); border-radius:12px; padding:26px;
+      text-align:center; color:var(--muted); font-size:14px; cursor:pointer;
+      transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:14px; min-height:78px;
     }
-    h1 {
-      font-size: clamp(34px, 6vw, 48px); font-weight: 600;
-      letter-spacing: -0.04em; line-height: 1.1; color: #fff; margin-bottom: 20px;
-    }
-    .hero-sub { font-size: 17px; color: var(--hi); max-width: 480px; line-height: 1.55; }
-    .hero-sub strong { color: var(--text); font-weight: 500; }
+    .dropzone:hover, .dropzone.drag { border-color:var(--accent); background:rgba(180,255,105,0.04); color:var(--hi); }
+    .dropzone img { width:44px; height:44px; border-radius:9px; object-fit:contain; background:var(--surface); }
+    .dropzone .dz-clear { color:var(--muted); font-size:12px; text-decoration:underline; margin-left:6px; }
 
-    .stats {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
-      margin: 56px 0 72px;
-    }
-    .stat { padding: 24px 20px; text-align: center; border-right: 1px solid var(--border); }
-    .stat:last-child { border-right: none; }
-    .stat-val { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; color: #fff; line-height: 1; }
-    .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .checkbox-row { display:flex; align-items:center; gap:11px; margin:26px 0; cursor:pointer; }
+    .checkbox-row input { width:18px; height:18px; accent-color:var(--blue); cursor:pointer; }
+    .checkbox-row span { font-size:15px; color:var(--text); }
 
-    .div { border: none; border-top: 1px solid var(--border); margin: 0 0 60px; }
+    .bid-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .money-wrap { position:relative; }
+    .money-wrap .pfx { position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--hi); font-size:15px; pointer-events:none; }
+    .money-wrap input { padding-left:28px; }
 
-    .terminal {
-      background: #0b0b0b; border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden; margin-bottom: 60px;
+    /* Estimate card */
+    .estimate {
+      position:relative; border:1px solid var(--border); border-radius:14px; padding:22px;
+      margin:26px 0; background:linear-gradient(180deg, rgba(180,255,105,0.04), rgba(91,140,255,0.03));
+      overflow:hidden;
     }
-    .term-bar {
-      background: #131313; border-bottom: 1px solid var(--border);
-      padding: 10px 14px; display: flex; align-items: center; gap: 7px;
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .r { background: #ff5f57; } .y { background: #febc2e; } .g { background: #28c840; }
-    .term-title { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-family: var(--mono); margin-right: 29px; }
-    .term-body { padding: 18px 20px 22px; font-family: var(--mono); font-size: 13px; line-height: 1.9; }
-    .t-prompt { color: #333; }
-    .t-cmd    { color: #888; }
-    .t-preview-status { color: var(--accent); transition: opacity 0.2s; }
-    .t-preview-status.empty { color: var(--muted); font-style: italic; }
-    .t-preview-status a {
-      color: var(--accent); text-decoration: underline;
-      text-decoration-color: rgba(180,255,105,0.4); text-underline-offset: 2px;
-    }
-    .t-preview-status a:hover { text-decoration-color: var(--accent); }
-    .t-think { color: #555; }
-    .t-resp  { color: #555; }
-    .term-note {
-      font-size: 11px; color: var(--muted); font-family: var(--font);
-      padding: 10px 20px 14px; border-top: 1px solid var(--border);
-    }
+    .estimate::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,var(--accent),var(--green)); }
+    .est-lead { font-size:14px; color:var(--hi); line-height:1.5; margin-bottom:18px; }
+    .est-lead b { color:var(--text); }
+    .est-row { display:flex; align-items:baseline; justify-content:space-between; }
+    .est-label { font-size:11px; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
+    .est-detail { font-size:13px; color:var(--hi); margin-top:3px; }
+    .est-total { font-size:38px; font-weight:700; letter-spacing:-0.04em; color:#fff; line-height:1; }
+    .est-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0 0; }
+    .est-card { background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:10px; padding:13px; }
+    .est-card .v { font-size:17px; font-weight:600; color:#fff; letter-spacing:-0.02em; }
+    .est-card .l { font-size:11px; color:var(--muted); margin-top:2px; }
+    .bid-hint { margin-top:16px; background:rgba(91,140,255,0.08); border:1px solid rgba(91,140,255,0.18); border-radius:9px; padding:11px 13px; font-size:12.5px; color:#aebfe8; line-height:1.5; }
 
-    .placements { margin-bottom: 72px; }
-    .placement { display: flex; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border); }
-    .placement:last-child { border-bottom: none; }
-    .pl-icon { font-size: 16px; min-width: 20px; padding-top: 1px; }
-    .pl-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-    .pl-desc  { font-size: 14px; color: var(--muted); line-height: 1.5; }
-    .pl-meta  { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
-
-    /* ── Campaign Form ── */
-    .form-section { margin-bottom: 96px; }
-    .form-section > h2 {
-      font-size: 22px; font-weight: 600; letter-spacing: -0.03em;
-      color: #fff; margin-bottom: 8px;
-    }
-    .form-section > p { font-size: 14px; color: var(--muted); margin-bottom: 40px; line-height: 1.5; }
-
-    .form-group {
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 24px; margin-bottom: 16px;
-    }
-    .form-group-title {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: 20px;
-    }
-
-    .field { margin-bottom: 20px; }
-    .field:last-child { margin-bottom: 0; }
-
-    label {
-      display: block; font-size: 12px; color: var(--hi);
-      margin-bottom: 7px; letter-spacing: 0.01em;
-    }
-
-    .char-count { float: right; font-size: 11px; font-family: var(--mono); color: var(--muted); }
-    .char-count.warn { color: #ff9a3c; }
-    .char-count.over { color: #ff5f57; }
-
-    input, textarea {
-      width: 100%; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: 14px; font-family: var(--font);
-      padding: 11px 14px; outline: none; transition: border-color 0.15s;
-    }
-    input:focus, textarea:focus { border-color: rgba(255,255,255,0.2); }
-    input::placeholder, textarea::placeholder { color: var(--muted); }
-    textarea { resize: vertical; min-height: 72px; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
-
-    .field-hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
-
-    /* CPM tier cards */
-    .cpm-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 10px; margin-bottom: 4px;
-    }
-    .cpm-card {
-      position: relative; border: 1px solid var(--border); border-radius: 8px;
-      padding: 16px 14px; cursor: pointer; transition: border-color 0.15s;
-    }
-    .cpm-card:hover { border-color: rgba(255,255,255,0.15); }
-    .cpm-card.selected {
-      border-color: var(--accent);
-      background: rgba(180,255,105,0.04);
-    }
-    .cpm-badge {
-      position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
-      background: var(--accent); color: #0a0a0a;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; padding: 2px 8px; border-radius: 0 0 5px 5px;
-    }
-    .cpm-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-    .cpm-price { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -0.03em; line-height: 1; }
-    .cpm-price span { font-size: 11px; font-weight: 400; color: var(--muted); }
-    .cpm-desc { font-size: 11px; color: var(--muted); margin-top: 6px; }
-    .cpm-card.selected .cpm-name { color: var(--accent); }
-
-    /* Ultra tier */
-    .cpm-ultra {
-      position: relative; border: 1px solid rgba(180,255,105,0.35); border-radius: 8px;
-      padding: 20px 20px; cursor: pointer; transition: border-color 0.15s;
-      background: rgba(180,255,105,0.02); margin-top: 10px;
-      display: flex; align-items: center; gap: 20px;
-    }
-    .cpm-ultra:hover { border-color: rgba(180,255,105,0.55); }
-    .cpm-ultra.selected { border-color: var(--accent); background: rgba(180,255,105,0.05); }
-    .cpm-ultra-left { flex: 1; }
-    .cpm-ultra-right { text-align: right; flex-shrink: 0; }
-    .cpm-ultra-badge {
-      display: inline-block; background: rgba(180,255,105,0.12);
-      color: var(--accent); font-size: 9px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 3px 9px; border-radius: 4px; margin-bottom: 8px;
-    }
-    .cpm-ultra .cpm-name { color: var(--accent); font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-    .cpm-ultra .cpm-desc { font-size: 12px; color: var(--muted); }
-    .cpm-ultra .cpm-price { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.03em; line-height: 1; }
-    .cpm-ultra .cpm-price span { font-size: 12px; font-weight: 400; color: var(--muted); }
-    .cpm-ultra .cpm-weight { font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-    /* Daily budget */
-    .budget-input-wrap { position: relative; }
-    .budget-prefix {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: var(--hi); font-size: 14px; pointer-events: none;
-    }
-    .budget-input-wrap input { padding-left: 26px; }
-    .reach-est {
-      font-size: 12px; color: var(--accent); margin-top: 8px;
-      font-family: var(--mono);
-    }
-
-    /* Submit */
     .submit-btn {
-      width: 100%; background: var(--accent); border: none; border-radius: 8px;
-      color: #0a0a0a; font-size: 14px; font-weight: 600; font-family: var(--font);
-      padding: 14px; cursor: pointer; transition: opacity 0.15s; margin-top: 8px;
+      width:100%; background:var(--accent); border:none; border-radius:999px; color:#0a0a0a;
+      font-size:15px; font-weight:600; font-family:var(--font); padding:15px; cursor:pointer;
+      transition:opacity 0.15s; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px;
     }
-    .submit-btn:hover { opacity: 0.88; }
-    .submit-btn:disabled { opacity: 0.4; cursor: default; }
+    .submit-btn:hover { opacity:0.9; } .submit-btn:disabled { opacity:0.45; cursor:default; }
+    .submit-btn .stripe { background:#635bff; color:#fff; font-weight:700; font-size:12px; padding:3px 9px; border-radius:5px; letter-spacing:-0.01em; }
+    .pay-note { text-align:center; font-size:12px; color:var(--muted); margin-top:12px; }
 
-    /* Success state */
-    .success-state {
-      display: none; text-align: center;
-      padding: 80px 0 96px;
-    }
-    .success-icon {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: rgba(180,255,105,0.12); border: 1px solid rgba(180,255,105,0.25);
-      color: var(--accent); font-size: 20px; line-height: 48px;
-      margin: 0 auto 24px;
-    }
-    .success-state h2 {
-      font-size: 28px; font-weight: 600; letter-spacing: -0.04em;
-      color: #fff; margin-bottom: 8px;
-    }
-    .success-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+    /* ── Bid market ── */
+    .market { border:1px solid var(--border); border-radius:16px; padding:26px; margin-bottom:80px; background:var(--surface); }
+    .market-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+    .market-title { font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+    .market-price { font-size:34px; font-weight:700; letter-spacing:-0.04em; color:#fff; line-height:1; }
+    .market-price span { font-size:12px; font-weight:500; color:var(--muted); letter-spacing:0.04em; margin-left:8px; text-transform:uppercase; }
+    .market-right { display:flex; align-items:center; gap:10px; }
+    .live-pill { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--hi); border:1px solid var(--border); border-radius:999px; padding:6px 12px; }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 0 rgba(40,200,64,0.6); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(40,200,64,0.5);} 70%{box-shadow:0 0 0 7px rgba(40,200,64,0);} 100%{box-shadow:0 0 0 0 rgba(40,200,64,0);} }
+    .chart-wrap { position:relative; margin-bottom:8px; }
+    .chart-wrap svg { width:100%; height:200px; display:block; }
+    .imps-badge { position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); border:1px solid var(--border); border-radius:999px; padding:6px 13px; font-size:12px; color:var(--hi); font-family:var(--mono); }
+    .imps-badge b { color:var(--accent); }
+    .chart-axis { font-size:10px; fill:var(--muted); font-family:var(--mono); }
+    .chart-grid { stroke:rgba(255,255,255,0.05); stroke-width:1; }
 
-    .dash-link-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: left;
-    }
-    .dash-link-label {
-      font-size: 11px; color: var(--muted); text-transform: uppercase;
-      letter-spacing: 0.07em; font-weight: 600; margin-bottom: 10px;
-    }
-    .dash-link-row { display: flex; gap: 10px; align-items: center; }
-    .dash-link-row code {
-      flex: 1; font-size: 12px; font-family: var(--mono); color: var(--accent);
-      background: rgba(180,255,105,0.06); border: 1px solid rgba(180,255,105,0.15);
-      border-radius: 6px; padding: 8px 12px; word-break: break-all; text-align: left;
-    }
-    .copy-btn {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-      color: var(--hi); font-size: 12px; font-family: var(--font);
-      padding: 8px 14px; cursor: pointer; white-space: nowrap; transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    .copy-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    table.board { width:100%; border-collapse:collapse; margin-top:14px; }
+    .board th { text-align:left; font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); padding:10px 8px; border-bottom:1px solid var(--border); }
+    .board th.num, .board td.num { text-align:right; }
+    .board td { padding:14px 8px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle; }
+    .board tr:last-child td { border-bottom:none; }
+    .board .rk { color:var(--muted); font-family:var(--mono); width:24px; }
+    .board .camp { color:var(--text); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .board .camp .ico { display:inline-block; width:16px; height:16px; border-radius:4px; vertical-align:-3px; margin-right:8px; object-fit:contain; }
+    .board .bid { font-weight:600; color:#fff; font-family:var(--mono); white-space:nowrap; }
+    .board .bid small { color:var(--muted); font-weight:400; }
+    .imp-cell { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+    .imp-num { font-family:var(--mono); font-size:12px; color:var(--hi); white-space:nowrap; }
+    .imp-bar { width:72px; height:5px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; }
+    .imp-bar i { display:block; height:100%; background:var(--accent); }
+    .status-live { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--green); }
 
-    .dash-open-btn {
-      display: inline-block; background: var(--accent); color: #0a0a0a;
-      font-size: 14px; font-weight: 600; text-decoration: none;
-      border-radius: 8px; padding: 13px 28px; transition: opacity 0.15s;
-    }
-    .dash-open-btn:hover { opacity: 0.88; }
+    /* Success */
+    .success-state { display:none; text-align:center; padding:70px 0 90px; }
+    .success-icon { width:48px; height:48px; border-radius:50%; background:rgba(180,255,105,0.12); border:1px solid rgba(180,255,105,0.25); color:var(--accent); font-size:20px; line-height:48px; margin:0 auto 22px; }
+    .success-state h2 { font-size:26px; font-weight:600; letter-spacing:-0.04em; color:#fff; margin-bottom:8px; }
+    .success-sub { font-size:15px; color:var(--muted); margin-bottom:34px; }
+    .dash-link-box { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:18px; text-align:left; }
+    .dash-link-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; font-weight:600; margin-bottom:10px; }
+    .dash-link-row { display:flex; gap:10px; align-items:center; }
+    .dash-link-row code { flex:1; font-size:12px; font-family:var(--mono); color:var(--accent); background:rgba(180,255,105,0.06); border:1px solid rgba(180,255,105,0.15); border-radius:6px; padding:9px 12px; word-break:break-all; }
+    .copy-btn { background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--hi); font-size:12px; padding:9px 14px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .dash-open-btn { display:inline-block; background:var(--accent); color:#0a0a0a; font-size:14px; font-weight:600; text-decoration:none; border-radius:999px; padding:13px 28px; }
 
-    footer {
-      border-top: 1px solid var(--border); padding: 24px 32px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    footer span { font-size: 13px; color: var(--muted); }
-    .footer-links { display: flex; gap: 24px; }
-    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
-    .footer-links a:hover { color: var(--text); }
+    footer { border-top:1px solid var(--border); padding:24px 32px; display:flex; align-items:center; justify-content:space-between; }
+    footer span { font-size:13px; color:var(--muted); }
+    .footer-links { display:flex; gap:24px; }
+    .footer-links a { font-size:13px; color:var(--muted); text-decoration:none; }
+    .footer-links a:hover { color:var(--text); }
+    @media (max-width:560px){ .bid-grid, .est-cards{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -282,245 +154,135 @@
 </nav>
 
 <main>
-
   <section class="hero">
-    <div class="eyebrow">Advertise</div>
-    <h1>Reach developers<br>where they work.</h1>
+    <div class="eyebrow">Advertisers</div>
+    <h1>Bid live for the most-<br>watched spinner on Earth.</h1>
     <p class="hero-sub">
-      Your message in the terminal of active developers using Claude Code.
-      <strong>Two placements per session. Zero bot traffic.</strong>
+      Each block buys <strong>1,000 five-second impressions</strong> in the Claude Code spinner. Clicks are billed at 50× the impression rate. Highest bid serves first; bid any amount from $1 — outbid the top to take #1, or queue up behind it. <strong>50% of every dollar</strong> settles to the developer whose machine showed the ad.
     </p>
   </section>
 
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-val">2.1%</div>
-      <div class="stat-label">Avg CTR</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val">14×</div>
-      <div class="stat-label">vs web display</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val">0%</div>
-      <div class="stat-label">Bot traffic</div>
-    </div>
-  </div>
-
-  <hr class="div">
-
-  <div class="terminal">
-    <div class="term-bar">
-      <div class="dot r"></div>
-      <div class="dot y"></div>
-      <div class="dot g"></div>
-      <div class="term-title">Live preview</div>
-    </div>
-    <div class="term-body">
-      <div><span class="t-prompt">~ $ </span><span class="t-cmd">claude</span></div>
-      <div class="t-preview-status empty" id="preview-status">Your ad text will appear here</div>
-      <br>
-      <div class="t-think">◌ Thinking with your ad...</div>
-      <br>
-      <div class="t-resp">Here's the implementation you asked for...</div>
-    </div>
-    <div class="term-note">statusLine placement · shown continuously · clickable OSC 8 link</div>
-  </div>
-
-  <div class="placements">
-    <div class="placement">
-      <div class="pl-icon">━</div>
-      <div>
-        <div class="pl-title">Status bar</div>
-        <div class="pl-desc">Persistent one-line message at the top of every Claude Code session. Refreshes every 30 seconds with contextual targeting.</div>
-        <div class="pl-meta">surface: statusLine · 30s refresh · clickable link</div>
-      </div>
-    </div>
-    <div class="placement">
-      <div class="pl-icon">◌</div>
-      <div>
-        <div class="pl-title">Thinking spinner</div>
-        <div class="pl-desc">Replaces "Thinking…" while Claude processes. Peak attention — the developer is watching and waiting.</div>
-        <div class="pl-meta">surface: spinnerVerbs · rotates per response · high attention</div>
-      </div>
-    </div>
-  </div>
-
-  <hr class="div">
-
   <!-- Campaign form -->
   <div class="form-section" id="form-section">
-    <h2>Create your campaign</h2>
-    <p>Self-serve. Set your bid, enter your creative, and your ad enters the rotation immediately.</p>
-
-    <form id="campaign-form" novalidate>
-
-      <div class="form-group">
-        <div class="form-group-title">Creative</div>
+    <div class="form-wrap">
+      <form id="campaign-form" novalidate>
 
         <div class="field">
-          <label for="company">Company / product name</label>
-          <input id="company" type="text" placeholder="Acme Corp" autocomplete="organization" required>
+          <label for="email">Email <span class="opt">(required)</span></label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
         </div>
 
         <div class="field">
-          <label for="logo_url">Brand logo URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input id="logo_url" type="url" placeholder="https://logo.clearbit.com/yourcompany.com" style="flex:1">
-            <div id="logo-preview" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--bg);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">
-              <span id="logo-initial" style="font-size:16px;color:var(--muted)">?</span>
-              <img id="logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
+          <label for="ad_text">Ad line · 3–60 char <span class="char-count" id="char-count">0 / 60</span></label>
+          <input id="ad_text" type="text" placeholder="Try Linear — issue tracking built for speed" maxlength="60" required>
+        </div>
+
+        <div class="field">
+          <label for="url">Destination URL (https://)</label>
+          <input id="url" type="url" placeholder="https://linear.app/" required>
+        </div>
+
+        <div class="field">
+          <label for="company">Brand name <span class="opt">(optional, shown on leaderboard)</span></label>
+          <input id="company" type="text" placeholder="Linear" autocomplete="organization">
+        </div>
+
+        <div class="field">
+          <label>Brand icon <span class="opt">(optional, PNG/JPG/WebP ≤ 64 KB)</span></label>
+          <div class="dropzone" id="dropzone">
+            <span id="dz-text">Drop an image here or click to browse</span>
+          </div>
+          <input id="logo_file" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">
+          <div class="field-hint" id="dz-hint" style="display:none"></div>
+        </div>
+
+        <label class="checkbox-row" for="leaderboard">
+          <input id="leaderboard" type="checkbox" checked>
+          <span>Show me on the public leaderboard</span>
+        </label>
+
+        <div class="bid-grid">
+          <div class="field" style="margin:0">
+            <label for="bid">Bid per block <span class="opt">(min $1.00 — sets queue priority)</span></label>
+            <div class="money-wrap">
+              <span class="pfx">$</span>
+              <input id="bid" type="number" min="1" step="0.01" value="5.00">
             </div>
           </div>
-          <div class="field-hint">Shown in your analytics dashboard and on the advertiser marketplace. Use <code style="font-size:11px;color:var(--hi)">https://logo.clearbit.com/yourdomain.com</code> for instant logo lookup.</div>
-        </div>
-
-        <div class="field">
-          <label for="ad_text">
-            Ad text
-            <span class="char-count" id="char-count">0 / 80</span>
-          </label>
-          <textarea
-            id="ad_text"
-            placeholder="✦ Your Product — One outcome-focused sentence. yourproduct.com"
-            maxlength="100"
-            rows="2"
-            required
-          ></textarea>
-          <div class="field-hint">Lead with your product name, one clear outcome, and your domain. Keep under 80 chars.</div>
-        </div>
-
-        <div class="field">
-          <label for="url">Destination URL</label>
-          <input id="url" type="url" placeholder="https://yourproduct.com" required>
-          <div class="field-hint">Clicks route through our tracker before redirecting here.</div>
-        </div>
-
-        <!-- Copy variants (opt-in) -->
-        <div class="field" id="variants-wrap" style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <label style="margin:0;font-size:13px;color:var(--text);font-weight:500">
-              AI-personalized copy <span style="font-size:11px;color:var(--muted);font-weight:400">(optional)</span>
-            </label>
-            <button type="button" id="variants-toggle" onclick="toggleVariants()"
-              style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:12px;padding:4px 10px;cursor:pointer;font-family:var(--font)">
-              + Add variants
-            </button>
-          </div>
-          <div id="variants-body" style="display:none">
-            <div class="field-hint" style="margin-bottom:16px">
-              When enabled, your ad shows different copy based on the developer's tech stack.
-              Advertisers with variants see <strong style="color:var(--text)">1.4–2.1× higher CTR</strong>.
-              Leave any field blank to use your default copy instead.
-            </div>
-            <div id="variant-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">TypeScript</label>
-                <input class="variant-input" data-tag="typescript" type="text" placeholder="✦ Your Product — TypeScript tip. yoursite.com">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Python</label>
-                <input class="variant-input" data-tag="python" type="text" placeholder="✦ Your Product — Python tip. yoursite.com">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Rust</label>
-                <input class="variant-input" data-tag="rust" type="text" placeholder="✦ Your Product — Rust tip. yoursite.com">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Go</label>
-                <input class="variant-input" data-tag="go" type="text" placeholder="✦ Your Product — Go tip. yoursite.com">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">JavaScript</label>
-                <input class="variant-input" data-tag="javascript" type="text" placeholder="✦ Your Product — JS tip. yoursite.com">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Docker / Infra</label>
-                <input class="variant-input" data-tag="docker" type="text" placeholder="✦ Your Product — DevOps tip. yoursite.com">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <div class="form-group-title">Bid &amp; budget</div>
-
-        <div class="field">
-          <label>CPM tier</label>
-          <div class="cpm-grid" id="cpm-grid">
-            <div class="cpm-card" data-cpm="2000">
-              <div class="cpm-name">Standard</div>
-              <div class="cpm-price">$20 <span>/ 1K imps</span></div>
-              <div class="cpm-desc">Base rotation weight</div>
-            </div>
-            <div class="cpm-card selected" data-cpm="2500">
-              <div class="cpm-badge">Recommended</div>
-              <div class="cpm-name">Priority</div>
-              <div class="cpm-price">$25 <span>/ 1K imps</span></div>
-              <div class="cpm-desc">1.25× rotation weight</div>
-            </div>
-            <div class="cpm-card" data-cpm="3500">
-              <div class="cpm-name">Premium</div>
-              <div class="cpm-price">$35 <span>/ 1K imps</span></div>
-              <div class="cpm-desc">1.75× rotation weight</div>
-            </div>
-          </div>
-
-          <!-- Ultra tier — full width, CTR-story focused -->
-          <div class="cpm-ultra" data-cpm="7500" id="ultra-card">
-            <div class="cpm-ultra-left">
-              <div class="cpm-ultra-badge">Ultra — highest CTR placement</div>
-              <div class="cpm-name">Ultra</div>
-              <div class="cpm-desc">Priority queue + first impression each session + dedicated spinner slot. In-terminal ads deliver 2.1% avg CTR — 14× web display. At Ultra, your ad shows first, every time.</div>
-            </div>
-            <div class="cpm-ultra-right">
-              <div class="cpm-price">$75 <span>/ 1K imps</span></div>
-              <div class="cpm-weight">3.75× rotation weight</div>
-            </div>
+          <div class="field" style="margin:0">
+            <label for="blocks">Number of blocks <span class="opt">(1,000 views each)</span></label>
+            <input id="blocks" type="number" min="1" step="1" value="1">
           </div>
         </div>
 
-        <div class="field">
-          <label for="daily_budget">Daily budget (USD)</label>
-          <div class="budget-input-wrap">
-            <span class="budget-prefix">$</span>
-            <input id="daily_budget" type="number" placeholder="100" min="50" step="10" value="100" required>
+        <div class="estimate">
+          <div class="est-lead">
+            Each block buys <b>1,000 views</b> of your ad. More blocks = more views. A higher bid moves you up the queue so your views deliver sooner — it doesn't add views.
           </div>
-          <div class="reach-est" id="reach-est">~4,000 impressions / day</div>
+          <div class="est-row">
+            <div>
+              <div class="est-label">Estimated total</div>
+              <div class="est-detail" id="est-detail">1 block at $5.00 = 1,000 views</div>
+            </div>
+            <div class="est-total" id="est-total">$5.00</div>
+          </div>
+          <div class="est-cards">
+            <div class="est-card"><div class="v" id="ec-bid">$5.00</div><div class="l">per block</div></div>
+            <div class="est-card"><div class="v" id="ec-blocks">1</div><div class="l">block</div></div>
+            <div class="est-card"><div class="v" id="ec-views">1,000</div><div class="l">total views</div></div>
+          </div>
+          <div class="bid-hint" id="bid-hint">Loading live top bid…</div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <div class="form-group-title">Contact</div>
-        <div class="field">
-          <label for="email">Billing email</label>
-          <input id="email" type="email" placeholder="billing@yourcompany.com" autocomplete="email" required>
-          <div class="field-hint">Your unique dashboard link will be sent here too.</div>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn" id="submit-btn">Launch campaign →</button>
-    </form>
-  </div>
-
-  <!-- Success state -->
-  <div class="success-state" id="success-state">
-    <div class="success-icon">✓</div>
-    <h2>Campaign created.</h2>
-    <p class="success-sub">Your ad is live in the rotation queue.</p>
-
-    <div class="dash-link-box">
-      <div class="dash-link-label">Analytics dashboard — bookmark this</div>
-      <div class="dash-link-row">
-        <code id="dash-link-url"></code>
-        <button class="copy-btn" id="copy-btn" onclick="copyDashLink()">Copy</button>
-      </div>
+        <button type="submit" class="submit-btn" id="submit-btn">
+          Checkout now on <span class="stripe">stripe</span>
+        </button>
+        <div class="pay-note" id="pay-note"></div>
+      </form>
     </div>
 
-    <a href="#" id="dash-open-btn" class="dash-open-btn">Open analytics dashboard →</a>
+    <!-- Success state -->
+    <div class="success-state" id="success-state">
+      <div class="success-icon">✓</div>
+      <h2>Campaign created.</h2>
+      <p class="success-sub" id="success-sub">Your bid is in the queue. <span id="email-sent-note"></span></p>
+      <div class="dash-link-box">
+        <div class="dash-link-label">Analytics dashboard — bookmark this</div>
+        <div class="dash-link-row">
+          <code id="dash-link-url"></code>
+          <button class="copy-btn" id="copy-btn" onclick="copyDashLink()">Copy</button>
+        </div>
+      </div>
+      <a href="#" id="dash-open-btn" class="dash-open-btn">Open analytics dashboard →</a>
+    </div>
   </div>
 
+  <hr class="div">
+
+  <!-- Bid market -->
+  <div class="market" id="market">
+    <div class="market-head">
+      <div>
+        <div class="market-title">Bid Market</div>
+        <div class="market-price"><span id="mk-price">$—</span><span>per 1,000 impressions</span></div>
+      </div>
+      <div class="market-right">
+        <span class="live-pill"><span class="live-dot"></span><b id="mk-live">—</b>&nbsp;ads live</span>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <div class="imps-badge"><b id="mk-impm">—</b> imps/min across the fleet</div>
+      <svg id="mk-chart" viewBox="0 0 760 200" preserveAspectRatio="none"></svg>
+    </div>
+    <table class="board">
+      <thead>
+        <tr><th class="rk">#</th><th>Campaign</th><th class="num">Bid / 1,000 imps</th><th class="num">Impressions</th><th class="num">Status</th></tr>
+      </thead>
+      <tbody id="mk-board">
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Loading live market…</td></tr>
+      </tbody>
+    </table>
+  </div>
 </main>
 
 <footer>
@@ -532,200 +294,206 @@
 </footer>
 
 <script>
-  const SUPABASE_URL = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
-  const DOMAIN_RE = /\b([\w-]+\.(?:com|io|dev|app|ai|co|net|org|sh|gg)(?:\/\S*)?)\s*$/i;
+  const SUPABASE_URL = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc";
+  const FN = `${SUPABASE_URL}/functions/v1`;
+  let dashUrl = "", logoPath = null, logoPublicUrl = null, topBidCents = 0;
 
-  let selectedCpm = 2500;
-  let dashUrl = '';
+  const $ = id => document.getElementById(id);
+  const fmtK = n => n >= 1000 ? (n % 1000 === 0 ? (n/1000)+'k' : (n/1000).toFixed(n<10000?1:0).replace(/\.0$/,'')+'k') : String(n);
+  const money = c => '$' + (c/100).toFixed(2);
 
-  // CPM tier selection (regular cards + ultra card)
-  function selectCpm(el) {
-    document.querySelectorAll('.cpm-card, .cpm-ultra').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedCpm = parseInt(el.dataset.cpm, 10);
-    updateReach();
+  // ── Ad line char counter ──
+  const adText = $('ad_text'), cc = $('char-count');
+  adText.addEventListener('input', () => {
+    const n = adText.value.length;
+    cc.textContent = `${n} / 60`;
+    cc.className = 'char-count' + (n > 60 ? ' over' : n >= 52 ? ' warn' : '');
+  });
+
+  // ── Estimate ──
+  function updateEstimate() {
+    const bid = Math.max(1, parseFloat($('bid').value) || 0);
+    const blocks = Math.max(1, parseInt($('blocks').value) || 1);
+    const total = bid * blocks, views = blocks * 1000;
+    $('est-detail').textContent = `${blocks} block${blocks>1?'s':''} at $${bid.toFixed(2)} = ${views.toLocaleString()} views`;
+    $('est-total').textContent = `$${total.toFixed(2)}`;
+    $('ec-bid').textContent = `$${bid.toFixed(2)}`;
+    $('ec-blocks').textContent = blocks;
+    $('ec-views').textContent = views.toLocaleString();
   }
+  $('bid').addEventListener('input', updateEstimate);
+  $('blocks').addEventListener('input', updateEstimate);
 
-  document.querySelectorAll('.cpm-card').forEach(card => {
-    card.addEventListener('click', () => selectCpm(card));
-  });
-  document.getElementById('ultra-card').addEventListener('click', function() {
-    selectCpm(this);
-  });
+  // ── Brand icon upload ──
+  const dz = $('dropzone'), fileInput = $('logo_file');
+  dz.addEventListener('click', () => fileInput.click());
+  ['dragover','dragenter'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('drag'); }));
+  dz.addEventListener('drop', ev => { if (ev.dataTransfer.files[0]) handleFile(ev.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
 
-  function updateReach() {
-    const budget = parseFloat(document.getElementById('daily_budget').value) || 100;
-    const cpmDollars = selectedCpm / 100;
-    const daily = Math.round((budget / cpmDollars) * 1000);
-    const monthly = Math.round(budget * 30);
-    document.getElementById('reach-est').textContent =
-      `~${daily.toLocaleString()} impressions / day  ·  ~$${monthly.toLocaleString()} / month`;
-  }
-
-  document.getElementById('daily_budget').addEventListener('input', updateReach);
-  updateReach();
-
-  // Logo URL preview
-  document.getElementById('logo_url').addEventListener('input', function() {
-    const url = this.value.trim();
-    const img  = document.getElementById('logo-img');
-    const init = document.getElementById('logo-initial');
-    if (url) {
-      img.src = url;
-      img.style.display = 'block';
-      init.style.display = 'none';
-      img.onerror = () => { img.style.display = 'none'; init.style.display = ''; init.textContent = '?'; };
-    } else {
-      img.style.display = 'none';
-      init.style.display = '';
-      init.textContent = document.getElementById('company').value.trim()[0]?.toUpperCase() || '?';
-    }
-  });
-  document.getElementById('company').addEventListener('input', function() {
-    const init = document.getElementById('logo-initial');
-    if (!document.getElementById('logo_url').value.trim()) {
-      init.textContent = this.value.trim()[0]?.toUpperCase() || '?';
-    }
-  });
-
-  // Live terminal preview
-  function linkify(text) {
-    const href = document.getElementById('url').value.trim() || '#';
-    return text.replace(DOMAIN_RE, (m, domain) =>
-      `<a href="${href}" target="_blank" rel="noopener">${domain}</a>`
-    );
-  }
-
-  function updatePreview() {
-    const val = document.getElementById('ad_text').value.trim();
-    const len = val.length;
-    const counter = document.getElementById('char-count');
-    const preview = document.getElementById('preview-status');
-    counter.textContent = `${len} / 80`;
-    counter.className = 'char-count' + (len > 90 ? ' over' : len > 70 ? ' warn' : '');
-    if (val) {
-      preview.innerHTML = linkify(val);
-      preview.classList.remove('empty');
-    } else {
-      preview.textContent = 'Your ad text will appear here';
-      preview.classList.add('empty');
+  async function handleFile(file) {
+    const okTypes = ['image/png','image/jpeg','image/webp'];
+    if (!okTypes.includes(file.type)) { showHint('Use PNG, JPG, or WebP.', true); return; }
+    if (file.size > 64 * 1024)        { showHint('Image must be ≤ 64 KB.', true); return; }
+    showHint('Uploading…', false);
+    try {
+      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/brand-icons/${path}`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+        body: file,
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      logoPath = `brand-icons/${path}`;
+      logoPublicUrl = `${SUPABASE_URL}/storage/v1/object/public/${logoPath}`;
+      dz.innerHTML = `<img src="${logoPublicUrl}" alt="icon"><span>${file.name}</span><a class="dz-clear" id="dz-clear">remove</a>`;
+      $('dz-clear').addEventListener('click', ev => { ev.stopPropagation(); resetIcon(); });
+      showHint('Icon uploaded ✓', false);
+    } catch (e) {
+      showHint('Upload failed — try again.', true);
     }
   }
+  function resetIcon() { logoPath = logoPublicUrl = null; dz.innerHTML = '<span id="dz-text">Drop an image here or click to browse</span>'; $('dz-hint').style.display='none'; fileInput.value=''; }
+  function showHint(msg, err) { const h=$('dz-hint'); h.style.display='block'; h.textContent=msg; h.style.color = err ? '#ff7a6c' : 'var(--accent)'; }
 
-  document.getElementById('ad_text').addEventListener('input', updatePreview);
-  document.getElementById('url').addEventListener('input', () => {
-    if (document.getElementById('ad_text').value.trim()) updatePreview();
-  });
+  // ── Bid hint from live market ──
+  function setBidHint() {
+    const h = $('bid-hint');
+    if (!topBidCents) { h.textContent = 'Bid any amount from $1.00. A higher bid moves you up the queue.'; return; }
+    const above = ((topBidCents + 1) / 100).toFixed(2);
+    h.innerHTML = `Top bid is <b>${money(topBidCents)}</b> per block — bid <b>$${above}+</b> to take #1, or any amount from $1.00 to join the queue. Your bid sets where you rank, not how many views you get.`;
+  }
 
-  // Generate a random ad_id
+  // ── Submit → save campaign → Stripe checkout (or pending if not configured) ──
   function genAdId() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let id = 'adv_';
-    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    let id = 'adv_'; const c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i=0;i<8;i++) id += c[Math.floor(Math.random()*c.length)];
     return id;
   }
 
-  // Form submission
-  document.getElementById('campaign-form').addEventListener('submit', async (e) => {
+  $('campaign-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.textContent = 'Creating campaign…';
+    const btn = $('submit-btn'); btn.disabled = true; btn.textContent = 'Creating…';
 
-    const company      = document.getElementById('company').value.trim();
-    const ad_text      = document.getElementById('ad_text').value.trim();
-    const url          = document.getElementById('url').value.trim();
-    const email        = document.getElementById('email').value.trim();
-    const daily_budget = parseFloat(document.getElementById('daily_budget').value) || 100;
+    const email = $('email').value.trim();
+    const ad_text = $('ad_text').value.trim();
+    const url = $('url').value.trim();
+    const company = $('company').value.trim() || null;
+    const bid = Math.max(1, parseFloat($('bid').value) || 0);
+    const blocks = Math.max(1, parseInt($('blocks').value) || 1);
 
-    if (!company || !ad_text || !url || !email) {
-      btn.disabled = false;
-      btn.textContent = 'Launch campaign →';
-      alert('Please fill in all fields.');
-      return;
+    if (!email || ad_text.length < 3 || !url) {
+      btn.disabled = false; btn.innerHTML = 'Checkout now on <span class="stripe">stripe</span>';
+      alert('Add your email, an ad line (3–60 chars), and a destination URL.'); return;
     }
 
-    const logo_url = document.getElementById('logo_url').value.trim() || null;
-
-    // Collect copy variants (opt-in)
-    const variantInputs = document.querySelectorAll('.variant-input');
-    const copy_variants = {};
-    let hasVariants = false;
-    variantInputs.forEach(inp => {
-      const val = inp.value.trim();
-      if (val) {
-        copy_variants[inp.dataset.tag] = val;
-        hasVariants = true;
-      }
-    });
-    if (hasVariants && !copy_variants['default']) copy_variants['default'] = ad_text;
-    const use_variants = hasVariants;
-
+    const ad_id = genAdId();
     const payload = {
-      ad_id:              genAdId(),
-      company,
-      email,
-      ad_text,
-      url,
-      logo_url,
-      cpm_cents:          selectedCpm,
-      daily_budget_cents: Math.round(daily_budget * 100),
-      status:             'active',
-      use_variants,
-      copy_variants:      hasVariants ? copy_variants : null,
+      ad_id, email, ad_text, url, company,
+      bid_per_block_cents: Math.round(bid * 100),
+      blocks,
+      cpm_cents: Math.round(bid * 100),
+      show_on_leaderboard: $('leaderboard').checked,
+      logo_path: logoPath, logo_url: logoPublicUrl,
+      status: 'pending', paid: false,
     };
 
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/advertisers`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/advertisers?select=dashboard_key,ad_id`, {
         method: 'POST',
-        headers: {
-          'apikey':        SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type':  'application/json',
-          'Prefer':        'return=representation',
-        },
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
         body: JSON.stringify(payload),
       });
+      if (!resp.ok) throw new Error(await resp.text());
+      const [rec] = await resp.json();
+      const base = window.location.href.replace(/advertise\.html.*$/, '');
+      dashUrl = `${base}dashboard.html?key=${rec.dashboard_key}`;
 
-      if (!resp.ok) {
-        const err = await resp.text();
-        throw new Error(err);
-      }
+      // Try Stripe checkout
+      const co = await fetch(`${FN}/create-checkout`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ad_id: rec.ad_id }),
+      }).then(r => r.json()).catch(() => ({}));
 
-      const [record] = await resp.json();
-      const key = record.dashboard_key;
-      const base = window.location.href.replace('advertise.html', '');
-      dashUrl = `${base}dashboard.html?key=${key}`;
+      if (co && co.url) { window.location.href = co.url; return; }   // → Stripe
 
-      document.getElementById('dash-link-url').textContent = dashUrl;
-      document.getElementById('dash-open-btn').href = dashUrl;
-      document.getElementById('form-section').style.display = 'none';
-      document.getElementById('success-state').style.display = 'block';
+      // No Stripe configured: campaign auto-activates (live now). Otherwise pending.
+      $('dash-link-url').textContent = dashUrl;
+      $('dash-open-btn').href = dashUrl;
+      $('success-sub').innerHTML = (co && co.activated)
+        ? 'Your ad is <b>live</b> in the spinner rotation right now. '
+          + `Watch the bid market below — and your dashboard tracks every impression.`
+        : 'Your campaign is saved as <b>pending</b> — it goes live the moment payment clears. '
+          + `We've saved your dashboard link${email ? ' for ' + escapeHtml(email) : ''}.`;
+      $('campaign-form').style.display = 'none';
+      $('success-state').style.display = 'block';
+      loadMarket();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(err);
-      btn.disabled = false;
-      btn.textContent = 'Launch campaign →';
+      btn.disabled = false; btn.innerHTML = 'Checkout now on <span class="stripe">stripe</span>';
       alert('Something went wrong. Please try again.');
     }
   });
 
-  function toggleVariants() {
-    const body = document.getElementById('variants-body');
-    const btn  = document.getElementById('variants-toggle');
-    const show = body.style.display === 'none';
-    body.style.display = show ? 'block' : 'none';
-    btn.textContent    = show ? '− Hide variants' : '+ Add variants';
-  }
-
   function copyDashLink() {
     navigator.clipboard.writeText(dashUrl).then(() => {
-      const btn = document.getElementById('copy-btn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      const b = $('copy-btn'); b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy', 2000);
     });
   }
-</script>
 
+  // ── Live bid market ──
+  function renderChart(series) {
+    const svg = $('mk-chart'), W = 760, H = 200, padL = 52, padB = 22, padT = 10;
+    if (!series.length) { svg.innerHTML = ''; return; }
+    const xs = series.map((p,i) => i), ys = series.map(p => p.clearing_price_cents/100);
+    const maxY = Math.max(...ys, 1), maxX = Math.max(xs.length - 1, 1);
+    const X = i => padL + (i / maxX) * (W - padL - 8);
+    const Y = v => padT + (1 - v / maxY) * (H - padT - padB);
+    let grid = '', ticks = 5;
+    for (let t = 0; t <= ticks; t++) {
+      const v = maxY * t / ticks, y = Y(v);
+      grid += `<line class="chart-grid" x1="${padL}" y1="${y}" x2="${W}" y2="${y}"/>`;
+      grid += `<text class="chart-axis" x="${padL-8}" y="${y+3}" text-anchor="end">$${v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(v<10?2:0)}</text>`;
+    }
+    const line = series.map((p,i) => `${X(i).toFixed(1)},${Y(p.clearing_price_cents/100).toFixed(1)}`).join(' ');
+    const area = `${padL},${Y(0)} ${line} ${X(maxX)},${Y(0)}`;
+    svg.innerHTML = `${grid}
+      <polygon points="${area}" fill="rgba(40,200,64,0.10)"/>
+      <polyline points="${line}" fill="none" stroke="#28c840" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+
+  async function loadMarket() {
+    try {
+      const d = await fetch(`${FN}/bid-market`).then(r => r.json());
+      topBidCents = d.clearing_price_cents || 0;
+      $('mk-price').textContent = topBidCents ? money(topBidCents) : '$0.00';
+      $('mk-live').textContent = d.ads_live;
+      $('mk-impm').textContent = fmtK(d.imps_per_min || 0);
+      setBidHint();
+      renderChart(d.price_series || []);
+      const rows = (d.leaderboard || []).map(r => {
+        const pct = r.impressions_target ? Math.min(100, r.impressions_delivered / r.impressions_target * 100) : 0;
+        const ico = r.logo_path ? `<img class="ico" src="${SUPABASE_URL}/storage/v1/object/public/${r.logo_path}" alt="">` : '';
+        return `<tr>
+          <td class="rk">${r.rank}</td>
+          <td class="camp">${ico}${escapeHtml(r.label)}</td>
+          <td class="num bid">${money(r.bid_per_block_cents)} <small>/ 1k imps</small></td>
+          <td class="num"><div class="imp-cell"><span class="imp-num">${fmtK(r.impressions_delivered)} / ${fmtK(r.impressions_target)}</span><span class="imp-bar"><i style="width:${pct}%"></i></span></div></td>
+          <td class="num"><span class="status-live"><span class="live-dot"></span>LIVE</span></td>
+        </tr>`;
+      }).join('');
+      $('mk-board').innerHTML = rows || `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">No live campaigns yet — be the first.</td></tr>`;
+    } catch (e) { /* keep last state */ }
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  updateEstimate();
+  loadMarket();
+  setInterval(loadMarket, 15000);
+</script>
 </body>
 </html>

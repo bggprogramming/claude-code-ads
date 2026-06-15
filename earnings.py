@@ -184,7 +184,6 @@ def track(ad, surface):
     the referral bonus in a background thread.
     Returns (total_dollars: float, milestone_just_hit: bool).
     """
-    cfg   = load_config()
     state = load_earnings()
 
     mc          = impression_mc(ad, surface)
@@ -199,15 +198,11 @@ def track(ad, surface):
 
     save_earnings(state)
 
-    # Fire Supabase update in background — non-blocking
-    if milestone_just_hit and cfg.get("user_id") and cfg.get("supabase_url"):
-        t = threading.Thread(
-            target=_push_milestone,
-            args=(cfg, cfg.get("referral_code", ""), cfg.get("referred_by", "")),
-            daemon=True,
-        )
-        t.start()
-        t.join(timeout=4)
+    # NOTE: the authoritative milestone + referral-bonus write now happens
+    # server-side in the track-event edge function (which computes earnings from
+    # the server-trusted CPM). This local state only drives terminal UX
+    # (pending_notifications / progress bar). _push_milestone is kept for the
+    # referral test harness but is no longer called on the hot path.
 
     return state["total_mc"] / 100_000, milestone_just_hit   # return dollars
 

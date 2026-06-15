@@ -52,6 +52,18 @@ def api(cfg, method, path, payload=None, params="", prefer="return=minimal"):
     return json.loads(body) if body else None
 
 
+def track_event(cfg, payload):
+    """Record an event via the track-event edge function (anon INSERT on events
+    is revoked; earnings are computed server-side)."""
+    url = f"{cfg['supabase_url']}/functions/v1/track-event"
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"}, method="POST",
+    )
+    resp = urllib.request.urlopen(req, timeout=10, context=SSL_CTX)
+    return json.loads(resp.read())
+
+
 def check(label, condition, detail=""):
     mark = "PASS" if condition else "FAIL"
     suffix = f"  →  {detail}" if detail else ""
@@ -84,13 +96,17 @@ def main():
         "ad_text":            "✦ TestCo — Ship twice as fast. testco.com",
         "url":                "https://testco.com",
         "cpm_cents":          2500,
+        "bid_per_block_cents": 2500,
         "daily_budget_cents": 10000,
         "status":             "active",
+        "paid":               True,
     }
 
     created = None
     try:
-        rows = api(cfg, "POST", "advertisers", campaign_payload, prefer="return=representation")
+        rows = api(cfg, "POST", "advertisers", campaign_payload,
+                   params="?select=ad_id,company,status,cpm_cents,dashboard_key",
+                   prefer="return=representation")
         created = rows[0] if isinstance(rows, list) else rows
     except Exception as e:
         print(f"  ERROR creating campaign: {e}")
@@ -127,7 +143,8 @@ def main():
     fetched = None
     try:
         rows = api(cfg, "GET", "advertisers",
-                   params=f"?dashboard_key=eq.{dashboard_key}&select=*")
+                   params=f"?dashboard_key=eq.{dashboard_key}"
+                          f"&select=ad_id,company,ad_text,url,cpm_cents,status,dashboard_key")
         fetched = rows[0] if rows else None
     except Exception as e:
         print(f"  ERROR fetching by dashboard_key: {e}")
@@ -148,26 +165,26 @@ def main():
     print("  Step 3 — Insert test impression + click events")
     print()
 
+    # Earnings are computed server-side from the campaign's bid (auction model):
+    # developer earns 50% of the bid per impression, flat across surfaces.
+    # bid_per_block_cents 2500 → 1250 mc/impression; click = 0.
     test_events = [
         {"ad_id": test_ad_id, "ad_text": campaign_payload["ad_text"],
-         "event": "impression", "surface": "statusline",
-         "user_id": "test-user-1", "earnings_millicents": 2500},
+         "event": "impression", "surface": "statusline", "user_id": "test-user-1"},
         {"ad_id": test_ad_id, "ad_text": campaign_payload["ad_text"],
-         "event": "impression", "surface": "spinner",
-         "user_id": "test-user-1", "earnings_millicents": 1250},
+         "event": "impression", "surface": "spinner", "user_id": "test-user-1"},
         {"ad_id": test_ad_id, "ad_text": campaign_payload["ad_text"],
-         "event": "impression", "surface": "statusline",
-         "user_id": "test-user-2", "earnings_millicents": 2500},
+         "event": "impression", "surface": "statusline", "user_id": "test-user-2"},
         {"ad_id": test_ad_id, "ad_text": campaign_payload["ad_text"],
-         "event": "click", "surface": "click",
-         "user_id": "test-user-1", "earnings_millicents": 0},
+         "event": "click", "surface": "click", "user_id": "test-user-1"},
     ]
 
     inserted = 0
     for ev in test_events:
         try:
-            api(cfg, "POST", "events", ev)
-            inserted += 1
+            res = track_event(cfg, ev)
+            if res.get("ok"):
+                inserted += 1
         except Exception as e:
             print(f"  ERROR inserting event: {e}")
 
@@ -214,8 +231,8 @@ def main():
                              abs(spend - 0.075) < 0.001,
                              f"${spend:.4f} (expected $0.0750)"))
 
-        results.append(check("earnings_millicents stored correctly",
-                             total_mc == 6250,
+        results.append(check("earnings_millicents stored correctly (3 × 1250 = dev 50% of bid)",
+                             total_mc == 3750,
                              f"{total_mc} mc = ${total_mc/100000:.5f}"))
 
     print()

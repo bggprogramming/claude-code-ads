@@ -149,18 +149,17 @@ function selectCopy(ad, contextTags) {
 // ── Analytics ────────────────────────────────────────────────────────────────
 
 function logImpression(adId, adText, userId, variant = 'default') {
-  const mc = STATUSBAR_CPM * 100; // same rate as statusline
-  supabasePost('/rest/v1/events', {
+  // Route through track-event — earnings are computed server-side.
+  supabasePost('/functions/v1/track-event', {
     ad_id: adId, ad_text: adText, event: 'impression',
-    surface: 'vscode_statusbar', user_id: userId,
-    earnings_millicents: mc, variant,
+    surface: 'vscode_statusbar', user_id: userId, variant,
   }).catch(() => {});
 }
 
 function logClick(adId, userId) {
-  supabasePost('/rest/v1/events', {
+  supabasePost('/functions/v1/track-event', {
     ad_id: adId, ad_text: '', event: 'click',
-    surface: 'vscode_click', user_id: userId, earnings_millicents: 0,
+    surface: 'vscode_click', user_id: userId,
   }).catch(() => {});
 }
 
