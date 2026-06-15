@@ -26,3 +26,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.dev-email]
 verify_jwt = false
+[functions.whoami]
+verify_jwt = false
