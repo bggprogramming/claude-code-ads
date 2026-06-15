@@ -27,7 +27,7 @@ ADS_FILE  = BASE / "ads.json"
 CFG_FILE  = BASE / "config.json"
 GITHUB_URL = "https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/ads.json"
 CACHE_FILE = Path("/tmp/claude-ads-feed.json")
-CACHE_TTL  = 300          # seconds — fresh enough for live bids, cheap enough for the status bar
+CACHE_TTL  = 60           # seconds — snappy for the live auction, cheap enough for the status bar
 _SSL_CTX   = ssl.create_default_context(cafile=certifi.where())
 _REQUIRED  = {"id", "text", "url"}
 

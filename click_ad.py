@@ -9,16 +9,22 @@ Also:
   - Every 50 impressions, prints a progress bar towards first payout
   - Uses copy variants selected by detected project context
 """
+import base64
 import json
 import os
+import ssl
 import sys
 import urllib.parse
+import urllib.request
 from pathlib import Path
+
+import certifi
 
 BASE        = Path(__file__).parent
 CLICK_PORT  = 54323
 SESSION_CAP = 3
 SITE_BASE   = "https://bggprogramming.github.io/claude-code-ads"
+SSL_CTX     = ssl.create_default_context(cafile=certifi.where())
 
 _sid         = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
@@ -60,6 +66,49 @@ def select_ad(ads):
 
 def osc8(text, url):
     return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+
+def render_logo(ad):
+    """
+    Return a terminal representation of the advertiser's brand logo.
+
+    - iTerm2 / kitty: the real uploaded image, inline.
+    - Everything else (incl. Apple Terminal, which can't show images): a small
+      colored brand chip so there's still a visual marker.
+    Returns '' if there's nothing to show.
+    """
+    logo_url = ad.get("logo_url")
+    term     = os.environ.get("TERM_PROGRAM", "")
+    is_iterm = term == "iTerm.app"
+    is_kitty = "kitty" in os.environ.get("TERM", "") or bool(os.environ.get("KITTY_WINDOW_ID"))
+
+    if logo_url and (is_iterm or is_kitty):
+        try:
+            req = urllib.request.Request(logo_url, headers={"User-Agent": "claude-code-ads/2.0"})
+            data = urllib.request.urlopen(req, timeout=1.5, context=SSL_CTX).read()
+            if data and len(data) <= 256 * 1024:
+                b64 = base64.b64encode(data).decode()
+                if is_iterm:
+                    # iTerm2 inline image protocol
+                    return (f"\033]1337;File=inline=1;preserveAspectRatio=1;height=2:"
+                            f"{b64}\a ")
+                if is_kitty:
+                    # kitty graphics protocol (direct transmission + display)
+                    return f"\033_Gf=100,a=T,t=d;{b64}\033\\ "
+        except Exception:
+            pass
+
+    # Fallback chip (works in Apple Terminal and anywhere with 256-color).
+    label = ""
+    for ch in ad.get("text", ""):
+        if ch.isalnum():
+            label = ch.upper()
+            break
+    if not label:
+        return ""
+    palette = [39, 170, 213, 220, 48, 203, 141]  # pleasant 256-color hues
+    color = palette[sum(ord(c) for c in ad.get("id", "x")) % len(palette)]
+    return f"\033[48;5;{color}m\033[38;5;232m {label} \033[0m "
 
 
 def earnings_progress_line(cfg):
@@ -114,7 +163,8 @@ def main():
     encoded  = urllib.parse.quote(ad["url"], safe="")
     track    = f"http://127.0.0.1:{CLICK_PORT}/click?ad_id={ad['id']}&dest={encoded}"
     link     = osc8(ad_text, track)
-    ad_line  = f"\033[2m{link}\033[0m\n"
+    logo     = render_logo(ad)
+    ad_line  = f"{logo}\033[2m{link}\033[0m\n"
 
     # Milestone notifications (each fires exactly once)
     notifications = _earnings.pending_notifications()

@@ -420,14 +420,17 @@
 
       if (co && co.url) { window.location.href = co.url; return; }   // → Stripe
 
-      // No Stripe configured yet: campaign saved as pending
+      // No Stripe configured: campaign auto-activates (live now). Otherwise pending.
       $('dash-link-url').textContent = dashUrl;
       $('dash-open-btn').href = dashUrl;
-      $('success-sub').innerHTML =
-        'Your campaign is saved as <b>pending</b> — it goes live the moment payment is enabled. '
-        + `We've saved your dashboard link${email ? ' for ' + escapeHtml(email) : ''}.`;
+      $('success-sub').innerHTML = (co && co.activated)
+        ? 'Your ad is <b>live</b> in the spinner rotation right now. '
+          + `Watch the bid market below — and your dashboard tracks every impression.`
+        : 'Your campaign is saved as <b>pending</b> — it goes live the moment payment clears. '
+          + `We've saved your dashboard link${email ? ' for ' + escapeHtml(email) : ''}.`;
       $('campaign-form').style.display = 'none';
       $('success-state').style.display = 'block';
+      loadMarket();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(err);

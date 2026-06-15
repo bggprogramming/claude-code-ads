@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your earnings — Claude Code Ads</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#080808;--surface:#0f0f0f;--border:rgba(255,255,255,0.07);--text:#e2e2e2;--muted:#4a4a4a;--hi:#717171;--accent:#b4ff69;--green:#28c840;--blue:#5b8cff;--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SF Mono','Fira Code',monospace}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,8,8,0.92);backdrop-filter:blur(12px);z-index:10}
+    .logo{font-size:13px;font-weight:500;color:var(--text);text-decoration:none}.logo em{color:var(--accent);font-style:normal}
+    .nav-link{font-size:13px;color:var(--muted);text-decoration:none}.nav-link:hover{color:var(--text)}
+    main{max-width:680px;margin:0 auto;padding:56px 24px 90px}
+    .eyebrow{font-size:11px;font-family:var(--mono);color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:14px}
+    h1{font-size:34px;font-weight:700;letter-spacing:-0.04em;color:#fff;margin-bottom:10px}
+    .sub{font-size:15px;color:var(--hi);margin-bottom:34px}
+    .codebar{display:flex;gap:10px;margin-bottom:36px}
+    .codebar input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:var(--mono);padding:13px 15px;outline:none}
+    .codebar input:focus{border-color:rgba(255,255,255,0.22)}
+    .codebar button{background:var(--accent);border:none;border-radius:10px;color:#0a0a0a;font-weight:600;font-size:14px;padding:0 22px;cursor:pointer}
+    .hint{font-size:12px;color:var(--muted);margin:-26px 0 36px;font-family:var(--mono)}
+    #panel{display:none}
+    .earn-card{border:1px solid var(--border);border-radius:16px;padding:28px;background:linear-gradient(180deg,rgba(180,255,105,0.05),rgba(40,200,64,0.02));margin-bottom:18px}
+    .earn-label{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .earn-big{font-size:52px;font-weight:700;letter-spacing:-0.04em;color:#fff;line-height:1}
+    .earn-big span{font-size:22px;color:var(--green)}
+    .bar{height:8px;border-radius:5px;background:rgba(255,255,255,0.08);overflow:hidden;margin:20px 0 8px}
+    .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--green))}
+    .bar-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+    .stat{border:1px solid var(--border);border-radius:12px;padding:18px}
+    .stat .v{font-size:24px;font-weight:600;color:#fff;letter-spacing:-0.03em}
+    .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+    .sec{border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
+    .sec-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+    .row:last-child{border-bottom:none}
+    .row .k{color:var(--hi)} .row .v{color:var(--text);font-family:var(--mono)}
+    .share{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:6px 6px 6px 14px;margin-top:4px}
+    .share code{flex:1;font-size:12px;font-family:var(--mono);color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .share button{background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--hi);font-size:12px;padding:8px 13px;cursor:pointer;white-space:nowrap}
+    .badge-md{font-size:11px;font-family:var(--mono);color:var(--hi);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px;margin-top:12px;word-break:break-all;line-height:1.5}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--border)}
+    td{padding:11px 6px;border-bottom:1px solid var(--border);font-size:14px}
+    tr:last-child td{border-bottom:none}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+    .pill.hit{color:var(--green)} .pill.wait{color:var(--muted)}
+    .empty{color:var(--muted);font-size:13px;text-align:center;padding:18px}
+    #err{display:none;color:#ff7a6c;font-size:14px;margin-top:8px}
+    footer{border-top:1px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between}
+    footer span,footer a{font-size:13px;color:var(--muted);text-decoration:none}
+    @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="index.html">claude code <em>ads</em></a>
+  <a class="nav-link" href="advertise.html">Advertise →</a>
+</nav>
+<main>
+  <div class="eyebrow">Developer portal</div>
+  <h1>Your earnings</h1>
+  <p class="sub">Enter your referral code to see what your terminal has earned. Find it with <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code>.</p>
+
+  <div class="codebar">
+    <input id="code" type="text" placeholder="your referral code (e.g. p5lvaf)" autocomplete="off" spellcheck="false">
+    <button id="go">View</button>
+  </div>
+  <div id="err"></div>
+
+  <div id="panel">
+    <div class="earn-card">
+      <div class="earn-label">Total earned</div>
+      <div class="earn-big"><span>$</span><span id="earned">0.00</span></div>
+      <div class="bar"><i id="payout-bar" style="width:0%"></i></div>
+      <div class="bar-cap"><span id="payout-pct">0%</span><span>to first payout ($<span id="payout-target">10</span>)</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="stat"><div class="v" id="imps">0</div><div class="l">impressions served</div></div>
+      <div class="stat"><div class="v" id="refs">0</div><div class="l">referrals</div></div>
+      <div class="stat"><div class="v" id="milestone">—</div><div class="l">$5 milestone</div></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Earnings by surface</div>
+      <div id="surfaces"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Your referral link — you both get $10</div>
+      <div class="share"><code id="ref-link"></code><button onclick="copy('ref-link',this)">Copy</button></div>
+      <div class="share" style="margin-top:10px"><code id="install-cmd"></code><button onclick="copy('install-cmd',this)">Copy</button></div>
+      <div class="sec-title" style="margin:20px 0 8px">GitHub README badge</div>
+      <div class="badge-md" id="badge-md"></div>
+      <button class="share" style="margin-top:10px;display:inline-flex;border:none;background:none;padding:0;color:var(--blue);cursor:pointer;font-size:13px" onclick="copy('badge-md',this)">Copy badge markdown</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Your referrals</div>
+      <table><thead><tr><th>Code</th><th>Status</th><th style="text-align:right">Joined</th></tr></thead><tbody id="ref-rows"></tbody></table>
+      <div class="row" style="margin-top:12px;border:none">
+        <span class="k">Bonuses</span>
+        <span class="v"><span id="bonus-pending" style="color:var(--accent)">$0.00</span> pending · <span id="bonus-paid" style="color:var(--green)">$0.00</span> paid</span>
+      </div>
+    </div>
+  </div>
+</main>
+<footer><span>Claude Code Ads</span><a href="index.html">For developers</a></footer>
+
+<script>
+  const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const SITE = location.href.replace(/portal\.html.*$/, '');
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toLocaleString();
+
+  function copy(id, btn){ navigator.clipboard.writeText($(id).textContent).then(()=>{const t=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=t,1500);}); }
+
+  async function load(code){
+    code = (code||'').trim().toLowerCase();
+    if(!code) return;
+    $('err').style.display='none';
+    try{
+      const d = await fetch(`${SUPA}/functions/v1/dev-portal?code=${encodeURIComponent(code)}`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+      localStorage.setItem('cca_code', code);
+      history.replaceState(null,'',`?code=${code}`);
+      $('earned').textContent = d.total_dollars.toFixed(4);
+      $('payout-bar').style.width = d.payout_pct + '%';
+      $('payout-pct').textContent = d.payout_pct + '%';
+      $('payout-target').textContent = d.payout_target_dollars;
+      $('imps').textContent = fmt(d.total_impressions);
+      $('refs').textContent = d.referral_count;
+      $('milestone').innerHTML = d.milestone_hit ? '<span style="color:var(--green)">unlocked ✓</span>' : 'locked';
+      $('surfaces').innerHTML = (d.by_surface.length ? d.by_surface : [{surface:'—',impressions:0,dollars:0}]).map(s=>
+        `<div class="row"><span class="k">${s.surface}</span><span class="v">${fmt(s.impressions)} imps · $${s.dollars.toFixed(4)}</span></div>`).join('');
+      const link = `${SITE}?ref=${d.referral_code}`.replace('portal.html','');
+      const siteRoot = SITE.replace(/portal\.html.*/,'');
+      $('ref-link').textContent = `${siteRoot}?ref=${d.referral_code}`;
+      $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${d.referral_code}`;
+      const shields = `https://img.shields.io/endpoint?url=${SUPA}/functions/v1/badge/${d.referral_code}&style=flat`;
+      $('badge-md').textContent = `[![Earned with Claude Code Ads](${shields})](${siteRoot})`;
+      $('ref-rows').innerHTML = d.referrals.length ? d.referrals.map(r=>
+        `<tr><td style="font-family:var(--mono)">${r.code}</td><td><span class="pill ${r.milestone_hit?'hit':'wait'}">${r.milestone_hit?'milestone hit ✓':'in progress…'}</span></td><td style="text-align:right;color:var(--muted)">${new Date(r.joined).toLocaleDateString()}</td></tr>`).join('')
+        : `<tr><td colspan="3" class="empty">No referrals yet — share your link above.</td></tr>`;
+      $('bonus-pending').textContent = '$'+d.bonus_pending_dollars.toFixed(2);
+      $('bonus-paid').textContent = '$'+d.bonus_paid_dollars.toFixed(2);
+      $('panel').style.display='block';
+    }catch(e){
+      $('panel').style.display='none';
+      $('err').style.display='block';
+      $('err').textContent = e.message==='404' ? 'No earnings found for that code yet. Double-check it with referral.py.' : 'Could not load — try again.';
+    }
+  }
+
+  $('go').addEventListener('click', ()=>load($('code').value));
+  $('code').addEventListener('keydown', e=>{ if(e.key==='Enter') load($('code').value); });
+  const initial = new URLSearchParams(location.search).get('code') || localStorage.getItem('cca_code');
+  if(initial){ $('code').value = initial; load(initial); }
+</script>
+</body>
+</html>
