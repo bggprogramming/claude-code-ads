@@ -16,6 +16,7 @@ To earn $5 at $25 CPM statusline: 200 impressions ≈ 1–2 days of active codin
 import json
 import ssl
 import threading
+import time
 import urllib.request
 from pathlib import Path
 
@@ -87,23 +88,56 @@ NOTIFY_MILESTONES = [
 
 # ── Local state ───────────────────────────────────────────────────────────────
 
+WEEK_SECONDS = 7 * 24 * 3600
+
+
+def _weekly_recap(state):
+    """A once-a-week 'you earned $X this week' nudge with a referral prompt.
+    Returns (message_or_None, state_touched). Initializes silently on first run."""
+    now     = time.time()
+    last_ts = state.get("last_weekly_ts")
+    if last_ts is None:                       # first ever run — seed, don't fire
+        state["last_weekly_ts"] = now
+        state["last_weekly_mc"] = state.get("total_mc", 0)
+        return None, True
+    if now - last_ts < WEEK_SECONDS:
+        return None, False
+    earned = (state.get("total_mc", 0) - state.get("last_weekly_mc", 0)) / 100_000
+    state["last_weekly_ts"] = now
+    state["last_weekly_mc"] = state.get("total_mc", 0)
+    if earned <= 0:
+        return None, True
+    return (
+        f"\033[38;5;156m📊 This week you earned ${earned:,.2f} while coding.\033[0m "
+        f"Invite a friend, you both get $10 → \033[2mpython3 ~/.claude/ads/referral.py\033[0m",
+        True,
+    )
+
+
 def pending_notifications() -> list:
     """
-    Returns un-announced milestone messages and marks them as seen.
-    Safe to call multiple times — each message appears at most once.
+    Returns un-announced milestone messages (+ a weekly recap when due) and marks
+    them seen. Safe to call multiple times — each message appears at most once.
     """
     state = load_earnings()
     mc    = state.get("total_mc", 0)
     done  = set(state.get("notified", []))
 
     triggered = []
+    changed   = False
     for threshold_mc, key, msg in NOTIFY_MILESTONES:
         if mc >= threshold_mc and key not in done:
             triggered.append(msg)
             done.add(key)
+            changed = True
 
-    if triggered:
-        state["notified"] = list(done)
+    recap, touched = _weekly_recap(state)
+    if recap:
+        triggered.append(recap)
+
+    if changed or touched:
+        if changed:
+            state["notified"] = list(done)
         save_earnings(state)
 
     return triggered

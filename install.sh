@@ -218,11 +218,22 @@ if [[ "$DO_CODEX" == "1" ]]; then
   codex_patch install
 fi
 
-# ── 5c. Install the editor status-bar extension (Cursor / VS Code / Windsurf) ──
+# ── 5c. Install the editor status-bar extension ──────────────────────────────
+# Prefer the Marketplace for VS Code (auto-updates); sideload for Cursor/others
+# (they use OpenVSX, where it isn't published yet).
 EXT_ID="adthink.claude-code-ads-1.0.0"
+VSCODE_FROM_MARKET=0
+if command -v code >/dev/null 2>&1; then
+  if code --install-extension adthink.claude-code-ads --force >/dev/null 2>&1; then
+    VSCODE_FROM_MARKET=1
+    info "✓ Installed adthink.claude-code-ads from the VS Code Marketplace (auto-updates)"
+  fi
+fi
 for pair in "Cursor:$HOME/.cursor/extensions" "VS Code:$HOME/.vscode/extensions" "Windsurf:$HOME/.windsurf/extensions" "VSCodium:$HOME/.vscode-oss/extensions"; do
   ename="${pair%%:*}"; edir="${pair#*:}"
   [[ -d "$edir" ]] || continue
+  # Skip the VS Code folder-sideload if we already installed from the Marketplace.
+  [[ "$ename" == "VS Code" && "$VSCODE_FROM_MARKET" == "1" ]] && continue
   tgt="$edir/$EXT_ID"; mkdir -p "$tgt"; ok=1
   for f in package.json extension.js icon.png; do
     if curl -fsSL "$REPO/vscode-extension/$f" -o "$tgt/$f.part" && [[ -s "$tgt/$f.part" ]]; then

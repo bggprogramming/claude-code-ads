@@ -69,18 +69,25 @@ Deno.serve(async (req: Request) => {
     .filter((c: any) => c.impressions_delivered < c.blocks * 1000)
     .sort((a: any, b: any) => b.bid_per_block_cents - a.bid_per_block_cents)
 
-  const advAds = live.map((c: any) => ({
+  const advAds = live.map((c: any) => {
+    // Pacing: down-weight campaigns that have already delivered most of their
+    // blocks, so a high bidder spreads delivery instead of front-loading and
+    // hogging rotation. Floor at 0.15 so a campaign never fully starves.
+    const target  = Math.max(1, (c.blocks ?? 1) * 1000)
+    const pace    = Math.max(0.15, 1 - (c.impressions_delivered ?? 0) / target)
+    return ({
     id: c.ad_id,
     text: c.ad_text,
     url: c.url,
-    weight: Math.max(1, Math.round(c.bid_per_block_cents / 10)),
+    weight: Math.max(1, Math.round((c.bid_per_block_cents / 10) * pace)),
     cpm: c.bid_per_block_cents / 100,
     tags: [],
     use_variants: !!c.use_variants,
     copy_variants: c.copy_variants || {},
     logo_url: c.logo_path ? `${baseUrl}${STORAGE_PUBLIC}${c.logo_path}` : (c.logo_url || null),
     completion_text: `──── ${c.company ? c.company + ' — ' : ''}${c.ad_text || c.url} ↗ ────`,
-  }))
+  })
+  })
 
   const ads = [...advAds, ...HOUSE]
 

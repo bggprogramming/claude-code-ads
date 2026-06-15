@@ -80,6 +80,13 @@
   </div>
   <div id="who" class="hint" style="display:none"></div>
   <div id="auth-msg" class="hint" style="display:none"></div>
+  <div id="link-box" style="display:none;margin-bottom:30px">
+    <div class="codebar" style="margin-bottom:8px">
+      <input id="link-code" type="text" placeholder="your referral code (e.g. p5lvaf)" autocomplete="off" spellcheck="false">
+      <button id="link-go">Link</button>
+    </div>
+    <div class="hint" style="margin:0">Find it with <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code> — links this Google account so you can sign in with it next time.</div>
+  </div>
   <div id="err"></div>
 
   <div id="panel">
@@ -136,7 +143,7 @@
     </div>
   </div>
 </main>
-<footer><span>Claude Code Ads</span><a href="index.html">For developers</a></footer>
+<footer><span>Claude Code Ads</span><a href="index.html">For developers</a><a href="terms.html" style="margin-left:18px">Terms</a><a href="privacy.html" style="margin-left:18px">Privacy</a></footer>
 
 <script>
   const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
@@ -289,18 +296,41 @@
 
   const sb = createClient(SB_URL, SB_KEY, { auth:{ detectSessionInUrl:true, persistSession:true } });
 
+  let GMAIL = '';
   async function resolve(session){
     if(!session) return;
     try{
       const r = await fetch(`${SB_URL}/functions/v1/whoami`, {
         headers:{ apikey: SB_KEY, Authorization: `Bearer ${session.access_token}` }
       }).then(r=>r.json());
-      if(r.referral_code){ if(msg) msg.style.display='none'; window.load(r.referral_code); }
-      else if(r.error === 'no_account'){
-        show(`Signed in as ${r.email}, but no earnings are linked to it yet. Sign in with your referral code once, then add this email under “Cash out” to link them.`);
+      if(r.referral_code){
+        if(msg) msg.style.display='none';
+        const lb=$('link-box'); if(lb) lb.style.display='none';
+        window.load(r.referral_code);
+      } else if(r.error === 'no_account'){
+        GMAIL = r.email || '';
+        show(`Signed in as ${GMAIL}. Link it to your earnings by entering your referral code once:`);
+        const lb=$('link-box'); if(lb) lb.style.display='block';
       }
     }catch(e){ /* ignore */ }
   }
+
+  // Link the signed-in Google email to an existing account by referral code.
+  const linkGo = $('link-go');
+  if(linkGo) linkGo.addEventListener('click', async ()=>{
+    const code = ($('link-code').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(!code || !GMAIL) return;
+    linkGo.textContent='Linking…'; linkGo.disabled=true;
+    try{
+      const r = await fetch(`${SB_URL}/functions/v1/dev-email`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ code, email: GMAIL })
+      }).then(r=>r.json());
+      if(r.ok){ $('link-box').style.display='none'; if(msg) msg.style.display='none'; window.load(code); }
+      else { show(r.error==='not found' ? 'That referral code wasn’t found — check it and try again.' : 'Could not link — try again.'); }
+    }catch(e){ show('Could not link — try again.'); }
+    linkGo.textContent='Link'; linkGo.disabled=false;
+  });
 
   const gbtn = $('google-btn');
   gbtn.addEventListener('click', async () => {

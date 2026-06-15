@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Ops — Claude Code Ads</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#080808;--surface:#0f0f0f;--border:rgba(255,255,255,0.07);--text:#e2e2e2;--muted:#5a5a5a;--hi:#8a8a92;--accent:#b4ff69;--green:#28c840;--blue:#5b8cff;--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SF Mono','Fira Code',monospace}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6}
+    main{max-width:760px;margin:0 auto;padding:48px 24px 90px}
+    .eyebrow{font-size:11px;font-family:var(--mono);color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:12px}
+    h1{font-size:30px;font-weight:700;letter-spacing:-0.03em;color:#fff;margin-bottom:6px}
+    .sub{font-size:14px;color:var(--hi);margin-bottom:32px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
+    .stat{border:1px solid var(--border);border-radius:12px;padding:18px}
+    .stat .v{font-size:26px;font-weight:700;color:#fff;letter-spacing:-0.03em}
+    .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+    .sec{border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
+    .sec-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .frow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+    .frow:last-child{border-bottom:none}
+    .fname{width:150px;font-size:13px;color:var(--hi);text-transform:capitalize}
+    .fbar{flex:1;height:10px;border-radius:5px;background:rgba(255,255,255,0.06);overflow:hidden}
+    .fbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--green))}
+    .fnum{width:120px;text-align:right;font-family:var(--mono);font-size:13px;color:var(--text)}
+    .conv{width:64px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
+    .empty{color:var(--muted);font-size:13px;padding:14px 0}
+    a{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Internal · Ops</div>
+  <h1>Funnel & stats</h1>
+  <p class="sub">Aggregate, anonymized. Onboarding funnel, conversion at each step, and live network totals.</p>
+
+  <div class="grid">
+    <div class="stat"><div class="v" id="paid">—</div><div class="l">total paid to devs</div></div>
+    <div class="stat"><div class="v" id="devs">—</div><div class="l">developers</div></div>
+    <div class="stat"><div class="v" id="imps">—</div><div class="l">impressions</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">Onboarding funnel (users per step · conversion from prior)</div>
+    <div id="funnel"><div class="empty">Loading…</div></div>
+  </div>
+</main>
+
+<script>
+  const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc";
+  const $ = id => document.getElementById(id);
+  const get = path => fetch(`${SUPA}/rest/v1/${path}`, { headers:{ apikey:KEY, Authorization:`Bearer ${KEY}` } }).then(r=>r.json());
+
+  // Canonical funnel order; we render the steps that have data.
+  const ORDER = ['installed','registered','optin_set','email_added','referral_shared','milestone','payout_requested'];
+  const LABEL = { installed:'Installed', registered:'Registered', optin_set:'Picked earnings tier', email_added:'Added email', referral_shared:'Shared referral', milestone:'Hit $5 milestone', payout_requested:'Requested payout' };
+
+  (async () => {
+    try {
+      const stats = (await get('public_stats?select=*'))[0] || {};
+      $('paid').textContent = '$' + (stats.total_paid_dollars ?? 0).toLocaleString();
+      $('devs').textContent = (stats.developer_count ?? 0).toLocaleString();
+      $('imps').textContent = (stats.total_impressions ?? 0).toLocaleString();
+    } catch(e){}
+
+    try {
+      const rows = await get('funnel_summary?select=*');
+      const by = {}; rows.forEach(r => by[r.step] = r);
+      const steps = ORDER.filter(s => by[s]);
+      if (!steps.length) { $('funnel').innerHTML = '<div class="empty">No funnel events yet.</div>'; return; }
+      const top = by[steps[0]].users || 1;
+      let prev = null;
+      $('funnel').innerHTML = steps.map(s => {
+        const u = by[s].users || 0;
+        const pct = Math.round(u / top * 100);
+        const conv = prev ? Math.round(u / prev * 100) + '%' : '—';
+        prev = u || prev;
+        return `<div class="frow"><div class="fname">${LABEL[s]||s}</div><div class="fbar"><i style="width:${pct}%"></i></div><div class="fnum">${u.toLocaleString()} users</div><div class="conv">${conv}</div></div>`;
+      }).join('');
+    } catch(e){ $('funnel').innerHTML = '<div class="empty">Could not load funnel.</div>'; }
+  })();
+</script>
+</body>
+</html>
