@@ -90,118 +90,72 @@ def apply_level(level):
     return level
 
 
-# ── Rendering ─────────────────────────────────────────────────────────────────
-TRACK_W = 46
+# ── Interactive numbered menu (works in any terminal, through an agent, or piped) ──
 
-def _render(sel):
-    t = TIERS[sel]
-    lines = []
-    lines.append(f"  {B}Earnings sharing{R}")
-    lines.append("")
-    # top labels: Private … Max payout
-    lines.append(f"      {GREY}Private{R}{' ' * (TRACK_W - 17)}{PURPLE}Max payout{R}")
-    # track: green up to marker, purple after
-    pos = int(sel / (len(TIERS) - 1) * (TRACK_W - 1))
-    left  = "━" * pos
-    right = "┄" * (TRACK_W - pos - 1)
-    lines.append(f"      {GREEN}{left}{R}{WHITE}●{R}{PURPLE}{right}{R}")
-    # tier name row, evenly spaced, selected highlighted
-    names = []
-    for i, tt in enumerate(TIERS):
-        nm = tt["name"]
-        col = (PINK + B) if (i == sel and tt["key"] == "max") else (WHITE + B) if i == sel else DIM
-        names.append(f"{col}{nm}{R}")
-    # space them across the track
-    slot = TRACK_W // len(TIERS)
-    row = "      "
-    for i, nm in enumerate(names):
-        raw = TIERS[i]["name"]
-        pad = max(1, slot - len(raw))
-        row += nm + (" " * pad)
-    lines.append(row)
-    # marker under selected
-    marker_col = 6 + int(sel / (len(TIERS) - 1) * (TRACK_W - 1))
-    lines.append(" " * marker_col + f"{(PINK if t['key']=='max' else WHITE)}▲{R}")
-    lines.append("")
-    # multiplier + tag
-    mcol = PINK if t["key"] == "max" else GREEN
-    uplift = int((t["mult"] - 1) * 100)
-    bump = f"{GREEN}+{uplift}% vs private{R}" if uplift > 0 else f"{DIM}base rate{R}"
-    lines.append(f"   {mcol}{B}{t['mult']:.1f}× earnings{R}   {DIM}·{R}   {t['tag']}    {bump}")
-    for dl in t["desc"].split("\n"):
-        lines.append(f"   {GREY}{dl}{R}")
-    lines.append("")
-    lines.append(f"   {DIM}←/→ to adjust · Enter to confirm · Esc to cancel{R}")
-    return lines
+def _bar(mult):
+    n = int(round(mult / 2.5 * 12))
+    return "▓" * n + "░" * (12 - n)
 
 
-def _read_key():
-    import termios, tty
-    fd = sys.stdin.fileno(); old = termios.tcgetattr(fd)
+def _ask(prompt):
+    """Read one line, preferring the controlling terminal so this works even when
+    stdin is a pipe (e.g. during `curl ... | bash`). Raises EOFError if no TTY."""
+    if sys.stdin.isatty():
+        return input(prompt)
     try:
-        tty.setraw(fd)
-        ch = sys.stdin.read(1)
-        if ch == "\x1b":
-            nxt = sys.stdin.read(2)
-            if nxt == "[C": return "right"
-            if nxt == "[D": return "left"
-            return "esc"
-        if ch in ("\r", "\n"): return "enter"
-        if ch == "\x03": return "esc"
-        if ch in ("h", "H"): return "left"
-        if ch in ("l", "L"): return "right"
-        return ch
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        with open("/dev/tty", "r") as tin:
+            sys.stdout.write(prompt); sys.stdout.flush()
+            line = tin.readline()
+            if not line:
+                raise EOFError
+            return line
+    except Exception:
+        raise EOFError
 
 
 def interactive():
-    if not sys.stdin.isatty() or not sys.stdout.isatty():
-        return summary()
     cfg = load_cfg()
-    sel = int(cfg.get("share_level", DEFAULT_LEVEL))
-    sel = max(0, min(3, sel))
-
-    sys.stdout.write("\033[?25l")  # hide cursor
-    lines = _render(sel)
-    sys.stdout.write("\n".join(lines) + "\n"); sys.stdout.flush()
-    n = len(lines)
+    cur = max(0, min(3, int(cfg.get("share_level", 1 if cfg.get("optin_enabled") else 0))))
+    print()
+    print(f"  {B}Earn more by sharing a little context{R}")
+    print(f"  {GREY}More context → advertisers can target you → they bid more → you earn more.{R}")
+    print()
+    for i, t in enumerate(TIERS):
+        col = PINK if t["key"] == "max" else (GREEN if i > 0 else GREY)
+        cur_tag = f"  {GREEN}← current{R}" if i == cur else ""
+        star = f"  {PINK}🔥 top earners{R}" if t["key"] == "max" else ""
+        print(f"   {B}{i+1}{R}  {col}{t['name']:<8} {t['mult']:.1f}×{R}  {DIM}[{_bar(t['mult'])}]{R}  "
+              f"{GREY}{t['desc'].splitlines()[0]}{R}{cur_tag}{star}")
+    print()
+    rec = TIERS[DEFAULT_LEVEL]
     try:
-        while True:
-            k = _read_key()
-            if k == "right" and sel < len(TIERS) - 1: sel += 1
-            elif k == "left" and sel > 0: sel -= 1
-            elif k == "enter":
-                _confirm(sel); break
-            elif k == "esc":
-                sys.stdout.write(f"\n  {DIM}Cancelled — nothing changed.{R}\n"); break
-            else:
-                continue
-            # re-render in place
-            sys.stdout.write(f"\033[{n}A\033[J")
-            lines = _render(sel)
-            sys.stdout.write("\n".join(lines) + "\n"); sys.stdout.flush()
-            n = len(lines)
-    finally:
-        sys.stdout.write("\033[?25h")  # show cursor
-        sys.stdout.flush()
+        ans = _ask(f"  Type 1-4 and press Enter  "
+                   f"{DIM}(Enter = {DEFAULT_LEVEL+1} · {rec['name']}, recommended){R}: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n  {GREY}No change. Run this anytime: python3 ~/.claude/ads/optin.py{R}\n")
+        return
+    mapping = {"": DEFAULT_LEVEL, "1": 0, "2": 1, "3": 2, "4": 3,
+               "private": 0, "off": 0, "stack": 1, "context": 2, "max": 3}
+    if ans not in mapping:
+        print(f"\n  {GREY}Didn't catch that — no change. Run optin.py again to choose.{R}\n")
+        return
+    _confirm(mapping[ans])
 
 
-def _confirm(sel):
-    level = apply_level(sel)
+def _confirm(level):
+    level = apply_level(level)
     t = TIERS[level]
-    sys.stdout.write(f"\033[{len(_render(sel))}A\033[J")  # clear the picker
     mcol = PINK if t["key"] == "max" else GREEN
     print()
     if level == 0:
-        print(f"  {GREY}Sharing off.{R} You'll earn at the base rate. Run optin.py anytime to earn more.")
+        print(f"  {GREY}Sharing off — base rate.{R} Run optin.py anytime to earn more.")
     else:
-        print(f"  {mcol}{B}{t['tag']} unlocked — {t['mult']:.1f}× earnings.{R}")
+        print(f"  {mcol}{B}✓ {t['tag']} — {t['mult']:.1f}× earnings.{R}")
         if level == 3:
-            print(f"  {PINK}🔥 Max payout. You're in the top tier — the good inventory routes to you.{R}")
+            print(f"  {PINK}🔥 Max payout: the good inventory routes to you.{R}")
         else:
             nxt = TIERS[level + 1]
-            print(f"  {DIM}Tip: {nxt['tag']} pays {nxt['mult']:.1f}× — run optin.py again to bump up.{R}")
+            print(f"  {GREY}Want more? {nxt['name']} pays {nxt['mult']:.1f}× — run optin.py again.{R}")
     print(f"  {DIM}Change anytime: python3 ~/.claude/ads/optin.py{R}")
     print()
 

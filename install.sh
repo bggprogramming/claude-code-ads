@@ -212,15 +212,17 @@ if [[ "$DO_CODEX" == "1" ]]; then
   codex_patch install
 fi
 
+# ── 6. Pick earnings tier, in-flow (only when a human terminal is attached) ──
+if [ -t 1 ]; then
+  python3 "$ADS_DIR/optin.py" || true
+fi
+
 echo ""
-info "Done! Restart your agent to activate."
+info "✓ All set — your ads activate in your next agent session."
+[[ "$DO_CLAUDE" == "1" ]] && info "  Claude Code: statusline + spinner + scrollback + completion"
+[[ "$DO_CODEX"  == "1" ]] && info "  Codex CLI:   scrollback + completion (per turn)"
 echo ""
-info "Commands:"
-info "  python3 ~/.claude/ads/optin.py      # pick your earnings tier — up to 2.5×"
-info "  python3 ~/.claude/ads/referral.py   # your referral link + earnings"
-info "  python3 ~/.claude/ads/stats.py      # impression analytics"
-echo ""
-[[ "$DO_CLAUDE" == "1" ]] && info "Claude Code: statusLine + spinner + scrollback + completion ads."
-[[ "$DO_CODEX"  == "1" ]] && info "Codex CLI:   scrollback + completion ads (per turn)."
-info "Uninstall anytime:  curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
+info "Earn more / change tier:  python3 ~/.claude/ads/optin.py"
+info "Your referral + stats:    python3 ~/.claude/ads/referral.py"
+info "Uninstall anytime:        curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
 echo ""
