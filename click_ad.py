@@ -124,7 +124,7 @@ def select_ad(ads, context_tags=None):
     counts   = session_counts()
     eligible = [a for a in ads if counts.get(a["id"], 0) < SESSION_CAP]
     pool     = eligible or ads
-    return _ctx.weighted_sample(pool, context_tags)   # context-boosted, like the statusline
+    return _ctx.select_optimal(pool, context_tags)   # eCPM (bid×pCTR) ranking, like the statusline
 
 
 def osc8(text, url):

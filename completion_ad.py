@@ -183,7 +183,7 @@ def main():
     cfg          = load_config()
     hook_cwd     = data.get("cwd")
     context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
-    ad           = _ctx.weighted_sample(ads, context_tags)
+    ad           = _ctx.select_optimal(ads, context_tags)
     ad_text, variant = _ctx.select_copy(ad, context_tags)
 
     line = format_completion_line(ad)

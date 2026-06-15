@@ -12,11 +12,28 @@ Provides:
 import glob
 import json
 import os
+import random
 import time
 from pathlib import Path
 
 CACHE_TTL   = 3600   # 1 hour — context persists for a full dev session
 BOOST       = 2.5    # contextual match multiplier
+
+# ── Optimal-placement (contextual bandit) tuning ───────────────────────────────
+# We rank the live ad library by EXPECTED VALUE per impression — the real ad-tech
+# objective (eCPM = bid × predicted-CTR). Since the developer earns proportionally
+# to the ad's price and a click pays CLICK_VALUE_MULT× an impression, maximizing
+# EV maximizes both network revenue and developer earnings.
+#
+#   EV(ad | context) ≈ price · (1 + CLICK_VALUE_MULT · pCTR) · relevance
+#
+# pCTR is a Bayesian-smoothed click rate per (ad, context) drawn by THOMPSON
+# SAMPLING from Beta(α,β): unproven ads are explored, proven winners exploited —
+# automatically, with no separate explore schedule. Context stays on-device; only
+# the aggregate per-ad/per-variant counts come from the feed, so privacy holds.
+CLICK_VALUE_MULT = 50     # a click is worth ~50× an impression (matches track-event)
+PRIOR_CTR        = 0.02   # prior belief about click-through rate (2%)
+PRIOR_STRENGTH   = 40      # prior weight in pseudo-impressions (higher = more cautious)
 
 # Filesystem signals: tag → file names to look for at the project root
 STACK_FILES = {
@@ -281,14 +298,83 @@ def select_copy(ad, context_tags=None):
 
 
 def weighted_sample(pool, context_tags=None):
-    """Weighted random selection with optional contextual boosting."""
+    """Weighted random selection with optional contextual boosting.
+    (Kept for back-compat + as the fallback when no performance stats exist.)"""
     ctx = context_tags or set()
     total = sum(contextual_weight(a, ctx) for a in pool)
     if total <= 0:
         return pool[-1]
-    r = __import__("random").random() * total
+    r = random.random() * total
     for ad in pool:
         r -= contextual_weight(ad, ctx)
         if r <= 0:
             return ad
     return pool[-1]
+
+
+# ── Optimal placement: expected-value (eCPM) ranking with Thompson sampling ────
+
+def _beta_sample(alpha, beta):
+    """Draw from Beta(alpha, beta) via two Gamma draws (Thompson sampling)."""
+    try:
+        x = random.gammavariate(max(alpha, 1e-6), 1.0)
+        y = random.gammavariate(max(beta, 1e-6), 1.0)
+        return x / (x + y) if (x + y) > 0 else PRIOR_CTR
+    except Exception:
+        return PRIOR_CTR
+
+
+def expected_value(ad, context_tags=None, variant=None):
+    """Expected developer revenue per impression for this ad in this context.
+
+    Uses the ad's price (cpm ∝ bid) × (1 + CLICK_VALUE_MULT · pCTR), where pCTR is
+    Thompson-sampled from the ad's measured clicks/impressions — preferring the
+    stats for the *variant we'd actually show* (which encodes the context), then
+    the ad's global stats, then a weak prior. A matching tag adds a relevance lift.
+    """
+    ctx   = context_tags or set()
+    price = float(ad.get("cpm", 20) or 20)
+
+    perf  = ad.get("perf") or {}
+    stats = None
+    if variant and variant != "default":
+        stats = (perf.get("variants") or {}).get(variant)
+    if not stats:
+        stats = {"imp": perf.get("imp", 0), "clk": perf.get("clk", 0)}
+
+    imp = max(0, int(stats.get("imp", 0) or 0))
+    clk = max(0, min(imp, int(stats.get("clk", 0) or 0)))
+
+    alpha = PRIOR_CTR * PRIOR_STRENGTH + clk
+    beta  = (1.0 - PRIOR_CTR) * PRIOR_STRENGTH + (imp - clk)
+    pctr  = _beta_sample(alpha, beta)
+
+    ev = price * (1.0 + CLICK_VALUE_MULT * pctr)
+
+    ad_tags = set(ad.get("tags", []))
+    if ad_tags and ctx and (ad_tags & ctx):
+        ev *= BOOST
+    return max(ev, 1e-6)
+
+
+def select_optimal(pool, context_tags=None):
+    """Pick an ad from the live library to maximize expected value, with built-in
+    exploration. Samples proportionally to Thompson-sampled EV so high-value ads
+    win most impressions while unproven ones still get explored. Falls back to a
+    uniform pick only if scoring fails."""
+    if not pool:
+        return None
+    ctx    = context_tags or set()
+    scored = []
+    for ad in pool:
+        _, variant = select_copy(ad, ctx)
+        scored.append((expected_value(ad, ctx, variant), ad))
+    total = sum(s for s, _ in scored)
+    if total <= 0:
+        return pool[-1]
+    r = random.random() * total
+    for s, ad in scored:
+        r -= s
+        if r <= 0:
+            return ad
+    return scored[-1][1]

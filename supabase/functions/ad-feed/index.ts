@@ -83,6 +83,25 @@ Deno.serve(async (req: Request) => {
   }))
 
   const ads = [...advAds, ...HOUSE]
+
+  // Per-ad performance (last 30d): impressions/clicks globally and per variant.
+  // Clients rank by expected value (eCPM = price × predicted-CTR) using these
+  // aggregate counts; the context that picks a variant never leaves the device.
+  const ids = ads.map((a: any) => a.id)
+  if (ids.length) {
+    const since = new Date(Date.now() - 30 * 86_400_000).toISOString()
+    const { data: evs } = await supabase
+      .from('events').select('ad_id, event, variant')
+      .in('ad_id', ids).gte('ts', since).limit(200_000)
+    const perf: Record<string, any> = {}
+    for (const e of evs ?? []) {
+      const p = (perf[e.ad_id] ??= { imp: 0, clk: 0, variants: {} })
+      const v = (p.variants[e.variant || 'default'] ??= { imp: 0, clk: 0 })
+      if (e.event === 'click') { p.clk++; v.clk++ } else { p.imp++; v.imp++ }
+    }
+    for (const a of ads) (a as any).perf = perf[a.id] || { imp: 0, clk: 0, variants: {} }
+  }
+
   const hash = await sha256Hex(JSON.stringify(ads))
 
   return new Response(JSON.stringify({ ads, hash }), {
