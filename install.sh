@@ -219,7 +219,7 @@ if [[ "$DO_CODEX" == "1" ]]; then
 fi
 
 # ── 5c. Install the editor status-bar extension (Cursor / VS Code / Windsurf) ──
-EXT_ID="bggprogramming.claude-code-ads-1.0.0"
+EXT_ID="adthink.claude-code-ads-1.0.0"
 for pair in "Cursor:$HOME/.cursor/extensions" "VS Code:$HOME/.vscode/extensions" "Windsurf:$HOME/.windsurf/extensions" "VSCodium:$HOME/.vscode-oss/extensions"; do
   ename="${pair%%:*}"; edir="${pair#*:}"
   [[ -d "$edir" ]] || continue

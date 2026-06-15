@@ -294,7 +294,7 @@ async function activate(context) {
 
     // Truncate to fit status bar
     const display = currentText.length > 70 ? currentText.slice(0, 69) + '…' : currentText;
-    statusBar.text  = `$(megaphone) ${display} ↗`;
+    statusBar.text  = `${display} ↗`;
     statusBar.show();
 
     // Count an impression only when the window is actually on screen. VS Code's
