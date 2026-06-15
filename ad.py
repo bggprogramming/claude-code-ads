@@ -85,10 +85,11 @@ def init_db(conn):
             ts       TEXT DEFAULT (datetime('now'))
         )
     """)
-    try:
-        conn.execute("ALTER TABLE events ADD COLUMN surface TEXT DEFAULT 'unknown'")
-    except Exception:
-        pass
+    for col, dflt in [("surface", "'unknown'"), ("user_id", "NULL"), ("variant", "'default'")]:
+        try:
+            conn.execute(f"ALTER TABLE events ADD COLUMN {col} TEXT DEFAULT {dflt}")
+        except Exception:
+            pass
     conn.commit()
 
 def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
@@ -112,15 +113,17 @@ def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
     except Exception:
         pass
 
-def log_impression(ad, cfg, surface="statusline"):
-    mc = _earnings.impression_mc(ad, surface)
+def log_impression(ad, cfg, surface="statusline", ad_text=None, variant="default"):
+    mc       = _earnings.impression_mc(ad, surface)
+    log_text = ad_text or ad.get("text", "")
 
     try:
         conn = sqlite3.connect(DB_FILE)
         init_db(conn)
         conn.execute(
-            "INSERT INTO events (ad_id, ad_text, event, surface, user_id) VALUES (?, ?, 'impression', ?, ?)",
-            (ad["id"], ad["text"], surface, cfg.get("user_id"))
+            "INSERT INTO events (ad_id, ad_text, event, surface, user_id, variant) "
+            "VALUES (?, ?, 'impression', ?, ?, ?)",
+            (ad["id"], log_text, surface, cfg.get("user_id"), variant)
         )
         conn.commit()
         conn.close()
@@ -130,7 +133,7 @@ def log_impression(ad, cfg, surface="statusline"):
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         t = threading.Thread(
             target=push_supabase,
-            args=(ad["id"], ad["text"], "impression", surface, cfg, mc),
+            args=(ad["id"], log_text, "impression", surface, cfg, mc),
             daemon=True
         )
         t.start()
@@ -158,10 +161,11 @@ def main():
     context_tags = _ctx.get_context()
     ad           = select_ad(ads, context_tags)
 
-    log_impression(ad, cfg)
+    ad_text, variant = _ctx.select_copy(ad, context_tags)
+    log_impression(ad, cfg, ad_text=ad_text, variant=variant)
     increment_session(ad["id"])
 
-    print(make_clickable(ad["text"], ad["id"], ad["url"]))
+    print(make_clickable(ad_text, ad["id"], ad["url"]))
 
 
 if __name__ == "__main__":

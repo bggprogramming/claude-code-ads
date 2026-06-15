@@ -253,6 +253,33 @@ def contextual_weight(ad, context_tags):
     return float(base)
 
 
+def select_copy(ad, context_tags=None):
+    """
+    Select the best copy variant for the current context.
+    Returns (text: str, variant_key: str).
+
+    If the ad has use_variants=True and copy_variants, pick the best matching
+    variant for the detected tech stack. Advertisers opt-in per-campaign.
+    """
+    variants = ad.get("copy_variants")
+    if not variants or not ad.get("use_variants"):
+        return ad.get("text", ""), "default"
+
+    ctx = context_tags or set()
+    # Check detected tags in order of specificity (longer/rarer tags first)
+    priority = ["typescript", "rust", "go", "python", "javascript", "docker", "infra"]
+    for tag in priority:
+        if tag in ctx and tag in variants:
+            return variants[tag], tag
+    # Any remaining tag match
+    for tag in ctx:
+        if tag in variants:
+            return variants[tag], tag
+
+    default_text = variants.get("default", ad.get("text", ""))
+    return default_text, "default"
+
+
 def weighted_sample(pool, context_tags=None):
     """Weighted random selection with optional contextual boosting."""
     ctx = context_tags or set()

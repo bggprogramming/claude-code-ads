@@ -101,16 +101,18 @@ def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
     except Exception:
         pass
 
-def log_impression(ad, surface="spinner"):
-    cfg = load_config()
-    mc  = _earnings.impression_mc(ad, surface)
+def log_impression(ad, surface="spinner", ad_text=None, variant="default"):
+    cfg      = load_config()
+    mc       = _earnings.impression_mc(ad, surface)
+    log_text = ad_text or ad.get("text", "")
 
     try:
         conn = sqlite3.connect(DB_FILE)
         init_db(conn)
         conn.execute(
-            "INSERT INTO events (ad_id, ad_text, event, surface, user_id) VALUES (?, ?, 'impression', ?, ?)",
-            (ad["id"], ad["text"], surface, cfg.get("user_id"))
+            "INSERT INTO events (ad_id, ad_text, event, surface, user_id, variant) "
+            "VALUES (?, ?, 'impression', ?, ?, ?)",
+            (ad["id"], log_text, surface, cfg.get("user_id"), variant)
         )
         conn.commit()
         conn.close()
@@ -120,7 +122,7 @@ def log_impression(ad, surface="spinner"):
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         t = threading.Thread(
             target=push_supabase,
-            args=(ad["id"], ad["text"], "impression", surface, cfg, mc),
+            args=(ad["id"], log_text, "impression", surface, cfg, mc),
             daemon=True
         )
         t.start()
@@ -176,11 +178,12 @@ def main():
     hook_session_id = hook_data.get("session_id")
     hook_cwd        = hook_data.get("cwd")
 
-    context_tags = _ctx.get_context(cwd=hook_cwd, session_id=hook_session_id)
-    ad = select_ad(ads, context_tags)
+    context_tags     = _ctx.get_context(cwd=hook_cwd, session_id=hook_session_id)
+    ad               = select_ad(ads, context_tags)
+    ad_text, variant = _ctx.select_copy(ad, context_tags)
 
-    if update_spinner_verbs(ad["text"]):
-        log_impression(ad, surface="spinner")
+    if update_spinner_verbs(ad_text):
+        log_impression(ad, surface="spinner", ad_text=ad_text, variant=variant)
         increment_session(ad["id"])
 
 

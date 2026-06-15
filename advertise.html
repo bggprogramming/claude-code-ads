@@ -395,6 +395,52 @@
           <input id="url" type="url" placeholder="https://yourproduct.com" required>
           <div class="field-hint">Clicks route through our tracker before redirecting here.</div>
         </div>
+
+        <!-- Copy variants (opt-in) -->
+        <div class="field" id="variants-wrap" style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <label style="margin:0;font-size:13px;color:var(--text);font-weight:500">
+              AI-personalized copy <span style="font-size:11px;color:var(--muted);font-weight:400">(optional)</span>
+            </label>
+            <button type="button" id="variants-toggle" onclick="toggleVariants()"
+              style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:12px;padding:4px 10px;cursor:pointer;font-family:var(--font)">
+              + Add variants
+            </button>
+          </div>
+          <div id="variants-body" style="display:none">
+            <div class="field-hint" style="margin-bottom:16px">
+              When enabled, your ad shows different copy based on the developer's tech stack.
+              Advertisers with variants see <strong style="color:var(--text)">1.4–2.1× higher CTR</strong>.
+              Leave any field blank to use your default copy instead.
+            </div>
+            <div id="variant-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">TypeScript</label>
+                <input class="variant-input" data-tag="typescript" type="text" placeholder="✦ Your Product — TypeScript tip. yoursite.com">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Python</label>
+                <input class="variant-input" data-tag="python" type="text" placeholder="✦ Your Product — Python tip. yoursite.com">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Rust</label>
+                <input class="variant-input" data-tag="rust" type="text" placeholder="✦ Your Product — Rust tip. yoursite.com">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Go</label>
+                <input class="variant-input" data-tag="go" type="text" placeholder="✦ Your Product — Go tip. yoursite.com">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">JavaScript</label>
+                <input class="variant-input" data-tag="javascript" type="text" placeholder="✦ Your Product — JS tip. yoursite.com">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);margin-bottom:5px">Docker / Infra</label>
+                <input class="variant-input" data-tag="docker" type="text" placeholder="✦ Your Product — DevOps tip. yoursite.com">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -602,6 +648,20 @@
 
     const logo_url = document.getElementById('logo_url').value.trim() || null;
 
+    // Collect copy variants (opt-in)
+    const variantInputs = document.querySelectorAll('.variant-input');
+    const copy_variants = {};
+    let hasVariants = false;
+    variantInputs.forEach(inp => {
+      const val = inp.value.trim();
+      if (val) {
+        copy_variants[inp.dataset.tag] = val;
+        hasVariants = true;
+      }
+    });
+    if (hasVariants && !copy_variants['default']) copy_variants['default'] = ad_text;
+    const use_variants = hasVariants;
+
     const payload = {
       ad_id:              genAdId(),
       company,
@@ -612,6 +672,8 @@
       cpm_cents:          selectedCpm,
       daily_budget_cents: Math.round(daily_budget * 100),
       status:             'active',
+      use_variants,
+      copy_variants:      hasVariants ? copy_variants : null,
     };
 
     try {
@@ -647,6 +709,14 @@
       alert('Something went wrong. Please try again.');
     }
   });
+
+  function toggleVariants() {
+    const body = document.getElementById('variants-body');
+    const btn  = document.getElementById('variants-toggle');
+    const show = body.style.display === 'none';
+    body.style.display = show ? 'block' : 'none';
+    btn.textContent    = show ? '− Hide variants' : '+ Add variants';
+  }
 
   function copyDashLink() {
     navigator.clipboard.writeText(dashUrl).then(() => {

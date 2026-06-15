@@ -17,8 +17,12 @@ BASE     = Path(__file__).parent
 CFG_FILE = BASE / "config.json"
 SSL_CTX  = ssl.create_default_context(cafile=certifi.where())
 
-MILESTONE_MC     = 500_000   # $5.00 in millicents
-BONUS_DOLLARS    = 5.00
+MILESTONE_MC     = 500_000   # $5.00 in millicents — referral trigger
+BONUS_DOLLARS    = 10.00     # $10 each way
+SUPABASE_URL_BASE = "https://gpbrzpyvzlzwvvymgeyk.supabase.co"
+BADGE_FN_BASE     = f"{SUPABASE_URL_BASE}/functions/v1/badge"
+SHIELDS_BASE      = "https://img.shields.io/endpoint"
+SITE_BASE         = "https://bggprogramming.github.io/claude-code-ads"
 
 
 def load_config():
@@ -93,11 +97,23 @@ def main():
         f"curl -fsSL https://raw.githubusercontent.com/bggprogramming/"
         f"claude-code-ads/main/install.sh | bash -s -- --ref {code}"
     )
+    site_link    = f"{SITE_BASE}/?ref={code}"
+    badge_url    = f"{BADGE_FN_BASE}/{code}"
+    shields_url  = f"{SHIELDS_BASE}?url={badge_url}&style=flat"
+    badge_md     = f"[![Earned with Claude Code Ads]({shields_url})]({site_link})"
+
     print(f"  Referral code: {code}")
     print(f"  Share this:")
     print(f"  {install_cmd}")
     print()
-    print("  When someone you refer earns their first $5, you both get $5.")
+    print("  When someone you refer earns their first $5, you both get $10.")
+    print()
+    print("  ── GitHub README badge ─────────────────────────────────────────")
+    print("  Add this to your README to show live earnings and drive referrals:")
+    print()
+    print(f"  {badge_md}")
+    print()
+    print(f"  Live badge: {shields_url}")
     print()
 
     # ── People you referred ───────────────────────────────────────────────────

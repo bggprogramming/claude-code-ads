@@ -103,11 +103,20 @@ def save_earnings(state):
 # ── Earnings per impression ───────────────────────────────────────────────────
 
 def impression_mc(ad, surface):
-    """Millicents earned for one impression of this ad on this surface."""
+    """Millicents earned for one impression of this ad on this surface.
+
+    Rate card (per 1k impressions → CPM equivalents at $25 base):
+      statusline     cpm * 100 mc  →  $25 CPM
+      vscode_statusbar  cpm * 100 mc  →  $25 CPM (same as statusline)
+      completion     cpm * 200 mc  →  $50 CPM  (premium post-response placement)
+      spinner        cpm *  50 mc  →  $12.50 CPM (ambient, lower attention)
+    """
     cpm = ad.get("cpm", 20)
-    if surface == "statusline":
+    if surface in ("statusline", "vscode_statusbar"):
         return cpm * 100
-    return cpm * 50   # spinner = half rate
+    if surface == "completion":
+        return cpm * 200   # 2× premium: post-response, high attention
+    return cpm * 50        # spinner / unknown
 
 
 # ── Supabase calls ────────────────────────────────────────────────────────────

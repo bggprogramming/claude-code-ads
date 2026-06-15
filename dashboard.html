@@ -278,6 +278,28 @@
         </table>
       </div>
 
+      <!-- Copy variants breakdown (shown only when use_variants is true) -->
+      <div class="section" id="variants-section" style="display:none">
+        <div class="section-title">Copy variant CTR</div>
+        <table class="data-table" id="variants-table">
+          <thead>
+            <tr>
+              <th>Stack variant</th>
+              <th>Impressions</th>
+              <th>Clicks</th>
+              <th>CTR</th>
+            </tr>
+          </thead>
+          <tbody id="variants-tbody">
+            <tr class="empty-row"><td colspan="4">No variant data yet</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5">
+          Personalized copy is shown based on the developer's detected tech stack.
+          Higher CTR variants are served more frequently via contextual boosting.
+        </p>
+      </div>
+
     </div><!-- #dashboard -->
   </main>
 </div>
@@ -451,6 +473,34 @@
           <td>$${daySpend}</td>
         </tr>`;
       }).join('');
+    }
+
+    // Copy variants breakdown
+    if (adv.use_variants) {
+      const byVariant = {};
+      events.forEach(e => {
+        const v = e.variant || 'default';
+        if (!byVariant[v]) byVariant[v] = { impressions: 0, clicks: 0 };
+        if (e.event === 'impression') byVariant[v].impressions++;
+        if (e.event === 'click')      byVariant[v].clicks++;
+      });
+      const variantKeys = Object.keys(byVariant).sort();
+      const vtbody = document.getElementById('variants-tbody');
+      if (variantKeys.length === 0) {
+        vtbody.innerHTML = '<tr class="empty-row"><td colspan="4">No variant data yet</td></tr>';
+      } else {
+        vtbody.innerHTML = variantKeys.map(v => {
+          const d    = byVariant[v];
+          const vCtr = d.impressions > 0 ? (d.clicks / d.impressions * 100).toFixed(2) : '0.00';
+          return `<tr>
+            <td>${v}</td>
+            <td>${fmt(d.impressions)}</td>
+            <td>${fmt(d.clicks)}</td>
+            <td>${vCtr}%</td>
+          </tr>`;
+        }).join('');
+      }
+      document.getElementById('variants-section').style.display = 'block';
     }
 
     // Show dashboard

@@ -1,0 +1,32 @@
+{
+  "name": "claude-code-ads",
+  "displayName": "Claude Code Ads — Earn while you code",
+  "description": "Display sponsored messages in VS Code/Cursor/Windsurf status bar and earn passive income from every session. Same network as Claude Code CLI — 90% revenue share.",
+  "version": "1.0.0",
+  "publisher": "bggprogramming",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bggprogramming/claude-code-ads"
+  },
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["ads", "earnings", "monetization", "passive income", "sponsored"],
+  "icon": "icon.png",
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-code-ads.openAd",
+        "title": "Claude Code Ads: Open current sponsor"
+      },
+      {
+        "command": "claude-code-ads.showEarnings",
+        "title": "Claude Code Ads: Show earnings"
+      }
+    ]
+  }
+}

@@ -5,7 +5,17 @@
     "url": "https://cursor.com",
     "weight": 34,
     "cpm": 25,
-    "tags": ["javascript", "typescript", "python", "rust", "go"]
+    "tags": ["javascript", "typescript", "python", "rust", "go"],
+    "use_variants": true,
+    "copy_variants": {
+      "default":    "✦ Cursor — Accept the next line of code with Tab. Ships in half the time. cursor.com",
+      "typescript": "✦ Cursor — TypeScript autocomplete that actually understands your types. cursor.com",
+      "python":     "✦ Cursor — Writes your Python tests before you do. cursor.com",
+      "rust":       "✦ Cursor — Borrow checker errors explained inline. cursor.com",
+      "go":         "✦ Cursor — Go autocomplete without the boilerplate. cursor.com",
+      "javascript": "✦ Cursor — JavaScript that autocompletes exactly how you think. cursor.com"
+    },
+    "completion_text": "──── Sponsored by Cursor · AI pair programmer that actually ships · cursor.com ────"
   },
   {
     "id": "ad_warp",
@@ -13,7 +23,16 @@
     "url": "https://warp.dev",
     "weight": 33,
     "cpm": 22,
-    "tags": ["docker", "infra", "javascript", "python"]
+    "tags": ["docker", "infra", "javascript", "python"],
+    "use_variants": true,
+    "copy_variants": {
+      "default":    "⚡ Warp — Search 10,000 past commands in under a second. Never retype again. warp.dev",
+      "docker":     "⚡ Warp — Your Docker logs, grep-able in milliseconds. warp.dev",
+      "infra":      "⚡ Warp — Run and share complex infra commands as reusable workflows. warp.dev",
+      "python":     "⚡ Warp — pip install, venv activate, run — all remembered. warp.dev",
+      "javascript": "⚡ Warp — npm scripts that actually make sense. Searchable history. warp.dev"
+    },
+    "completion_text": "──── Sponsored by Warp · The terminal built for developers · warp.dev ────"
   },
   {
     "id": "ad_linear",
@@ -21,6 +40,9 @@
     "url": "https://linear.app",
     "weight": 33,
     "cpm": 20,
-    "tags": []
+    "tags": [],
+    "use_variants": false,
+    "copy_variants": {},
+    "completion_text": "──── Sponsored by Linear · Issue tracking built for speed · linear.app ────"
   }
 ]
