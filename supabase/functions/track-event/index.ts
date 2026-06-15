@@ -35,14 +35,14 @@ const DEFAULT_CPM = 20
 
 const ALLOWED_SURFACES = new Set([
   'statusline', 'spinner', 'completion', 'scrollback',
-  'vscode_statusbar', 'vscode_click', 'click', 'unknown',
+  'vscode_statusbar', 'vscode_panel', 'vscode_click', 'click', 'unknown',
 ])
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
 function houseMc(cpm: number, surface: string): number {
-  if (surface === 'statusline' || surface === 'vscode_statusbar' || surface === 'scrollback') return cpm * 100
+  if (surface === 'statusline' || surface === 'vscode_statusbar' || surface === 'vscode_panel' || surface === 'scrollback') return cpm * 100
   if (surface === 'completion') return cpm * 200
   return cpm * 50
 }

@@ -119,6 +119,8 @@ tmp = settings.with_suffix(".tmp"); tmp.write_text(json.dumps(data, indent=2)); 
 print("  ✓ Claude settings.json cleaned.")
 PYEOF
   [[ -f "$CODEX_CONFIG" ]] && codex_patch uninstall || true
+  # Revert the Codex panel injection if it was applied (restores backups).
+  [[ -f "$ADS_DIR/inject_codex_panel.py" ]] && python3 "$ADS_DIR/inject_codex_panel.py" --revert 2>/dev/null || true
   info "Done. Your ~/.claude/ads data is kept (rm -rf \"$ADS_DIR\" to remove)."
   echo ""; exit 0
 fi
@@ -139,7 +141,7 @@ FILES=(ad.py update_spinner.py click_server.py start_click_server.sh
        earnings.py setup.py referral.py stats.py ads.json
        context.py feed.py click_ad.py completion_ad.py record_tool_start.py
        context_hook.py context_uploader.py optin.py viewability.py
-       funnel.py demo.py)
+       funnel.py demo.py inject_codex_panel.py)
 for f in "${FILES[@]}"; do
   if ! curl -fsSL "$REPO/$f" -o "$ADS_DIR/$f.part"; then
     err "Failed to download $f. Aborting (no config changes made)."; rm -f "$ADS_DIR/$f.part"; exit 1
