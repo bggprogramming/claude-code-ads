@@ -86,7 +86,7 @@ def main():
     print(f"  Your earnings:  ${earned:.4f} of $5.00 milestone")
     print(f"  [{b}] {pct}%")
     if earnings.get("milestone_hit"):
-        print("  Milestone hit! Your $5 bonus is pending.")
+        print("  Milestone hit! Your $10 referral bonus is pending.")
     else:
         remaining = max(0, (MILESTONE_MC - total_mc) / 100_000)
         print(f"  ${remaining:.4f} to go until your milestone.")

@@ -142,7 +142,7 @@ def _show_link(code):
     print("  Your referral link:")
     print(f"  curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref {code}")
     print()
-    print("  Share this — when someone you refer earns their first $5, you both get $5.")
+    print("  Share this — when someone you refer earns their first $5, you both get $10.")
 
 
 if __name__ == "__main__":
