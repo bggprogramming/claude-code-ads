@@ -211,17 +211,10 @@ def _codex_hello(cfg):
 
 
 def _emit_codex(ad, ad_text, variant, cfg):
-    """Codex Stop hook: return ONE clean sponsor line as JSON systemMessage, THEN
-    count the impression (emit first so a slow network call can't delay the ad)."""
-    msg = ad_text
-    url = (ad.get("url") or "")
-    dom = url.split("//")[-1].split("/")[0]
-    if dom and dom not in ad_text:
-        msg += f"  ·  {dom}"
-    notes = [_strip_ansi(n).strip() for n in _earnings.pending_notifications()]
-    if notes:
-        msg += "   ·   " + "  ".join(notes)
-
+    """Codex Stop hook: ONE clean sponsor line as JSON systemMessage, matching
+    kickback's format exactly — "Brand — tagline ↗", no label, no domain. Emit
+    first so a slow network call can't delay the ad, THEN count the impression."""
+    msg = f"{ad_text} ↗"
     _codex_emit(msg)                       # show the ad immediately
     if _view.is_viewable():                # then record the impression
         track_scrollback(ad, ad_text, variant, cfg)
