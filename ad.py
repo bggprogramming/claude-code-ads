@@ -11,6 +11,7 @@ import sqlite3
 import ssl
 import sys
 import threading
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -32,6 +33,26 @@ SESSION_CAP = 3  # max impressions per ad per terminal session
 # Session file keyed by terminal session so each new terminal = fresh cap
 _sid = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
+
+# Claude Code re-renders the statusLine very frequently. Count at most ONE
+# impression per window (a viewable "refresh"), not one per render — otherwise
+# earnings balloon and diverge from the server.
+IMPRESSION_WINDOW = 30   # seconds
+IMP_TS_FILE = Path(f"/tmp/claude-ads-imp-{_sid}.json")
+
+
+def impression_due():
+    try:
+        if IMP_TS_FILE.exists():
+            if time.time() - json.loads(IMP_TS_FILE.read_text()).get("ts", 0) < IMPRESSION_WINDOW:
+                return False
+    except Exception:
+        pass
+    try:
+        IMP_TS_FILE.write_text(json.dumps({"ts": time.time()}))
+    except Exception:
+        pass
+    return True
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -169,7 +190,8 @@ def main():
     # terminal window is actually visible (not covered by another window).
     print(make_clickable(ad_text, ad["id"], ad["url"]))
 
-    if _view.is_viewable():
+    # Count once per window, and only when the window is actually visible.
+    if impression_due() and _view.is_viewable():
         log_impression(ad, cfg, ad_text=ad_text, variant=variant)
         increment_session(ad["id"])
 

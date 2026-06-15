@@ -198,16 +198,24 @@ def earnings_progress_line(cfg):
 
 
 def _emit_codex(ad, ad_text, variant, cfg):
-    """Codex Stop hook: count the impression (if visible) and return a clean
-    JSON systemMessage with the ad + earnings — no terminal drawing."""
+    """Codex Stop hook: count the impression (if visible) and return ONE clean
+    sponsor line as JSON systemMessage — no dev clutter, no terminal drawing."""
     if _view.is_viewable():
         track_scrollback(ad, ad_text, variant, cfg)
-    parts = [f"Sponsored · {ad_text}"]
-    for n in _earnings.pending_notifications():
-        parts.append(_strip_ansi(n).strip())
-    earned = _earnings.load_earnings().get("total_mc", 0) / 100_000
-    parts.append(f"${earned:.2f} earned so far · python3 ~/.claude/ads/optin.py to earn more")
-    msg = "   ·   ".join(p for p in parts if p)
+
+    # Clean, single-line ad (like a real sponsor slot). Append the domain only
+    # if it isn't already in the copy.
+    msg = f"Sponsored — {ad_text}"
+    url = (ad.get("url") or "")
+    dom = url.split("//")[-1].split("/")[0]
+    if dom and dom not in ad_text:
+        msg += f"  ·  {dom}"
+
+    # Milestone celebrations are rare; show them when they happen (still one line).
+    notes = [_strip_ansi(n).strip() for n in _earnings.pending_notifications()]
+    if notes:
+        msg += "   ·   " + "  ".join(notes)
+
     try:
         print(json.dumps({"continue": True, "systemMessage": msg}))
     except Exception:

@@ -74,7 +74,6 @@ command = 'python3 "{ads}/context_hook.py"'
 [[hooks.Stop.hooks]]
 type = "command"
 command = 'python3 "{ads}/click_ad.py" --codex'
-statusMessage = "sponsored by"
 {END}'''
     text = (text + "\n\n" + block).lstrip() + "\n"
 else:
