@@ -123,6 +123,52 @@ function weightedSample(ads) {
   return ads[ads.length - 1];
 }
 
+// ── Optimal placement: same contextual Thompson-sampling bandit as the CLI ─────
+// EV = price · (1 + 50·pCTR) · relevance, pCTR ~ Beta(α,β) over measured clicks.
+const CLICK_VALUE_MULT = 50, PRIOR_CTR = 0.02, PRIOR_STRENGTH = 40, BOOST = 2.5;
+const VARIANT_PRIORITY = ['typescript', 'rust', 'go', 'python', 'javascript', 'docker', 'infra'];
+
+function _gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function _gamma(k) {                                   // Marsaglia–Tsang
+  if (k < 1) return _gamma(k + 1) * Math.pow(Math.random(), 1 / k);
+  const d = k - 1 / 3, c = 1 / Math.sqrt(9 * d);
+  for (;;) {
+    let x, v;
+    do { x = _gauss(); v = 1 + c * x; } while (v <= 0);
+    v = v * v * v; const u = Math.random();
+    if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+    if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+  }
+}
+function _betaSample(a, b) { const x = _gamma(Math.max(a, 1e-6)), y = _gamma(Math.max(b, 1e-6)); return (x + y) > 0 ? x / (x + y) : PRIOR_CTR; }
+
+function expectedValue(ad, ctx) {
+  const price = (+ad.cpm || 20);
+  const perf  = ad.perf || {};
+  let variant = 'default';
+  if (ad.use_variants && ad.copy_variants) {
+    for (const t of VARIANT_PRIORITY) { if (ctx.has(t) && ad.copy_variants[t]) { variant = t; break; } }
+  }
+  const stats = (variant !== 'default' && perf.variants && perf.variants[variant])
+    ? perf.variants[variant] : { imp: perf.imp || 0, clk: perf.clk || 0 };
+  const imp = Math.max(0, stats.imp || 0), clk = Math.max(0, Math.min(imp, stats.clk || 0));
+  const pctr = _betaSample(PRIOR_CTR * PRIOR_STRENGTH + clk, (1 - PRIOR_CTR) * PRIOR_STRENGTH + (imp - clk));
+  let ev = price * (1 + CLICK_VALUE_MULT * pctr);
+  const tags = new Set(ad.tags || []);
+  if (tags.size && ctx.size) { for (const t of ctx) { if (tags.has(t)) { ev *= BOOST; break; } } }
+  return Math.max(ev, 1e-6);
+}
+
+function selectOptimal(ads, ctx) {
+  ctx = ctx || new Set();
+  const scored = ads.map(a => [expectedValue(a, ctx), a]);
+  const total  = scored.reduce((s, [v]) => s + v, 0);
+  if (total <= 0) return ads[ads.length - 1];
+  let r = Math.random() * total;
+  for (const [v, a] of scored) { r -= v; if (r <= 0) return a; }
+  return scored[scored.length - 1][1];
+}
+
 function detectContext() {
   const ws = vscode.workspace.workspaceFolders;
   if (!ws || ws.length === 0) return new Set();
@@ -239,7 +285,7 @@ async function activate(context) {
     if (!ads.length) return;
 
     const contextTags = detectContext();
-    currentAd         = weightedSample(ads);
+    currentAd         = selectOptimal(ads, contextTags);   // eCPM (bid×pCTR) ranking
     currentText       = selectCopy(currentAd, contextTags);
     currentVariant    = (currentAd.use_variants && currentAd.copy_variants)
       ? (['typescript','rust','go','python','javascript','docker','infra']
