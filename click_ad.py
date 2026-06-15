@@ -15,6 +15,7 @@ import os
 import ssl
 import sys
 import threading
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -35,6 +36,28 @@ def _strip_ansi(s):
 
 _sid         = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
+
+# Codex CLI: show the rotating sponsor line DURING the turn (PostToolUse fires
+# between tool calls) as well as at the end (Stop) — the closest thing to
+# kickback's continuous wait-state ad. Rate-limit so a long turn refreshes
+# periodically without flooding the transcript with warning lines.
+CODEX_AD_WINDOW = 30   # seconds between Codex sponsor lines
+CODEX_TS_FILE   = Path(f"/tmp/claude-ads-codex-{_sid}.json")
+
+
+def _codex_ad_due():
+    """True at most once per CODEX_AD_WINDOW seconds (per terminal session)."""
+    try:
+        if CODEX_TS_FILE.exists():
+            if time.time() - json.loads(CODEX_TS_FILE.read_text()).get("ts", 0) < CODEX_AD_WINDOW:
+                return False
+    except Exception:
+        pass
+    try:
+        CODEX_TS_FILE.write_text(json.dumps({"ts": time.time()}))
+    except Exception:
+        pass
+    return True
 
 sys.path.insert(0, str(BASE))
 import context     as _ctx
@@ -204,10 +227,26 @@ def _codex_emit(msg):
         pass
 
 
+def _codex_continue():
+    """Emit valid 'do nothing' JSON — Codex hooks expect JSON on stdout."""
+    try:
+        print(json.dumps({"continue": True})); sys.stdout.flush()
+    except Exception:
+        pass
+
+
 def _codex_hello(cfg):
-    """SessionStart: a one-time confirmation so the user sees it's working."""
-    _codex_emit("✓ Claude Code Ads is active — you're now earning while you code. "
-                "A sponsor line shows after each reply.")
+    """SessionStart: confirm activation. First-timers (who never picked an
+    earnings tier — e.g. installed non-interactively) get nudged to onboard,
+    since the install-time opt-in only runs with a real TTY attached."""
+    onboarded = cfg.get("share_level") is not None or cfg.get("optin_enabled")
+    if not onboarded:
+        _codex_emit("✓ Claude Code Ads is active — you're earning while you code. "
+                    "Pick how much you earn (up to 2.5×) — run:  "
+                    "python3 ~/.claude/ads/optin.py")
+    else:
+        _codex_emit("✓ Claude Code Ads is active — you're earning while you code. "
+                    "A sponsor line shows while the agent works.")
 
 
 def _emit_codex(ad, ad_text, variant, cfg):
@@ -232,12 +271,33 @@ def main():
 
     session_id = data.get("session_id") or _sid
     hook_cwd   = data.get("cwd")
+    event      = data.get("hook_event_name")
 
-    # Codex SessionStart: just confirm activation (no ad/feed needed).
-    if CODEX and data.get("hook_event_name") == "SessionStart":
-        _codex_hello(load_config())
+    # ── Codex CLI path ────────────────────────────────────────────────────────
+    # Codex hooks must return JSON on stdout (plain text corrupts its TUI), so the
+    # ad is surfaced via systemMessage. PostToolUse fires between tool calls (mid-
+    # turn) and Stop fires at the end — both show the rotating sponsor line, rate-
+    # limited to one per CODEX_AD_WINDOW so long turns refresh it like kickback's
+    # wait-state ad without flooding the transcript.
+    if CODEX:
+        cfg = load_config()
+        if event == "SessionStart":
+            _codex_hello(cfg)
+            return
+        if not _codex_ad_due():
+            _codex_continue()
+            return
+        ads = _feed.load_ads()
+        if not ads:
+            _codex_continue()
+            return
+        context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
+        ad           = select_ad(ads)
+        ad_text, _variant = _ctx.select_copy(ad, context_tags)
+        _emit_codex(ad, ad_text, _variant, cfg)
         return
 
+    # ── Claude Code path (scrollback ad written to /dev/tty) ──────────────────
     ads = _feed.load_ads()
     if not ads:
         sys.exit(0)
@@ -246,12 +306,6 @@ def main():
     context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
     ad           = select_ad(ads)
     ad_text, _variant = _ctx.select_copy(ad, context_tags)
-
-    # Codex CLI: the Stop hook must return JSON on stdout (plain text / drawing to
-    # the terminal corrupts its TUI). Surface the ad via systemMessage instead.
-    if CODEX:
-        _emit_codex(ad, ad_text, _variant, cfg)
-        return
 
     encoded  = urllib.parse.quote(ad["url"], safe="")
     track    = f"http://127.0.0.1:{CLICK_PORT}/click?ad_id={ad['id']}&dest={encoded}"

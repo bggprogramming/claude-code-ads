@@ -61,8 +61,10 @@ if cfg.exists():
 # strip any prior block of ours (idempotent / uninstall)
 text = re.sub(re.escape(START) + r".*?" + re.escape(END) + r"\n?", "", text, flags=re.S).rstrip()
 if mode == "install":
-    # Codex surfaces the ad through the Stop hook's JSON systemMessage (click_ad
-    # --codex). PostToolUse just feeds local context for better targeting.
+    # Codex surfaces the ad via JSON systemMessage. PostToolUse fires between tool
+    # calls so the sponsor line shows DURING the turn (rate-limited in click_ad),
+    # and Stop shows it at the end. SessionStart confirms activation / onboarding.
+    # context_hook also runs on PostToolUse to feed local targeting context.
     block = f'''{START}
 [[hooks.SessionStart]]
 [[hooks.SessionStart.hooks]]
@@ -74,6 +76,9 @@ matcher = ".*"
 [[hooks.PostToolUse.hooks]]
 type = "command"
 command = 'python3 "{ads}/context_hook.py"'
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = 'python3 "{ads}/click_ad.py" --codex'
 
 [[hooks.Stop]]
 [[hooks.Stop.hooks]]
@@ -221,6 +226,12 @@ done
 # ── 6. Pick earnings tier, in-flow (only when a human terminal is attached) ──
 if [ -t 1 ]; then
   python3 "$ADS_DIR/optin.py" || true
+else
+  # Non-interactive install (e.g. run by an AI agent / piped) — the opt-in menu
+  # can't prompt, so point them at it. Codex also nudges on first SessionStart.
+  echo ""
+  info "  👉 To choose how much you earn (up to 2.5×), run:"
+  info "       python3 ~/.claude/ads/optin.py"
 fi
 
 echo ""
@@ -228,7 +239,7 @@ info "🎉 Done! Your terminal now earns you money while you code."
 echo ""
 info "  1. Start a new session — that's it. Ads show up on their own."
 [[ "$DO_CLAUDE" == "1" ]] && info "     (Claude Code: status bar, spinner, and a line after each reply.)"
-[[ "$DO_CODEX"  == "1" ]] && info "     (Codex: a sponsor line after each reply.)"
+[[ "$DO_CODEX"  == "1" ]] && info "     (Codex: a sponsor line shows while the agent works + after each reply.)"
 CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
 if [[ -n "$CODE" ]]; then
   echo ""
