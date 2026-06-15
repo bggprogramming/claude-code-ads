@@ -26,6 +26,12 @@ CLICK_PORT  = 54323
 SESSION_CAP = 3
 SITE_BASE   = "https://bggprogramming.github.io/claude-code-ads"
 SSL_CTX     = ssl.create_default_context(cafile=certifi.where())
+CODEX       = "--codex" in sys.argv   # Codex CLI: emit JSON systemMessage, not /dev/tty
+
+
+def _strip_ansi(s):
+    import re
+    return re.sub(r"\033\[[0-9;]*m", "", s)
 
 _sid         = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
@@ -111,80 +117,26 @@ def osc8(text, url):
 
 def render_logo(ad):
     """
-    Return a terminal representation of the advertiser's brand logo.
-
-    1. iTerm2 / kitty: the real uploaded image, inline (crisp).
-    2. Any other terminal (incl. Apple Terminal, VS Code/Cursor): the actual logo
-       rendered as colored Unicode half-blocks — low-res but recognizable, using
-       truecolor when available, else the 256-color cube.
-    3. No logo / no Pillow / fetch fails: a small colored brand chip.
-    Returns '' if there's nothing to show.
+    Inline brand image for terminals that support an image protocol (iTerm2 / kitty);
+    a small colored brand chip everywhere else. (No block-art — it rendered poorly.)
     """
     logo_url = ad.get("logo_url")
     term     = os.environ.get("TERM_PROGRAM", "")
     is_iterm = term == "iTerm.app"
     is_kitty = "kitty" in os.environ.get("TERM", "") or bool(os.environ.get("KITTY_WINDOW_ID"))
 
-    data = None
-    if logo_url:
+    if logo_url and (is_iterm or is_kitty):
         try:
             req  = urllib.request.Request(logo_url, headers={"User-Agent": "claude-code-ads/2.0"})
             data = urllib.request.urlopen(req, timeout=1.5, context=SSL_CTX).read()
-            if not data or len(data) > 256 * 1024:
-                data = None
+            if data and len(data) <= 256 * 1024:
+                b64 = base64.b64encode(data).decode()
+                if is_iterm:
+                    return f"\033]1337;File=inline=1;preserveAspectRatio=1;height=2:{b64}\a "
+                return f"\033_Gf=100,a=T,t=d;{b64}\033\\ "
         except Exception:
-            data = None
-
-    if data:
-        b64 = base64.b64encode(data).decode()
-        if is_iterm:
-            return f"\033]1337;File=inline=1;preserveAspectRatio=1;height=2:{b64}\a "
-        if is_kitty:
-            return f"\033_Gf=100,a=T,t=d;{b64}\033\\ "
-        art = _blocks_art(data)        # real logo as colored blocks (Apple Terminal etc.)
-        if art:
-            return art
-
+            pass
     return _chip(ad)
-
-
-def _blocks_art(data, cells_tall=6, max_wide=24):
-    """Render image bytes as colored half-block art (▀: fg=top px, bg=bottom px)."""
-    try:
-        import io
-        from PIL import Image
-    except Exception:
-        return None
-    try:
-        im = Image.open(io.BytesIO(data)).convert("RGBA")
-        bgc = Image.new("RGBA", im.size, (11, 11, 13, 255))   # flatten alpha on terminal bg
-        im  = Image.alpha_composite(bgc, im).convert("RGB")
-        ph  = cells_tall * 2
-        aspect = (im.width / im.height) if im.height else 1.0
-        pw  = max(2, min(max_wide, round(ph * aspect)))
-        im  = im.resize((pw, ph))
-        px  = im.load()
-        truecolor = os.environ.get("COLORTERM", "") in ("truecolor", "24bit")
-
-        def code(rgb, fg):
-            r, g, b = rgb
-            lead = 38 if fg else 48
-            if truecolor:
-                return f"\033[{lead};2;{r};{g};{b}m"
-            n = 16 + 36 * round(r / 255 * 5) + 6 * round(g / 255 * 5) + round(b / 255 * 5)
-            return f"\033[{lead};5;{n}m"
-
-        lines = []
-        for cy in range(cells_tall):
-            line = "  "
-            for x in range(pw):
-                top = px[x, cy * 2]
-                bot = px[x, cy * 2 + 1]
-                line += code(top, True) + code(bot, False) + "▀"
-            lines.append(line + "\033[0m")
-        return "\n".join(lines) + "\n"
-    except Exception:
-        return None
 
 
 def _chip(ad):
@@ -245,6 +197,23 @@ def earnings_progress_line(cfg):
     return line
 
 
+def _emit_codex(ad, ad_text, variant, cfg):
+    """Codex Stop hook: count the impression (if visible) and return a clean
+    JSON systemMessage with the ad + earnings — no terminal drawing."""
+    if _view.is_viewable():
+        track_scrollback(ad, ad_text, variant, cfg)
+    parts = [f"Sponsored · {ad_text}"]
+    for n in _earnings.pending_notifications():
+        parts.append(_strip_ansi(n).strip())
+    earned = _earnings.load_earnings().get("total_mc", 0) / 100_000
+    parts.append(f"${earned:.2f} earned so far · python3 ~/.claude/ads/optin.py to earn more")
+    msg = "   ·   ".join(p for p in parts if p)
+    try:
+        print(json.dumps({"continue": True, "systemMessage": msg}))
+    except Exception:
+        pass
+
+
 def main():
     # Read hook stdin for context (Stop hook passes session_id, cwd)
     data = {}
@@ -266,6 +235,12 @@ def main():
     context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
     ad           = select_ad(ads)
     ad_text, _variant = _ctx.select_copy(ad, context_tags)
+
+    # Codex CLI: the Stop hook must return JSON on stdout (plain text / drawing to
+    # the terminal corrupts its TUI). Surface the ad via systemMessage instead.
+    if CODEX:
+        _emit_codex(ad, ad_text, _variant, cfg)
+        return
 
     encoded  = urllib.parse.quote(ad["url"], safe="")
     track    = f"http://127.0.0.1:{CLICK_PORT}/click?ad_id={ad['id']}&dest={encoded}"

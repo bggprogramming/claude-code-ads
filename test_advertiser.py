@@ -98,8 +98,8 @@ def main():
         "cpm_cents":          2500,
         "bid_per_block_cents": 2500,
         "daily_budget_cents": 10000,
-        "status":             "active",
-        "paid":               True,
+        "status":             "paused",   # test row — must NOT enter the live auction
+        "paid":               False,
     }
 
     created = None
@@ -121,8 +121,8 @@ def main():
                          bool(created.get("dashboard_key")) and len(created["dashboard_key"]) == 36,
                          created.get("dashboard_key", "MISSING")))
 
-    results.append(check("status is 'active'",
-                         created.get("status") == "active",
+    results.append(check("status stored ('paused' test row — not in live auction)",
+                         created.get("status") == "paused",
                          created.get("status")))
 
     results.append(check("cpm_cents stored correctly",
@@ -238,24 +238,26 @@ def main():
     print()
     print(SEP)
 
-    # ── Step 5: Verify seeded advertisers have real impression data ────────────
+    # ── Step 5: Verify the built-in house ads are served by the ad-feed function ──
     print()
-    print("  Step 5 — Verify seeded advertisers (Cursor, Warp, Linear) have data")
+    print("  Step 5 — Verify built-in house ads (Cursor, Warp, Linear) are served")
     print()
 
+    feed_ids = set()
+    try:
+        url = f"{cfg['supabase_url']}/functions/v1/ad-feed"
+        req = urllib.request.Request(url, headers={"User-Agent": "test"})
+        body = json.loads(urllib.request.urlopen(req, timeout=10, context=SSL_CTX).read())
+        feed_ids = {a.get("id") for a in body.get("ads", [])}
+    except Exception as e:
+        print(f"  ad-feed fetch error: {e}")
+
     for ad_id, company in [("ad_cursor", "Cursor"), ("ad_warp", "Warp"), ("ad_linear", "Linear")]:
-        try:
-            adv_rows = api(cfg, "GET", "advertisers", params=f"?ad_id=eq.{ad_id}&select=ad_id,company,status,dashboard_key")
-            evt_rows = api(cfg, "GET", "events",      params=f"?ad_id=eq.{ad_id}&select=event&limit=1")
-            has_adv = bool(adv_rows)
-            has_evt = bool(evt_rows)
-            results.append(check(
-                f"{company}: row in advertisers + has events",
-                has_adv and has_evt,
-                f"dashboard_key={'✓' if has_adv else '✗'}  events={'✓' if has_evt else '✗'}"
-            ))
-        except Exception as e:
-            results.append(check(f"{company}: row in advertisers", False, str(e)))
+        results.append(check(
+            f"{company}: served by ad-feed (house ad)",
+            ad_id in feed_ids,
+            "in feed ✓" if ad_id in feed_ids else "NOT in feed"
+        ))
 
     print()
     print(SEP)

@@ -145,8 +145,8 @@ def interactive():
     base = _base_per_imp_mc()
     base1k = _per1k(1.0, base)
     print()
-    print(f"  {B}Earn more by sharing a little context{R}")
-    print(f"  {GREY}More context → advertisers can target you → they bid more → you earn more.{R}")
+    print(f"  {B}💰 Pick how much to share — more sharing = more money.{R}")
+    print(f"  {GREY}Only coding hints (your languages, tools). Never your code, files, or secrets.{R}")
     print()
     for i, t in enumerate(TIERS):
         col   = PINK if t["key"] == "max" else (GREEN if i > 0 else GREY)
@@ -162,8 +162,8 @@ def interactive():
     print()
     rec = TIERS[DEFAULT_LEVEL]
     try:
-        ans = _ask(f"  Type 1-4 and press Enter  "
-                   f"{DIM}(Enter = {DEFAULT_LEVEL+1} · {rec['name']}, recommended){R}: ").strip().lower()
+        ans = _ask(f"  Pick a number 1-4 and press Enter  "
+                   f"{DIM}(just press Enter for {DEFAULT_LEVEL+1} · {rec['name']}){R}: ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print(f"\n  {GREY}No change. Run this anytime: python3 ~/.claude/ads/optin.py{R}\n")
         return

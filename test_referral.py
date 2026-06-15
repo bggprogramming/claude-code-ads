@@ -132,7 +132,7 @@ def main():
             "ad_id": test_adid, "company": "RefTest", "email": "reftest@example.com",
             "ad_text": "ref test", "url": "https://example.com",
             "cpm_cents": 200000, "bid_per_block_cents": 200000, "blocks": 10,
-            "paid": True, "status": "active",
+            "paid": False, "status": "paused",   # test row — not in the live auction
         })
     except Exception as e:
         print(f"  (temp advertiser insert error: {e})")

@@ -61,31 +61,20 @@ if cfg.exists():
 # strip any prior block of ours (idempotent / uninstall)
 text = re.sub(re.escape(START) + r".*?" + re.escape(END) + r"\n?", "", text, flags=re.S).rstrip()
 if mode == "install":
+    # Codex surfaces the ad through the Stop hook's JSON systemMessage (click_ad
+    # --codex). PostToolUse just feeds local context for better targeting.
     block = f'''{START}
-[[hooks.SessionStart]]
-[[hooks.SessionStart.hooks]]
-type = "command"
-command = 'bash "{ads}/start_click_server.sh"'
-
-[[hooks.PreToolUse]]
-matcher = ".*"
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = 'python3 "{ads}/record_tool_start.py"'
-
 [[hooks.PostToolUse]]
 matcher = ".*"
 [[hooks.PostToolUse.hooks]]
 type = "command"
 command = 'python3 "{ads}/context_hook.py"'
-[[hooks.PostToolUse.hooks]]
-type = "command"
-command = 'python3 "{ads}/completion_ad.py"'
 
 [[hooks.Stop]]
 [[hooks.Stop.hooks]]
 type = "command"
-command = 'python3 "{ads}/click_ad.py"'
+command = 'python3 "{ads}/click_ad.py" --codex'
+statusMessage = "sponsored by"
 {END}'''
     text = (text + "\n\n" + block).lstrip() + "\n"
 else:
@@ -161,9 +150,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   pip3 install --quiet pyobjc-framework-Quartz 2>/dev/null \
     || python3 -m pip install --quiet pyobjc-framework-Quartz 2>/dev/null || true
 fi
-# Optional: Pillow lets the brand logo render as colored blocks in terminals
-# without an image protocol (Apple Terminal, VS Code). Falls back to a chip.
-pip3 install --quiet Pillow 2>/dev/null || python3 -m pip install --quiet Pillow 2>/dev/null || true
 
 # ── 4. Register account ───────────────────────────────────────────────────────
 info "Setting up your account…"
@@ -218,11 +204,18 @@ if [ -t 1 ]; then
 fi
 
 echo ""
-info "✓ All set — your ads activate in your next agent session."
-[[ "$DO_CLAUDE" == "1" ]] && info "  Claude Code: statusline + spinner + scrollback + completion"
-[[ "$DO_CODEX"  == "1" ]] && info "  Codex CLI:   scrollback + completion (per turn)"
+info "🎉 Done! Your terminal now earns you money while you code."
 echo ""
-info "Earn more / change tier:  python3 ~/.claude/ads/optin.py"
-info "Your referral + stats:    python3 ~/.claude/ads/referral.py"
-info "Uninstall anytime:        curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
+info "  1. Start a new session — that's it. Ads show up on their own."
+[[ "$DO_CLAUDE" == "1" ]] && info "     (Claude Code: status bar, spinner, and a line after each reply.)"
+[[ "$DO_CODEX"  == "1" ]] && info "     (Codex: a sponsor line after each reply.)"
+CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
+if [[ -n "$CODE" ]]; then
+  echo ""
+  info "  2. Invite a friend — you BOTH get \$10:"
+  info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
+fi
+echo ""
+info "  Earn more anytime:  python3 ~/.claude/ads/optin.py"
+info "  Remove it anytime:  curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
 echo ""
