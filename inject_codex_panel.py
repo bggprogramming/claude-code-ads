@@ -29,10 +29,16 @@ KEY  = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im
         ".Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc")
 BASE = Path(__file__).parent
 
-EXT_GLOBS = ["openai.chatgpt-*", "openai.codex-*", "openai.*chatgpt*", "*codex*"]
+# Codex panels we know how to inject (same webview build in VS Code and Cursor).
+CODEX_GLOBS = ["openai.chatgpt-*", "openai.codex-*", "*codex*"]
+# Other agent panels kickback also targets — detected + reported, not yet injected
+# (the status-bar ad still covers them in the meantime). Excludes our own extension.
+OTHER_AGENT_GLOBS = ["anthropic.claude-code-*", "anthropic.*", "*claude-dev*", "continue.continue-*"]
 EXT_ROOTS = [Path.home() / ".vscode" / "extensions",
              Path.home() / ".cursor" / "extensions",
-             Path.home() / ".vscode-insiders" / "extensions"]
+             Path.home() / ".cursor-nightly" / "extensions",
+             Path.home() / ".vscode-insiders" / "extensions",
+             Path.home() / ".windsurf" / "extensions"]
 
 CSP_FIND = 'connect-src ${n.join(" ")}'
 CSP_REPL = 'connect-src ${n.join(" ")} ' + SUPA
@@ -81,15 +87,36 @@ def load_identity():
     return None, 0
 
 
-def find_ext():
+def _editor(ext: Path) -> str:
+    name = ext.parent.parent.name            # e.g. ".vscode" / ".cursor"
+    return {".vscode": "VS Code", ".cursor": "Cursor", ".cursor-nightly": "Cursor Nightly",
+            ".vscode-insiders": "VS Code Insiders", ".windsurf": "Windsurf"}.get(name, name)
+
+
+def find_exts():
+    """Every injectable Codex panel across all installed editors (VS Code, Cursor…)."""
+    found = []
     for root in EXT_ROOTS:
         if not root.is_dir():
             continue
-        for g in EXT_GLOBS:
+        for g in CODEX_GLOBS:
             for d in sorted(root.glob(g)):
-                if (d / "webview" / "index.html").exists() and (d / "out" / "extension.js").exists():
-                    return d
-    return None
+                if (d / "webview" / "index.html").exists() and (d / "out" / "extension.js").exists() and d not in found:
+                    found.append(d)
+    return found
+
+
+def find_other_agents():
+    """Agent panels kickback also targets but we don't inject yet (report only)."""
+    out = []
+    for root in EXT_ROOTS:
+        if not root.is_dir():
+            continue
+        for g in OTHER_AGENT_GLOBS:
+            for d in sorted(root.glob(g)):
+                if d not in out and "claude-code-ads" not in d.name:   # not our own extension
+                    out.append(d)
+    return out
 
 
 def _backup(p: Path):
@@ -115,12 +142,12 @@ def patch(ext: Path):
 
     # 1. CSP connect-src
     js = extjs.read_text(encoding="utf-8", errors="replace")
-    if SUPA in js and CSP_REPL in js:
-        print("  · CSP already patched")
-    elif CSP_FIND in js:
+    if CSP_FIND in js:
         _backup(extjs)
         extjs.write_text(js.replace(CSP_FIND, CSP_REPL, 1), encoding="utf-8")
         print("  ✓ CSP connect-src extended")
+    elif SUPA in js:
+        print("  · CSP already patched")
     else:
         print("  ✗ CSP anchor not found — extension build changed; aborting (no changes).")
         return False
@@ -169,18 +196,24 @@ def status(ext: Path):
 
 
 def main():
-    ext = find_ext()
-    if not ext:
-        print("  No Codex/ChatGPT VS Code extension found. Install it, then re-run.")
-        sys.exit(0)
-    arg = sys.argv[1] if len(sys.argv) > 1 else ""
-    if arg == "--revert":
-        revert(ext)
-    elif arg == "--status":
-        status(ext)
-    else:
-        print(f"  Patching {ext.name} …")
-        patch(ext)
+    arg  = sys.argv[1] if len(sys.argv) > 1 else ""
+    exts = find_exts()
+
+    if not exts:
+        print("  No injectable Codex panel found in VS Code or Cursor.")
+    for ext in exts:
+        print(f"\n  [{_editor(ext)}] {ext.name}")
+        if arg == "--revert":
+            revert(ext)
+        elif arg == "--status":
+            status(ext)
+        else:
+            patch(ext)
+
+    # Surface other agent panels (Claude Code, etc.) so parity gaps are visible.
+    for o in find_other_agents():
+        print(f"\n  note: [{_editor(o)}] {o.name} — panel injection for this agent isn't built "
+              f"yet; the status-bar ad still covers it. Ask the maintainer to add it.")
 
 
 if __name__ == "__main__":
