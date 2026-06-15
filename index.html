@@ -184,6 +184,13 @@
     .t-prompt { color: #333; }
     .t-cmd    { color: #888; }
     .t-status { color: var(--accent); }
+    .t-status a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-color: rgba(180,255,105,0.4);
+      text-underline-offset: 2px;
+    }
+    .t-status a:hover { text-decoration-color: var(--accent); }
     .t-think  { color: #555; }
     .t-resp   { color: #555; }
 
@@ -349,7 +356,7 @@
     </div>
     <div class="term-body">
       <div><span class="t-prompt">~ $ </span><span class="t-cmd">claude</span></div>
-      <div class="t-status">✦ Cursor — Accept the next line with Tab. Ships in half the time. cursor.com<span class="term-label">statusLine</span></div>
+      <div class="t-status">✦ Cursor — Accept the next line with Tab. Ships in half the time. <a href="https://cursor.com" target="_blank" rel="noopener">cursor.com</a><span class="term-label">statusLine</span></div>
       <br>
       <div class="t-think">⚡ Thinking with Warp...<span class="term-label-dim">spinner</span></div>
       <br>

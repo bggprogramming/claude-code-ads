@@ -126,6 +126,13 @@
       transition: opacity 0.2s;
     }
     .t-preview-status.empty { color: var(--muted); font-style: italic; }
+    .t-preview-status a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-color: rgba(180,255,105,0.4);
+      text-underline-offset: 2px;
+    }
+    .t-preview-status a:hover { text-decoration-color: var(--accent); }
 
     .t-think  { color: #555; }
     .t-resp   { color: #555; }
@@ -422,6 +429,17 @@
   const SUPABASE_URL = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
 
+  // Matches a bare domain at the end of the string: word.tld or word.tld/path
+  const DOMAIN_RE = /\b([\w-]+\.(?:com|io|dev|app|ai|co|net|org|sh|gg)(?:\/\S*)?)\s*$/i;
+
+  function linkify(text) {
+    const destUrl = document.getElementById('url').value.trim();
+    const href    = destUrl || '#';
+    return text.replace(DOMAIN_RE, (match, domain) =>
+      `<a href="${href}" target="_blank" rel="noopener">${domain}</a>`
+    );
+  }
+
   function updatePreview(el) {
     const val = el.value.trim();
     const len = val.length;
@@ -432,13 +450,19 @@
     counter.className = 'char-count' + (len > 90 ? ' over' : len > 70 ? ' warn' : '');
 
     if (val) {
-      preview.textContent = val;
+      preview.innerHTML = linkify(val);
       preview.classList.remove('empty');
     } else {
       preview.textContent = 'Your ad text will appear here';
       preview.classList.add('empty');
     }
   }
+
+  // Re-linkify when the URL field changes (updates the href on existing preview)
+  document.getElementById('url').addEventListener('input', () => {
+    const adEl = document.getElementById('ad_text');
+    if (adEl.value.trim()) updatePreview(adEl);
+  });
 
   document.getElementById('lead-form').addEventListener('submit', async (e) => {
     e.preventDefault();
