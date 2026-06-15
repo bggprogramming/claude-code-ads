@@ -126,6 +126,10 @@ def main():
         import subprocess
         subprocess.run(["pbcopy"], input=invite_msg.encode(), check=True, timeout=3)
         print("  ✓ Copied to your clipboard — just paste it into Messages.")
+        try:
+            import funnel; funnel.log("referral_shared")
+        except Exception:
+            pass
     except Exception:
         print(f"  Direct install link: {invite_url}")
     print()

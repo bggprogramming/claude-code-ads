@@ -24,3 +24,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.payout-request]
 verify_jwt = false
+[functions.dev-email]
+verify_jwt = false

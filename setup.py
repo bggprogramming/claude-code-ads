@@ -133,6 +133,10 @@ def main():
     ok = register_supabase(cfg)
     if ok:
         print("  Registered.")
+    try:
+        sys.path.insert(0, str(BASE)); import funnel; funnel.log("registered")
+    except Exception:
+        pass
 
     _show_link(cfg["referral_code"])
 

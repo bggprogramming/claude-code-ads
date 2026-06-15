@@ -124,13 +124,22 @@ PYEOF
 fi
 
 echo ""; info "Installing Claude Code Ads…"; echo ""
+# Transparency — say exactly what this touches before changing anything.
+info "This will:"
+info "  • copy scripts to ~/.claude/ads/   (self-contained; nothing global)"
+[[ "$DO_CLAUDE" == "1" ]] && info "  • add hooks to ~/.claude/settings.json   (merged, your hooks kept)"
+[[ "$DO_CODEX"  == "1" ]] && info "  • add hooks to ~/.codex/config.toml      (in a marked, removable block)"
+info "  • show a sponsor line while your agent works — you keep 50%"
+info "  Remove it all anytime:  curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
+echo ""
 
 # ── 1. Download scripts ───────────────────────────────────────────────────────
 mkdir -p "$ADS_DIR"
 FILES=(ad.py update_spinner.py click_server.py start_click_server.sh
        earnings.py setup.py referral.py stats.py ads.json
        context.py feed.py click_ad.py completion_ad.py record_tool_start.py
-       context_hook.py context_uploader.py optin.py viewability.py)
+       context_hook.py context_uploader.py optin.py viewability.py
+       funnel.py demo.py)
 for f in "${FILES[@]}"; do
   if ! curl -fsSL "$REPO/$f" -o "$ADS_DIR/$f.part"; then
     err "Failed to download $f. Aborting (no config changes made)."; rm -f "$ADS_DIR/$f.part"; exit 1
@@ -223,9 +232,13 @@ for pair in "Cursor:$HOME/.cursor/extensions" "VS Code:$HOME/.vscode/extensions"
   [[ "$ok" == "1" ]] && info "✓ Status-bar extension installed into $ename (reload it to activate)"
 done
 
+# ── Funnel: installed ─────────────────────────────────────────────────────────
+python3 "$ADS_DIR/funnel.py" installed >/dev/null 2>&1 || true
+
 # ── 6. Pick earnings tier, in-flow (only when a human terminal is attached) ──
 if [ -t 1 ]; then
   python3 "$ADS_DIR/optin.py" || true
+  python3 "$ADS_DIR/demo.py"  || true   # the "it worked" moment
 else
   # Non-interactive install (e.g. run by an AI agent / piped) — the opt-in menu
   # can't prompt, so point them at it. Codex also nudges on first SessionStart.
@@ -237,17 +250,20 @@ fi
 echo ""
 info "🎉 Done! Your terminal now earns you money while you code."
 echo ""
+CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
+if [[ -n "$CODE" ]]; then
+  info "  💸 DOUBLE YOUR EARNINGS — invite a friend, you BOTH get \$10:"
+  info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
+  info "     (this is the #1 way people earn here — share it once)"
+  echo ""
+fi
 info "  1. Start a new session — that's it. Ads show up on their own."
 [[ "$DO_CLAUDE" == "1" ]] && info "     (Claude Code: status bar, spinner, and a line after each reply.)"
 [[ "$DO_CODEX"  == "1" ]] && info "     (Codex: a sponsor line shows while the agent works + after each reply.)"
-CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
 if [[ -n "$CODE" ]]; then
   echo ""
   info "  2. Your earnings portal (bookmark it — one click, no code to type):"
   info "     https://bggprogramming.github.io/claude-code-ads/portal.html?code=$CODE"
-  echo ""
-  info "  3. Invite a friend — you BOTH get \$10:"
-  info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
 fi
 echo ""
 info "  Earn more anytime:  python3 ~/.claude/ads/optin.py"

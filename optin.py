@@ -18,10 +18,20 @@ import sys
 import time
 from pathlib import Path
 
-BASE     = Path(__file__).parent
-CFG_FILE = BASE / "config.json"
-SETTINGS = Path.home() / ".claude" / "settings.json"
-UPLOADER = str(BASE / "context_uploader.py")
+BASE      = Path(__file__).parent
+CFG_FILE  = BASE / "config.json"
+SETTINGS  = Path.home() / ".claude" / "settings.json"
+UPLOADER  = str(BASE / "context_uploader.py")
+SITE_BASE = "https://bggprogramming.github.io/claude-code-ads"
+
+
+def _funnel(step, meta=None):
+    try:
+        sys.path.insert(0, str(BASE))
+        import funnel
+        funnel.log(step, meta)
+    except Exception:
+        pass
 
 # ── ANSI ──────────────────────────────────────────────────────────────────────
 R   = "\033[0m"; B = "\033[1m"; DIM = "\033[2m"
@@ -147,6 +157,7 @@ def interactive():
     print()
     print(f"  {B}💰 Pick how much to share — more sharing = more money.{R}")
     print(f"  {GREY}Only coding hints (your languages, tools). Never your code, files, or secrets.{R}")
+    print(f"  {DIM}Most developers pick Stack; the top earners run Max (2.5×).{R}")
     print()
     for i, t in enumerate(TIERS):
         col   = PINK if t["key"] == "max" else (GREEN if i > 0 else GREY)
@@ -173,6 +184,7 @@ def interactive():
         print(f"\n  {GREY}Didn't catch that — no change. Run optin.py again to choose.{R}\n")
         return
     _confirm(mapping[ans])
+    _capture_email()
 
 
 def _animate(target):
@@ -205,6 +217,53 @@ def _animate(target):
         pass
 
 
+def _invite_cta():
+    """Referral is our cheapest growth — make it the first thing the user sees
+    after activating. Shown right after they pick a tier."""
+    code = load_cfg().get("referral_code", "")
+    if not code:
+        return
+    link = f"{SITE_BASE}/invite.html?ref={code}"
+    print()
+    print(f"  {PINK}{B}💸 Invite a friend — you BOTH get $10.{R}")
+    print(f"  {GREEN}{link}{R}")
+    print(f"  {DIM}Share it once — it's the fastest way to earn. "
+          f"(full message: python3 ~/.claude/ads/referral.py){R}")
+    print()
+
+
+def _capture_email():
+    """Optional email — for payouts + so earnings are never lost with the code.
+    Pseudonymous stays the default; this is opt-in."""
+    cfg = load_cfg()
+    if cfg.get("email") or not cfg.get("referral_code"):
+        return
+    try:
+        ans = _ask(f"  {DIM}Optional — email for payouts & recovery "
+                   f"(so you never lose your earnings). Enter to skip:{R} ").strip()
+    except (EOFError, KeyboardInterrupt):
+        return
+    if not ans or "@" not in ans or " " in ans:
+        return
+    try:
+        import ssl, urllib.request
+        import certifi
+        body = json.dumps({"code": cfg["referral_code"], "email": ans}).encode()
+        req  = urllib.request.Request(
+            f"{cfg['supabase_url']}/functions/v1/dev-email", data=body,
+            headers={"apikey": cfg["supabase_key"],
+                     "Authorization": f"Bearer {cfg['supabase_key']}",
+                     "Content-Type": "application/json"}, method="POST")
+        urllib.request.urlopen(req, timeout=5,
+                               context=ssl.create_default_context(cafile=certifi.where()))
+        cfg["email"] = ans
+        save_cfg(cfg)
+        print(f"  {GREEN}✓ Saved — we'll email you the day cash-out opens.{R}\n")
+        _funnel("email_added")
+    except Exception:
+        print(f"  {GREY}Couldn't save that now — add it later in your portal.{R}\n")
+
+
 def _confirm(level):
     level = apply_level(level)
     t = TIERS[level]
@@ -221,7 +280,8 @@ def _confirm(level):
             nxt = TIERS[level + 1]
             print(f"  {GREY}Want more? {nxt['name']} pays {nxt['mult']:.1f}× — run optin.py again.{R}")
     print(f"  {DIM}Change anytime: python3 ~/.claude/ads/optin.py{R}")
-    print()
+    _funnel("optin_set", {"level": level})
+    _invite_cta()
 
 
 def summary():

@@ -156,6 +156,7 @@ Deno.serve(async (req: Request) => {
           ], { onConflict: 'referrer_code,referred_code,recipient', ignoreDuplicates: true })
         }
         await supabase.from('users').update({ milestone_hit: true }).eq('id', userId)
+        await supabase.from('funnel_events').insert({ code: u.referral_code, step: 'milestone' })
         milestoneHit = true
       }
     }

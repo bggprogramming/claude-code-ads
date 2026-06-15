@@ -93,6 +93,10 @@
       <div class="empty" id="cashout-note" style="text-align:left;padding:12px 0 4px"></div>
       <button id="connect-btn" style="width:100%;background:var(--blue);border:none;border-radius:999px;color:#fff;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Set up payouts →</button>
       <button id="cashout-btn" style="width:100%;background:var(--accent);border:none;border-radius:999px;color:#0a0c08;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Cash out</button>
+      <div class="share" style="margin-top:12px">
+        <input id="email-in" type="email" placeholder="email — get paid & never lose your earnings (optional)" autocomplete="email" spellcheck="false" style="flex:1;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
+        <button onclick="saveEmail(this)">Save</button>
+      </div>
       <div id="payout-hist" style="margin-top:6px"></div>
     </div>
 
@@ -125,6 +129,7 @@
 
 <script>
   const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc";
   const SITE = location.href.replace(/portal\.html.*$/, '');
   const $ = id => document.getElementById(id);
   const fmt = n => n.toLocaleString();
@@ -141,6 +146,23 @@
 
   let CODE = '';
   function logout(){ localStorage.removeItem('cca_code'); location.href = location.pathname; }
+
+  // Fire-and-forget funnel event (pseudonymous: referral code + step).
+  function funnelLog(step){
+    try{ fetch(`${SUPA}/rest/v1/funnel_events`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({code:CODE||null,step})}); }catch(e){}
+  }
+
+  async function saveEmail(btn){
+    const email = $('email-in').value.trim();
+    if(!email || !email.includes('@')){ $('email-in').focus(); return; }
+    const t=btn.textContent; btn.textContent='Saving…'; btn.disabled=true;
+    try{
+      const r = await fetch(`${SUPA}/functions/v1/dev-email`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:CODE,email})}).then(r=>r.json());
+      btn.textContent = r.ok ? 'Saved ✓' : 'Try again';
+      if(r.ok) funnelLog('email_added');
+    }catch(e){ btn.textContent='Try again'; }
+    btn.disabled=false; setTimeout(()=>btn.textContent=t,2000);
+  }
 
   async function load(code){
     code = extractCode(code);
@@ -170,6 +192,7 @@
       const ib = $('invite-btn');
       const shareText = "i'm getting paid to code — the ads in my terminal pay me 50%. join w/ my link and we both get $10:";
       ib.onclick = async () => {
+        funnelLog('referral_shared');
         if (navigator.share) { try { await navigator.share({ title:'Get paid to code', text: shareText, url: inviteUrl }); return; } catch(e){} }
         navigator.clipboard.writeText(`${shareText} ${inviteUrl}`).then(()=>{ ib.textContent='✓ Invite copied — paste in Messages'; setTimeout(()=>ib.textContent='Send invite via Messages →',2200); });
       };
