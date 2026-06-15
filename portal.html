@@ -190,7 +190,7 @@
       $('ref-link').textContent = inviteUrl;
       // Wire the native share / copy invite
       const ib = $('invite-btn');
-      const shareText = "i'm getting paid to code — the ads in my terminal pay me 50%. join w/ my link and we both get $10:";
+      const shareText = "i'm getting paid to code — the ads in my terminal pay me 90%. join w/ my link and we both get $10:";
       ib.onclick = async () => {
         funnelLog('referral_shared');
         if (navigator.share) { try { await navigator.share({ title:'Get paid to code', text: shareText, url: inviteUrl }); return; } catch(e){} }

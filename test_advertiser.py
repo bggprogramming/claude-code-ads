@@ -166,8 +166,8 @@ def main():
     print()
 
     # Earnings are computed server-side from the campaign's bid (auction model):
-    # developer earns 50% of the bid per impression, flat across surfaces.
-    # bid_per_block_cents 2500 → 1250 mc/impression; click = 0.
+    # developer earns 90% of the bid per impression, flat across surfaces.
+    # bid_per_block_cents 2500 → 2250 mc/impression; click = 0.
     test_events = [
         {"ad_id": test_ad_id, "ad_text": campaign_payload["ad_text"],
          "event": "impression", "surface": "statusline", "user_id": "test-user-1"},
@@ -231,8 +231,8 @@ def main():
                              abs(spend - 0.075) < 0.001,
                              f"${spend:.4f} (expected $0.0750)"))
 
-        results.append(check("earnings_millicents stored correctly (3 × 1250 = dev 50% of bid)",
-                             total_mc == 3750,
+        results.append(check("earnings_millicents stored correctly (3 × 2250 = dev 90% of bid)",
+                             total_mc == 6750,
                              f"{total_mc} mc = ${total_mc/100000:.5f}"))
 
     print()

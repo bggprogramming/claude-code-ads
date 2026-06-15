@@ -14,7 +14,7 @@ the function bodies (recipient/earnings always resolved server-side) and by RLS.
 
 | Function | Purpose |
 |---|---|
-| `track-event` | **Only** writer of `events`. Computes developer earnings server-side (impression = 50% of bid; click = 50× the impression rate). Handles milestone + referral bonus. |
+| `track-event` | **Only** writer of `events`. Computes developer earnings server-side (impression = 90% of bid; click = 50× the impression rate). Handles milestone + referral bonus. |
 | `ad-feed` | House ads + active paid campaigns, bid-ordered, with a sha256 integrity hash. Consumed by `feed.py`. |
 | `bid-market` | Live market snapshot: clearing price, ads live, imps/min, leaderboard, price-history chart series. |
 | `create-checkout` | Stripe Checkout session for a campaign. No-payment mode (auto-activate) until `STRIPE_SECRET_KEY` is set. |

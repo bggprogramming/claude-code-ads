@@ -131,7 +131,7 @@ info "This will:"
 info "  • copy scripts to ~/.claude/ads/   (self-contained; nothing global)"
 [[ "$DO_CLAUDE" == "1" ]] && info "  • add hooks to ~/.claude/settings.json   (merged, your hooks kept)"
 [[ "$DO_CODEX"  == "1" ]] && info "  • add hooks to ~/.codex/config.toml      (in a marked, removable block)"
-info "  • show a sponsor line while your agent works — you keep 50%"
+info "  • show a sponsor line while your agent works — you keep 90%"
 info "  Remove it all anytime:  curl -fsSL $REPO/install.sh | bash -s -- --uninstall"
 echo ""
 

@@ -1,7 +1,7 @@
 # Claude Code Ads — Earn while you code
 
 Your AI coding agent already shows a status line while it works. This turns that
-line into a tiny sponsored message — and pays you for it. **You keep 50% of every
+line into a tiny sponsored message — and pays you for it. **You keep 90% of every
 impression.**
 
 A clean, one-line sponsor appears in your status bar (bottom-right). Click it to

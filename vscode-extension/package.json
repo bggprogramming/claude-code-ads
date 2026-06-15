@@ -1,7 +1,7 @@
 {
   "name": "claude-code-ads",
   "displayName": "Claude Code Ads — Earn while you code",
-  "description": "Earn while you code: a sponsored message in the VS Code / Cursor / Windsurf status bar. Same network + account as the Claude Code CLI — you keep 50% of every impression.",
+  "description": "Earn while you code: a sponsored message in the VS Code / Cursor / Windsurf status bar. Same network + account as the Claude Code CLI — you keep 90% of every impression.",
   "version": "1.0.0",
   "publisher": "bggprogramming",
   "license": "MIT",

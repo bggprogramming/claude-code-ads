@@ -106,7 +106,7 @@ def main():
 
     earned_str = f"${earned:.2f}" if earned >= 0.01 else "money"
     invite_msg = (
-        f"i'm getting paid to code — the ads in my terminal pay me 50% "
+        f"i'm getting paid to code — the ads in my terminal pay me 90% "
         f"(made {earned_str} so far). join with my link and we both get $10:\n{invite_url}"
     )
 

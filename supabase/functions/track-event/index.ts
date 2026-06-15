@@ -1,8 +1,8 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 // Server-authoritative event tracking. Clients cannot set their own earnings.
-// Impressions: developer earns 50% of the ad's per-impression price.
-// Clicks: billed at 50× the impression rate (developer earns 50% of that).
+// Impressions: developer earns 90% of the ad's per-impression price.
+// Clicks: billed at 50× the impression rate (developer earns 90% of that).
 // Earnings-sharing tier multiplies the developer's share (more context shared
 // → better targeting → advertisers bid more → the developer earns more).
 // Only path allowed to write `events` (anon INSERT is revoked by RLS).
@@ -21,7 +21,7 @@ const corsHeaders = {
 
 const MILESTONE_MC      = 500_000
 const REFERRAL_BONUS_MC = 1_000_000
-const DEV_SHARE         = 0.5
+const DEV_SHARE         = 0.9
 const CLICK_MULTIPLIER  = 50
 const SHARE_MULT        = [1.0, 1.3, 1.7, 2.5]   // by share_level (0..3)
 

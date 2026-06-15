@@ -125,8 +125,8 @@ def main():
     print()
 
     # Temp advertiser with a high bid so a handful of impressions crosses $5.
-    # Developer earns 50% of the bid per impression: bid_per_block_cents 200000
-    # → 100,000 mc/impression; 6 impressions → 600,000 (> 500,000 milestone).
+    # Developer earns 90% of the bid per impression: bid_per_block_cents 200000
+    # → 180,000 mc/impression; 3 impressions → 540,000 (> 500,000 milestone).
     try:
         api(cfg, "POST", "advertisers", {
             "ad_id": test_adid, "company": "RefTest", "email": "reftest@example.com",

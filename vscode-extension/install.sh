@@ -43,5 +43,5 @@ if [[ "$UNINSTALL" != "1" ]]; then
   echo "  Done! Fully quit and reopen the editor to activate."
   echo "  A sponsored line shows bottom-right; click it to visit. Run"
   echo "  \"Claude Code Ads: Show earnings\" from the command palette to see earnings."
-  echo "  Same account as the CLI — you keep 50% of every impression."
+  echo "  Same account as the CLI — you keep 90% of every impression."
 fi

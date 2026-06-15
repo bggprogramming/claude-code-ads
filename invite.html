@@ -70,7 +70,7 @@
 
     <div class="eyebrow" id="eyebrow">You've been invited</div>
     <h1 id="headline">Get paid to <span class="hl">code.</span></h1>
-    <p class="lede" id="lede">Your terminal already runs sponsored messages while Claude works. This pays you <b>50% of every one</b> — passively, while you do what you already do.</p>
+    <p class="lede" id="lede">Your terminal already runs sponsored messages while Claude works. This pays you <b>90% of every one</b> — passively, while you do what you already do.</p>
 
     <div class="proof" id="proof" style="display:none">
       <div class="amt" id="proof-amt">$0.00</div>
@@ -100,7 +100,7 @@
     <div class="steps">
       <div class="step"><div class="n">1</div><div class="t">Paste the command<span>One line. Works on macOS &amp; Linux, any terminal that runs Claude Code.</span></div></div>
       <div class="step"><div class="n">2</div><div class="t">Keep coding with Claude<span>A tasteful sponsor line shows in your status bar &amp; spinner.</span></div></div>
-      <div class="step"><div class="n">3</div><div class="t">Get paid — and you both get $10<span>50% of every impression is yours. Hit $5 and the bonus unlocks.</span></div></div>
+      <div class="step"><div class="n">3</div><div class="t">Get paid — and you both get $10<span>90% of every impression is yours. Hit $5 and the bonus unlocks.</span></div></div>
     </div>
 
     <div class="chips">
@@ -163,7 +163,7 @@
   // Share (native share sheet → Messages on iOS/macOS; copy fallback)
   const shareBtn = document.getElementById('share-btn');
   const shareUrl = ref ? `${ROOT}invite.html?ref=${ref}` : `${ROOT}invite.html`;
-  const shareText = "i'm getting paid to code — the ads in my terminal pay me 50%. join w/ my link and we both get $10:";
+  const shareText = "i'm getting paid to code — the ads in my terminal pay me 90%. join w/ my link and we both get $10:";
   shareBtn.addEventListener('click', async () => {
     if (navigator.share) {
       try { await navigator.share({ title: 'Get paid to code', text: shareText, url: shareUrl }); return; } catch (e) {}
