@@ -106,6 +106,7 @@ def push_supabase(ad_id, ad_text, cfg, variant):
         "surface": "completion",
         "user_id": cfg.get("user_id"),
         "variant": variant,
+        "share_level": cfg.get("share_level", 0),
     }).encode()
     req = urllib.request.Request(url, data=payload, headers={
         "apikey":        cfg["supabase_key"],

@@ -3,6 +3,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 // Server-authoritative event tracking. Clients cannot set their own earnings.
 // Impressions: developer earns 50% of the ad's per-impression price.
 // Clicks: billed at 50× the impression rate (developer earns 50% of that).
+// Earnings-sharing tier multiplies the developer's share (more context shared
+// → better targeting → advertisers bid more → the developer earns more).
 // Only path allowed to write `events` (anon INSERT is revoked by RLS).
 
 const corsHeaders = {
@@ -14,7 +16,8 @@ const corsHeaders = {
 const MILESTONE_MC      = 500_000
 const REFERRAL_BONUS_MC = 1_000_000
 const DEV_SHARE         = 0.5
-const CLICK_MULTIPLIER  = 50          // clicks bill at 50× the impression rate
+const CLICK_MULTIPLIER  = 50
+const SHARE_MULT        = [1.0, 1.3, 1.7, 2.5]   // by share_level (0..3)
 
 const BUILTIN_CPM: Record<string, number> = { ad_cursor: 25, ad_warp: 22, ad_linear: 20 }
 const DEFAULT_CPM = 20
@@ -26,7 +29,6 @@ const ALLOWED_SURFACES = new Set([
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-// House-ad rate card: dev earning per impression = rate(surface) × CPM.
 function houseMc(cpm: number, surface: string): number {
   if (surface === 'statusline' || surface === 'vscode_statusbar') return cpm * 100
   if (surface === 'completion') return cpm * 200
@@ -46,6 +48,7 @@ Deno.serve(async (req: Request) => {
   let   surface = String(body.surface ?? 'unknown')
   const userId  = body.user_id ? String(body.user_id) : null
   const variant = String(body.variant ?? 'default')
+  const lvl     = Math.max(0, Math.min(3, parseInt(body.share_level ?? 0) || 0))
 
   if (!adId)                          return json(400, { error: 'ad_id required' })
   if (event !== 'impression' && event !== 'click')
@@ -58,7 +61,6 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false } }
   )
 
-  // Resolve the ad: built-in house ad, or an auction advertiser campaign.
   let adv: any = null
   if (BUILTIN_CPM[adId] == null) {
     const { data } = await supabase
@@ -68,12 +70,14 @@ Deno.serve(async (req: Request) => {
     adv = data
   }
 
-  // Developer earnings recorded on the event.
   const baseImpressionMc = adv
     ? Math.round(adv.bid_per_block_cents * DEV_SHARE)
     : houseMc(BUILTIN_CPM[adId] ?? DEFAULT_CPM, surface === 'click' ? 'statusline' : surface)
-  const mc = event === 'click' ? baseImpressionMc * CLICK_MULTIPLIER
-           : (adv ? Math.round(adv.bid_per_block_cents * DEV_SHARE) : houseMc(BUILTIN_CPM[adId] ?? DEFAULT_CPM, surface))
+  let mc = event === 'click' ? baseImpressionMc * CLICK_MULTIPLIER
+         : (adv ? Math.round(adv.bid_per_block_cents * DEV_SHARE) : houseMc(BUILTIN_CPM[adId] ?? DEFAULT_CPM, surface))
+
+  // Earnings-sharing multiplier (developer's share scales with the tier).
+  mc = Math.round(mc * SHARE_MULT[lvl])
 
   const { error: insErr } = await supabase.from('events').insert({
     ad_id: adId, ad_text: adText, event, surface,
@@ -81,7 +85,6 @@ Deno.serve(async (req: Request) => {
   })
   if (insErr) return json(500, { error: 'insert failed', detail: insErr.message })
 
-  // Auction delivery accounting (impressions only; clicks don't consume inventory).
   if (adv && event === 'impression') {
     const delivered = (adv.impressions_delivered ?? 0) + 1
     const target    = (adv.blocks ?? 1) * 1000
@@ -90,7 +93,6 @@ Deno.serve(async (req: Request) => {
     await supabase.from('advertisers').update(patch).eq('id', adv.id)
   }
 
-  // Developer milestone + referral bonus. Total earnings = ALL events (incl. clicks).
   let milestoneHit = false
   let totalMc: number | null = null
   if (userId) {
@@ -115,5 +117,5 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json(200, { ok: true, earnings_millicents: mc, total_millicents: totalMc, milestone_hit: milestoneHit })
+  return json(200, { ok: true, earnings_millicents: mc, share_level: lvl, total_millicents: totalMc, milestone_hit: milestoneHit })
 })

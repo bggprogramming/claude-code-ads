@@ -88,8 +88,10 @@ def main():
         return
 
     cfg = load_cfg()
-    if not cfg.get("optin_enabled"):
-        return  # quietly exit if not opted in
+    # Earnings-sharing tier (0=private … 3=max). Back-compat: optin_enabled → 1.
+    level = int(cfg.get("share_level", 1 if cfg.get("optin_enabled") else 0))
+    if level <= 0:
+        return  # private — nothing leaves the machine
 
     session_id      = data.get("session_id", "")
     transcript_path = data.get("transcript_path", "")
@@ -104,16 +106,18 @@ def main():
         tools = []
         exts  = []
 
-    prompt_snippet = read_last_prompt(transcript_path) if transcript_path else None
-
+    # Tiered payload — only share what the chosen level permits.
+    #   1 stack:   tech stack + tools
+    #   2 context: + file extensions + hashed cwd
+    #   3 max:     + the gist of the last prompt
     payload = {
         "user_id":         cfg.get("user_id", ""),
         "session_id":      session_id,
-        "cwd_hash":        hash_path(cwd) if cwd else "",
         "tech_stack":      list(tags),
         "tools_used":      list(tools),
-        "file_extensions": list(exts),
-        "prompt_snippet":  prompt_snippet,
+        "file_extensions": list(exts) if level >= 2 else [],
+        "cwd_hash":        (hash_path(cwd) if cwd else "") if level >= 2 else "",
+        "prompt_snippet":  (read_last_prompt(transcript_path) if transcript_path else None) if level >= 3 else None,
     }
 
     url = f"{cfg['supabase_url']}/rest/v1/session_contexts"

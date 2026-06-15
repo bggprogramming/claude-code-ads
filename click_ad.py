@@ -132,10 +132,16 @@ def earnings_progress_line(cfg):
     code     = cfg.get("referral_code", "")
     ref_url  = f"{SITE_BASE}/?ref={code}" if code else SITE_BASE
 
-    return (
+    line = (
         f"\033[2m[claude-code-ads] [{bar}] ${dollars:.2f} / ${payout:.2f}"
         f" · share: {ref_url}\033[0m"
     )
+
+    # Nudge: if not at the top earnings tier, show the upside (drives opt-in).
+    if int(cfg.get("share_level", 0)) < 3:
+        line += ("\n\033[2m  └ \033[0m\033[38;5;205myou're leaving up to 2.5× on the table\033[0m"
+                 "\033[2m — unlock it: \033[0m\033[38;5;156mpython3 ~/.claude/ads/optin.py\033[0m")
+    return line
 
 
 def main():

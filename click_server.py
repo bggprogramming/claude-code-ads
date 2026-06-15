@@ -79,6 +79,7 @@ def log_click(ad_id):
             "event":   "click",
             "surface": "click",
             "user_id": cfg.get("user_id"),
+            "share_level": cfg.get("share_level", 0),
         }).encode()
         req = urllib.request.Request(url, data=payload, headers={
             "apikey":        cfg["supabase_key"],
