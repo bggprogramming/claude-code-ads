@@ -14,6 +14,7 @@ import json
 import os
 import ssl
 import sys
+import threading
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -30,9 +31,43 @@ _sid         = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") 
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
 
 sys.path.insert(0, str(BASE))
-import context  as _ctx
-import earnings as _earnings
-import feed     as _feed
+import context     as _ctx
+import earnings    as _earnings
+import feed        as _feed
+import viewability as _view
+
+
+def track_scrollback(ad, ad_text, variant, cfg):
+    """Count the post-response scrollback ad as an impression (server computes
+    earnings). This is the primary surface in agents without a status line
+    (e.g. Codex). Viewability-gated by the caller."""
+    if not (cfg.get("supabase_url") and cfg.get("supabase_key")):
+        return
+    url = f"{cfg['supabase_url']}/functions/v1/track-event"
+    payload = json.dumps({
+        "ad_id":       ad["id"],
+        "ad_text":     ad_text,
+        "event":       "impression",
+        "surface":     "scrollback",
+        "user_id":     cfg.get("user_id"),
+        "variant":     variant,
+        "share_level": cfg.get("share_level", 0),
+    }).encode()
+    req = urllib.request.Request(url, data=payload, headers={
+        "apikey":        cfg["supabase_key"],
+        "Authorization": f"Bearer {cfg['supabase_key']}",
+        "Content-Type":  "application/json",
+    }, method="POST")
+    t = threading.Thread(
+        target=lambda: _safe_urlopen(req), daemon=True)
+    t.start(); t.join(timeout=4)
+
+
+def _safe_urlopen(req):
+    try:
+        urllib.request.urlopen(req, timeout=4, context=SSL_CTX)
+    except Exception:
+        pass
 
 
 def load_config():
@@ -196,6 +231,10 @@ def main():
             sys.stdout.flush()
         except Exception:
             pass
+
+    # Count the scrollback ad as an impression only if the window is visible.
+    if _view.is_viewable():
+        track_scrollback(ad, ad_text, _variant, cfg)
 
 
 if __name__ == "__main__":

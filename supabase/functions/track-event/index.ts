@@ -23,14 +23,15 @@ const BUILTIN_CPM: Record<string, number> = { ad_cursor: 25, ad_warp: 22, ad_lin
 const DEFAULT_CPM = 20
 
 const ALLOWED_SURFACES = new Set([
-  'statusline', 'spinner', 'completion', 'vscode_statusbar', 'vscode_click', 'click', 'unknown',
+  'statusline', 'spinner', 'completion', 'scrollback',
+  'vscode_statusbar', 'vscode_click', 'click', 'unknown',
 ])
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
 function houseMc(cpm: number, surface: string): number {
-  if (surface === 'statusline' || surface === 'vscode_statusbar') return cpm * 100
+  if (surface === 'statusline' || surface === 'vscode_statusbar' || surface === 'scrollback') return cpm * 100
   if (surface === 'completion') return cpm * 200
   return cpm * 50
 }
