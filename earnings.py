@@ -55,6 +55,33 @@ NOTIFY_MILESTONES = [
         "\033[1;32m✓ $10.00 earned!\033[0m Your first payout is ready. "
         "Check earnings → \033[2mpython3 ~/.claude/ads/stats.py\033[0m",
     ),
+    (
+        2_500_000,
+        "twentyfive_dollars",
+        "\033[1;32m✓ $25 earned!\033[0m Your terminal is genuinely working for you now. "
+        "Earn more → \033[2mpython3 ~/.claude/ads/optin.py\033[0m",
+    ),
+    (
+        5_000_000,
+        "fifty_dollars",
+        "\033[1;32m✓ $50 milestone!\033[0m Halfway to $100. "
+        "Pull in a friend for +$10 → \033[2mpython3 ~/.claude/ads/referral.py\033[0m",
+    ),
+    (
+        10_000_000,
+        "hundred_dollars",
+        "\033[1;33m★ $100 earned!\033[0m You're in the top tier of developers cashing in on autocomplete.",
+    ),
+    (
+        25_000_000,
+        "twofifty_dollars",
+        "\033[1;33m★ $250!\033[0m Certified terminal tycoon. 🪙",
+    ),
+    (
+        50_000_000,
+        "fivehundred_dollars",
+        "\033[1;33m★ $500 earned while coding.\033[0m Absolutely unhinged. Keep going.",
+    ),
 ]
 
 
@@ -112,7 +139,7 @@ def impression_mc(ad, surface):
       spinner        cpm *  50 mc  →  $12.50 CPM (ambient, lower attention)
     """
     cpm = ad.get("cpm", 20)
-    if surface in ("statusline", "vscode_statusbar"):
+    if surface in ("statusline", "vscode_statusbar", "scrollback"):
         return cpm * 100
     if surface == "completion":
         return cpm * 200   # 2× premium: post-response, high attention

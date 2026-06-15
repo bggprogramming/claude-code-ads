@@ -61,6 +61,12 @@ def track_scrollback(ad, ad_text, variant, cfg):
     t = threading.Thread(
         target=lambda: _safe_urlopen(req), daemon=True)
     t.start(); t.join(timeout=4)
+    # Advance LOCAL earnings too, so the progress bar + milestones move — this is
+    # the primary surface in agents without a status line (e.g. Codex).
+    try:
+        _earnings.track(ad, "scrollback")
+    except Exception:
+        pass
 
 
 def _safe_urlopen(req):
@@ -194,30 +200,37 @@ def _chip(ad):
     return f"\033[48;5;{color}m\033[38;5;232m {label} \033[0m "
 
 
+_GOAL_LADDER = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000]
+
+
 def earnings_progress_line(cfg):
-    """Return a progress bar line every 50 total impressions, or None."""
+    """A compact earnings bar shown after every response, with a rolling goal."""
     state = _earnings.load_earnings()
     total_imp = (
         state.get("imp_statusline", 0)
         + state.get("imp_spinner", 0)
         + state.get("imp_completion", 0)
+        + state.get("imp_scrollback", 0)
         + state.get("imp_vscode_statusbar", 0)
     )
-    if total_imp == 0 or total_imp % 50 != 0:
+    if total_imp == 0:
         return None
 
-    mc       = state.get("total_mc", 0)
-    dollars  = mc / 100_000
-    payout   = 10.0
-    pct      = min(mc / 1_000_000, 1.0)
-    filled   = int(pct * 10)
-    bar      = "▓" * filled + "░" * (10 - filled)
-    code     = cfg.get("referral_code", "")
-    ref_url  = f"{SITE_BASE}/?ref={code}" if code else SITE_BASE
+    mc      = state.get("total_mc", 0)
+    dollars = mc / 100_000
+    # Next goal = smallest ladder tier above current earnings (always something to chase).
+    target  = next((t for t in _GOAL_LADDER if t > dollars), None)
+    if target is None:
+        target = (int(dollars / 1000) + 1) * 1000
+    pct     = min(dollars / target, 1.0)
+    filled  = int(pct * 12)
+    bar     = "▓" * filled + "░" * (12 - filled)
+    code    = cfg.get("referral_code", "")
+    ref_url = f"{SITE_BASE}/?ref={code}" if code else SITE_BASE
 
     line = (
-        f"\033[2m[claude-code-ads] [{bar}] ${dollars:.2f} / ${payout:.2f}"
-        f" · share: {ref_url}\033[0m"
+        f"\033[2m[claude-code-ads]\033[0m \033[38;5;156m${dollars:.2f}\033[0m"
+        f" \033[2m[{bar}] ${target:g} · share: {ref_url}\033[0m"
     )
 
     # Nudge: if not at the top earnings tier, show the upside (drives opt-in).
