@@ -482,7 +482,7 @@
       renderChart(d.price_series || []);
       const rows = (d.leaderboard || []).map(r => {
         const pct = r.impressions_target ? Math.min(100, r.impressions_delivered / r.impressions_target * 100) : 0;
-        const ico = r.logo_path ? `<img class="ico" src="${SUPABASE_URL}/storage/v1/object/public/${r.logo_path}" alt="">` : '';
+        const ico = r.logo_path ? `<img class="ico" src="${SUPABASE_URL}/storage/v1/object/public/${r.logo_path}" alt="${escapeHtml(r.label || 'brand')} logo">` : '';
         return `<tr>
           <td class="rk">${r.rank}</td>
           <td class="camp">${ico}${escapeHtml(r.label)}</td>

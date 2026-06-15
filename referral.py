@@ -17,8 +17,9 @@ BASE     = Path(__file__).parent
 CFG_FILE = BASE / "config.json"
 SSL_CTX  = ssl.create_default_context(cafile=certifi.where())
 
-MILESTONE_MC     = 500_000   # $5.00 in millicents — referral trigger
-BONUS_DOLLARS    = 10.00     # $10 each way
+sys.path.insert(0, str(BASE))
+from earnings import MILESTONE_MC, REFERRAL_BONUS_MC   # single source of truth
+BONUS_DOLLARS = REFERRAL_BONUS_MC / 100_000            # $10 each way
 SUPABASE_URL_BASE = "https://gpbrzpyvzlzwvvymgeyk.supabase.co"
 BADGE_FN_BASE     = f"{SUPABASE_URL_BASE}/functions/v1/badge"
 SHIELDS_BASE      = "https://img.shields.io/endpoint"
@@ -110,6 +111,8 @@ def main():
     )
 
     print(f"  Referral code: {code}")
+    print(f"  Your portal (bookmark — opens straight to your earnings):")
+    print(f"  {SITE_BASE}/portal.html?code={code}")
     print()
     print("  ── Invite a friend (you both get $10) ───────────────────────────")
     print("  Send this on iMessage — the link shows a rich preview:")

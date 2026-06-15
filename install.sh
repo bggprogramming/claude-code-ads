@@ -243,7 +243,10 @@ info "  1. Start a new session — that's it. Ads show up on their own."
 CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
 if [[ -n "$CODE" ]]; then
   echo ""
-  info "  2. Invite a friend — you BOTH get \$10:"
+  info "  2. Your earnings portal (bookmark it — one click, no code to type):"
+  info "     https://bggprogramming.github.io/claude-code-ads/portal.html?code=$CODE"
+  echo ""
+  info "  3. Invite a friend — you BOTH get \$10:"
   info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
 fi
 echo ""

@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false } })
 
   const { data: user } = await supabase
-    .from('users').select('id, referral_code, referred_by, milestone_hit, created_at')
+    .from('users').select('id, referral_code, referred_by, milestone_hit, created_at, stripe_account_id, payouts_enabled')
     .eq('referral_code', code).maybeSingle()
   if (!user) return json(404, { error: 'not found', code })
 
@@ -40,6 +40,18 @@ Deno.serve(async (req: Request) => {
     bySurface[s] ??= { impressions: 0, mc: 0 }
     bySurface[s].impressions++; bySurface[s].mc += amt
   }
+
+  // Payout history + available balance (lifetime earnings − already requested/paid).
+  const { data: pays } = await supabase
+    .from('payouts').select('amount_millicents, status, created_at, paid_at')
+    .eq('user_id', user.id).order('created_at', { ascending: false })
+  let paidOutMc = 0, pendingPayoutMc = 0
+  for (const p of pays ?? []) {
+    if (p.status === 'paid') paidOutMc += p.amount_millicents ?? 0
+    else if (p.status === 'pending') pendingPayoutMc += p.amount_millicents ?? 0
+  }
+  const MIN_PAYOUT_MC = 1_000_000   // $10 minimum cash-out
+  const availableMc   = Math.max(0, totalMc - paidOutMc - pendingPayoutMc)
 
   const { data: refs } = await supabase
     .from('users').select('referral_code, milestone_hit, created_at')
@@ -72,5 +84,17 @@ Deno.serve(async (req: Request) => {
     referral_count: (refs ?? []).length,
     bonus_pending_dollars: pendingMc / 100_000,
     bonus_paid_dollars: paidMc / 100_000,
+    // Cash-out
+    payouts_enabled: !!user.payouts_enabled,
+    connected: !!user.stripe_account_id,
+    available_dollars: availableMc / 100_000,
+    paid_out_dollars: paidOutMc / 100_000,
+    pending_payout_dollars: pendingPayoutMc / 100_000,
+    min_payout_dollars: MIN_PAYOUT_MC / 100_000,
+    can_cash_out: availableMc >= MIN_PAYOUT_MC,
+    payouts: (pays ?? []).map((p: any) => ({
+      dollars: (p.amount_millicents ?? 0) / 100_000, status: p.status,
+      created: p.created_at, paid: p.paid_at,
+    })),
   })
 })

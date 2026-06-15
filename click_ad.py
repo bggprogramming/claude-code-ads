@@ -120,18 +120,11 @@ def session_counts():
         return {}
 
 
-def select_ad(ads):
-    import random
+def select_ad(ads, context_tags=None):
     counts   = session_counts()
     eligible = [a for a in ads if counts.get(a["id"], 0) < SESSION_CAP]
     pool     = eligible or ads
-    total    = sum(a.get("weight", 1) for a in pool)
-    r        = random.random() * total
-    for ad in pool:
-        r -= ad.get("weight", 1)
-        if r <= 0:
-            return ad
-    return pool[-1]
+    return _ctx.weighted_sample(pool, context_tags)   # context-boosted, like the statusline
 
 
 def osc8(text, url):
@@ -292,7 +285,7 @@ def main():
             _codex_continue()
             return
         context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
-        ad           = select_ad(ads)
+        ad           = select_ad(ads, context_tags)
         ad_text, _variant = _ctx.select_copy(ad, context_tags)
         _emit_codex(ad, ad_text, _variant, cfg)
         return
@@ -304,7 +297,7 @@ def main():
 
     cfg          = load_config()
     context_tags = _ctx.get_context(cwd=hook_cwd, session_id=session_id)
-    ad           = select_ad(ads)
+    ad           = select_ad(ads, context_tags)
     ad_text, _variant = _ctx.select_copy(ad, context_tags)
 
     encoded  = urllib.parse.quote(ad["url"], safe="")

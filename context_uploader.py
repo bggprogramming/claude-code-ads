@@ -92,6 +92,8 @@ def main():
     level = int(cfg.get("share_level", 1 if cfg.get("optin_enabled") else 0))
     if level <= 0:
         return  # private — nothing leaves the machine
+    if not (cfg.get("supabase_url") and cfg.get("supabase_key")):
+        return  # not configured — never KeyError inside a Stop hook
 
     session_id      = data.get("session_id", "")
     transcript_path = data.get("transcript_path", "")

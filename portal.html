@@ -62,12 +62,13 @@
 <main>
   <div class="eyebrow">Developer portal</div>
   <h1>Your earnings</h1>
-  <p class="sub">Enter your referral code to see what your terminal has earned. Find it with <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code>.</p>
+  <p class="sub">Enter your referral code — or paste your portal link — to see what your terminal has earned. Get yours with <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code> (it prints a one-click link you can bookmark, so you never type the code again).</p>
 
   <div class="codebar">
-    <input id="code" type="text" placeholder="your referral code (e.g. p5lvaf)" autocomplete="off" spellcheck="false">
+    <input id="code" type="text" placeholder="referral code or portal link" autocomplete="off" spellcheck="false">
     <button id="go">View</button>
   </div>
+  <div id="who" class="hint" style="display:none"></div>
   <div id="err"></div>
 
   <div id="panel">
@@ -82,6 +83,17 @@
       <div class="stat"><div class="v" id="imps">0</div><div class="l">impressions served</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">referrals</div></div>
       <div class="stat"><div class="v" id="milestone">—</div><div class="l">$5 milestone</div></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Cash out</div>
+      <div class="row"><span class="k">Available to withdraw</span><span class="v" id="avail">$0.00</span></div>
+      <div class="row"><span class="k">Pending</span><span class="v" id="pending-payout">$0.00</span></div>
+      <div class="row"><span class="k">Paid out</span><span class="v" id="paidout">$0.00</span></div>
+      <div class="empty" id="cashout-note" style="text-align:left;padding:12px 0 4px"></div>
+      <button id="connect-btn" style="width:100%;background:var(--blue);border:none;border-radius:999px;color:#fff;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Set up payouts →</button>
+      <button id="cashout-btn" style="width:100%;background:var(--accent);border:none;border-radius:999px;color:#0a0c08;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Cash out</button>
+      <div id="payout-hist" style="margin-top:6px"></div>
     </div>
 
     <div class="sec">
@@ -119,14 +131,29 @@
 
   function copy(id, btn){ navigator.clipboard.writeText($(id).textContent).then(()=>{const t=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=t,1500);}); }
 
+  // Accept a raw code OR a pasted link (portal.html?code=, invite.html?ref=, /?ref=).
+  function extractCode(s){
+    s = (s||'').trim();
+    const m = s.match(/[?&](?:code|ref)=([a-z0-9]+)/i);
+    if (m) return m[1].toLowerCase();
+    return s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  }
+
+  let CODE = '';
+  function logout(){ localStorage.removeItem('cca_code'); location.href = location.pathname; }
+
   async function load(code){
-    code = (code||'').trim().toLowerCase();
+    code = extractCode(code);
     if(!code) return;
     $('err').style.display='none';
     try{
       const d = await fetch(`${SUPA}/functions/v1/dev-portal?code=${encodeURIComponent(code)}`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
       localStorage.setItem('cca_code', code);
       history.replaceState(null,'',`?code=${code}`);
+      CODE = d.referral_code;
+      $('who').style.display='block';
+      $('who').innerHTML = `signed in as <b style="color:var(--hi)">${d.referral_code}</b> · <a href="#" id="logout" style="color:var(--blue);text-decoration:none">log out</a>`;
+      $('logout').onclick = (e)=>{ e.preventDefault(); logout(); };
       $('earned').textContent = d.total_dollars.toFixed(4);
       $('payout-bar').style.width = d.payout_pct + '%';
       $('payout-pct').textContent = d.payout_pct + '%';
@@ -154,6 +181,21 @@
         : `<tr><td colspan="3" class="empty">No referrals yet — share your link above.</td></tr>`;
       $('bonus-pending').textContent = '$'+d.bonus_pending_dollars.toFixed(2);
       $('bonus-paid').textContent = '$'+d.bonus_paid_dollars.toFixed(2);
+
+      // ── Cash out ──────────────────────────────────────────────────────────
+      $('avail').textContent          = '$'+(d.available_dollars||0).toFixed(2);
+      $('pending-payout').textContent = '$'+(d.pending_payout_dollars||0).toFixed(2);
+      $('paidout').textContent        = '$'+(d.paid_out_dollars||0).toFixed(2);
+      let note;
+      if (!d.connected)        note = `Set up payouts to withdraw your earnings (minimum $${d.min_payout_dollars}).`;
+      else if (d.can_cash_out) note = `You can withdraw $${(d.available_dollars).toFixed(2)} now.`;
+      else                     note = `Keep earning — cash out unlocks at $${d.min_payout_dollars}.`;
+      $('cashout-note').textContent = note;
+      $('connect-btn').style.display = d.connected ? 'none' : 'block';
+      $('cashout-btn').style.display = (d.connected && d.can_cash_out) ? 'block' : 'none';
+      $('payout-hist').innerHTML = (d.payouts||[]).map(p=>
+        `<div class="row"><span class="k">${new Date(p.created).toLocaleDateString()}</span><span class="v">$${p.dollars.toFixed(2)} · ${p.status}</span></div>`).join('');
+
       $('panel').style.display='block';
     }catch(e){
       $('panel').style.display='none';
@@ -162,9 +204,29 @@
     }
   }
 
+  // Cash-out: set up payouts (Stripe Connect onboarding) or withdraw.
+  $('connect-btn').addEventListener('click', async ()=>{
+    const b=$('connect-btn'); b.textContent='Opening…'; b.disabled=true;
+    try{
+      const r = await fetch(`${SUPA}/functions/v1/payout-connect`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:CODE})}).then(r=>r.json());
+      if(r.url){ location.href=r.url; return; }
+      $('cashout-note').textContent = r.message || 'Payouts are not enabled yet — check back soon.';
+    }catch(e){ $('cashout-note').textContent='Could not start payout setup — try again.'; }
+    b.textContent='Set up payouts →'; b.disabled=false;
+  });
+  $('cashout-btn').addEventListener('click', async ()=>{
+    const b=$('cashout-btn'); b.textContent='Requesting…'; b.disabled=true;
+    try{
+      const r = await fetch(`${SUPA}/functions/v1/payout-request`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:CODE})}).then(r=>r.json());
+      $('cashout-note').textContent = r.message || (r.status==='paid' ? `Sent $${r.amount_dollars.toFixed(2)} to your account.` : (r.error||'Done.'));
+      load(CODE);   // refresh balances + history
+    }catch(e){ $('cashout-note').textContent='Could not request cash-out — try again.'; }
+    b.disabled=false;
+  });
+
   $('go').addEventListener('click', ()=>load($('code').value));
   $('code').addEventListener('keydown', e=>{ if(e.key==='Enter') load($('code').value); });
-  const initial = new URLSearchParams(location.search).get('code') || localStorage.getItem('cca_code');
+  const initial = new URLSearchParams(location.search).get('code') || new URLSearchParams(location.search).get('ref') || localStorage.getItem('cca_code');
   if(initial){ $('code').value = initial; load(initial); }
 </script>
 </body>

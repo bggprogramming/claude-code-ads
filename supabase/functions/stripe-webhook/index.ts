@@ -32,15 +32,33 @@ Deno.serve(async (req: Request) => {
     return new Response('bad signature', { status: 400 })
   }
 
+  // Replay protection: reject events whose signature timestamp is >5 min old.
+  const t = Number(Object.fromEntries(sig.split(',').map(kv => kv.split('=')))['t'])
+  if (!Number.isFinite(t) || Math.abs(Math.floor(Date.now() / 1000) - t) > 300) {
+    return new Response('stale or invalid timestamp', { status: 400 })
+  }
+
   let evt: any
   try { evt = JSON.parse(raw) } catch { return new Response('bad json', { status: 400 }) }
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false } })
+
+  // Idempotency: process each Stripe event id at most once.
+  if (evt.id) {
+    const { data: seen } = await supabase
+      .from('processed_stripe_events')
+      .upsert([{ event_id: String(evt.id) }], { onConflict: 'event_id', ignoreDuplicates: true })
+      .select()
+    if (!seen || seen.length === 0) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), { headers: { 'Content-Type': 'application/json' } })
+    }
+  }
 
   if (evt.type === 'checkout.session.completed') {
     const adId = evt.data?.object?.metadata?.ad_id || evt.data?.object?.client_reference_id
     if (adId) {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-        { auth: { persistSession: false } })
       await supabase.from('advertisers')
         .update({ paid: true, status: 'active' })
         .eq('ad_id', adId)

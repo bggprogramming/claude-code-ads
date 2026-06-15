@@ -25,6 +25,7 @@ CFG_FILE         = BASE / "config.json"
 THRESHOLD        = 30    # seconds — minimum tool duration to show completion ad
 WIDTH            = 78    # line width for separator
 _TOOL_START_DIR  = "/tmp"
+COMPLETION_WINDOW = 30   # seconds — count at most one completion impression per window
 
 sys.path.insert(0, str(BASE))
 import certifi
@@ -42,6 +43,24 @@ def load_config():
             return json.load(f)
     except Exception:
         return {}
+
+
+def completion_due(session_id):
+    """At most one completion impression per COMPLETION_WINDOW (per session) — so
+    a turn with several long tools can't count multiple impressions (matches the
+    statusline's rate-limit and keeps local earnings in step with the server)."""
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(session_id))
+    f = Path(_TOOL_START_DIR) / f"claude-ads-comp-{safe}.json"
+    try:
+        if f.exists() and time.time() - json.loads(f.read_text()).get("ts", 0) < COMPLETION_WINDOW:
+            return False
+    except Exception:
+        pass
+    try:
+        f.write_text(json.dumps({"ts": time.time()}))
+    except Exception:
+        pass
+    return True
 
 
 def elapsed_since_tool_start(session_id):
@@ -182,8 +201,9 @@ def main():
         except Exception:
             pass
 
-    # Count only when the terminal window is visible (not covered).
-    if _view.is_viewable():
+    # Count only when the terminal window is visible (not covered) and not within
+    # the rate-limit window of the previous completion impression.
+    if _view.is_viewable() and completion_due(session_id):
         log_impression(ad, variant, cfg)
 
 

@@ -6,6 +6,12 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 // Earnings-sharing tier multiplies the developer's share (more context shared
 // → better targeting → advertisers bid more → the developer earns more).
 // Only path allowed to write `events` (anon INSERT is revoked by RLS).
+//
+// Anti-fraud (clients pick ad_id/event/surface, so volume/shape is untrusted):
+//   • per-user burst rate-limit  (drop earnings beyond RATE_MAX / RATE_WINDOW)
+//   • per-user daily earnings cap (clamp so one account can't mint unlimited $)
+//   • click validation           (a paid click needs a recent matching impression)
+// These raise the bar; the real backstop is KYC at payout (Stripe Connect).
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +24,11 @@ const REFERRAL_BONUS_MC = 1_000_000
 const DEV_SHARE         = 0.5
 const CLICK_MULTIPLIER  = 50
 const SHARE_MULT        = [1.0, 1.3, 1.7, 2.5]   // by share_level (0..3)
+
+const RATE_WINDOW_MS    = 10_000      // burst window
+const RATE_MAX          = 8           // max earning events per user per window
+const DAILY_CAP_MC      = 1_000_000   // $10/day/user safety cap on earnings
+const CLICK_LOOKBACK_MS = 60 * 60_000 // a click only pays 50× if a matching impression is ≤1h old
 
 const BUILTIN_CPM: Record<string, number> = { ad_cursor: 25, ad_warp: 22, ad_linear: 20 }
 const DEFAULT_CPM = 20
@@ -44,11 +55,11 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json() } catch { return json(400, { error: 'invalid json' }) }
 
   const adId    = String(body.ad_id ?? '').trim()
-  const adText  = String(body.ad_text ?? '')
+  const adText  = String(body.ad_text ?? '').slice(0, 300)
   const event   = String(body.event ?? 'impression')
   let   surface = String(body.surface ?? 'unknown')
-  const userId  = body.user_id ? String(body.user_id) : null
-  const variant = String(body.variant ?? 'default')
+  const userId  = body.user_id ? String(body.user_id).slice(0, 64) : null
+  const variant = String(body.variant ?? 'default').slice(0, 40)
   const lvl     = Math.max(0, Math.min(3, parseInt(body.share_level ?? 0) || 0))
 
   if (!adId)                          return json(400, { error: 'ad_id required' })
@@ -71,14 +82,44 @@ Deno.serve(async (req: Request) => {
     adv = data
   }
 
-  const baseImpressionMc = adv
+  // ── Anti-fraud: gather today's recent events for this user (one query) ──────
+  const now        = Date.now()
+  const startOfDay = new Date(); startOfDay.setUTCHours(0, 0, 0, 0)
+  let recent: any[] = []
+  if (userId) {
+    const { data } = await supabase
+      .from('events').select('ts, event, ad_id, earnings_millicents')
+      .eq('user_id', userId).gte('ts', startOfDay.toISOString())
+      .order('ts', { ascending: false }).limit(100_000)
+    recent = data ?? []
+  }
+
+  // Burst rate-limit: too many earning events in the window → record at 0 earnings.
+  const burst = recent.filter(e => now - new Date(e.ts).getTime() < RATE_WINDOW_MS).length
+  const rateLimited = userId != null && burst >= RATE_MAX
+
+  // A click only earns the 50× multiplier if a matching impression is recent.
+  let payClick = event === 'click'
+  if (payClick && userId) {
+    const hasImp = recent.some(e =>
+      e.event === 'impression' && e.ad_id === adId &&
+      now - new Date(e.ts).getTime() < CLICK_LOOKBACK_MS)
+    if (!hasImp) payClick = false   // treat as a normal impression-priced event
+  }
+
+  const impMc = adv
     ? Math.round(adv.bid_per_block_cents * DEV_SHARE)
     : houseMc(BUILTIN_CPM[adId] ?? DEFAULT_CPM, surface === 'click' ? 'statusline' : surface)
-  let mc = event === 'click' ? baseImpressionMc * CLICK_MULTIPLIER
-         : (adv ? Math.round(adv.bid_per_block_cents * DEV_SHARE) : houseMc(BUILTIN_CPM[adId] ?? DEFAULT_CPM, surface))
-
-  // Earnings-sharing multiplier (developer's share scales with the tier).
+  let mc = payClick ? impMc * CLICK_MULTIPLIER : impMc
   mc = Math.round(mc * SHARE_MULT[lvl])
+
+  // Daily earnings cap (clamp to remaining; never negative).
+  if (userId) {
+    const todayMc = recent.reduce((s, e) => s + (e.earnings_millicents ?? 0), 0)
+    const remaining = Math.max(0, DAILY_CAP_MC - todayMc)
+    if (rateLimited) mc = 0
+    else             mc = Math.min(mc, remaining)
+  }
 
   const { error: insErr } = await supabase.from('events').insert({
     ad_id: adId, ad_text: adText, event, surface,
@@ -86,6 +127,7 @@ Deno.serve(async (req: Request) => {
   })
   if (insErr) return json(500, { error: 'insert failed', detail: insErr.message })
 
+  // Advertiser delivery accounting (impressions only; counts even if dev was capped).
   if (adv && event === 'impression') {
     const delivered = (adv.impressions_delivered ?? 0) + 1
     const target    = (adv.blocks ?? 1) * 1000
@@ -94,6 +136,7 @@ Deno.serve(async (req: Request) => {
     await supabase.from('advertisers').update(patch).eq('id', adv.id)
   }
 
+  // Milestone / referral bonus — uses full lifetime earnings.
   let milestoneHit = false
   let totalMc: number | null = null
   if (userId) {
@@ -118,5 +161,9 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json(200, { ok: true, earnings_millicents: mc, share_level: lvl, total_millicents: totalMc, milestone_hit: milestoneHit })
+  return json(200, {
+    ok: true, earnings_millicents: mc, share_level: lvl,
+    total_millicents: totalMc, milestone_hit: milestoneHit,
+    rate_limited: rateLimited,
+  })
 })
