@@ -1,0 +1,20 @@
+project_id = "gpbrzpyvzlzwvvymgeyk"
+
+[functions.badge]
+verify_jwt = false
+[functions.track-event]
+verify_jwt = false
+[functions.ad-feed]
+verify_jwt = false
+[functions.bid-market]
+verify_jwt = false
+[functions.create-checkout]
+verify_jwt = false
+[functions.stripe-webhook]
+verify_jwt = false
+[functions.campaign-manage]
+verify_jwt = false
+[functions.dev-portal]
+verify_jwt = false
+[functions.send-dashboard-email]
+verify_jwt = false

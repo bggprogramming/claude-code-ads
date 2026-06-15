@@ -441,7 +441,8 @@
     const totalImp    = impressions.length;
     const totalClk    = clicks.length;
     const ctr         = totalImp > 0 ? (totalClk / totalImp * 100) : 0;
-    const spendDollars = (adv.bid_per_block_cents / 100) * totalImp / 1000;
+    // Advertiser spend: impressions at bid/1k, clicks at 50× the impression rate.
+    const spendDollars = (adv.bid_per_block_cents / 100) * (totalImp + 50 * totalClk) / 1000;
     const campaignTotal = (adv.bid_per_block_cents / 100) * (adv.blocks || 1);   // total bid value
     const budgetPct   = campaignTotal > 0 ? Math.min(100, spendDollars / campaignTotal * 100) : 0;
 
@@ -493,7 +494,7 @@
       tbody.innerHTML = days.map(day => {
         const d = byDay[day];
         const dayCtr = d.impressions > 0 ? (d.clicks / d.impressions * 100).toFixed(2) : '0.00';
-        const daySpend = ((adv.bid_per_block_cents / 100) * d.impressions / 1000).toFixed(2);
+        const daySpend = ((adv.bid_per_block_cents / 100) * (d.impressions + 50 * d.clicks) / 1000).toFixed(2);
         return `<tr>
           <td>${fmtDateShort(day)}</td>
           <td>${fmt(d.impressions)}</td>
