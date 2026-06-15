@@ -16,6 +16,7 @@ import urllib.request
 from pathlib import Path
 
 import certifi
+import context as _ctx
 import earnings as _earnings
 
 BASE       = Path(__file__).parent
@@ -55,19 +56,10 @@ def increment_session(ad_id):
     except Exception:
         pass
 
-def weighted_sample(pool):
-    total = sum(a.get("weight", 1) for a in pool)
-    r = random.random() * total
-    for ad in pool:
-        r -= ad.get("weight", 1)
-        if r <= 0:
-            return ad
-    return pool[-1]
-
-def select_ad(ads):
-    counts = session_counts()
+def select_ad(ads, context_tags=None):
+    counts   = session_counts()
     eligible = [a for a in ads if counts.get(a["id"], 0) < SESSION_CAP]
-    return weighted_sample(eligible or ads)
+    return _ctx.weighted_sample(eligible or ads, context_tags)
 
 def init_db(conn):
     conn.execute("""
@@ -176,7 +168,20 @@ def main():
     if not ads:
         sys.exit(0)
 
-    ad = select_ad(ads)
+    # Read hook stdin (available when called from Stop/SessionStart hook)
+    hook_data = {}
+    try:
+        raw = sys.stdin.read(4096)
+        if raw.strip():
+            hook_data = json.loads(raw)
+    except Exception:
+        pass
+
+    hook_session_id = hook_data.get("session_id")
+    hook_cwd        = hook_data.get("cwd")
+
+    context_tags = _ctx.get_context(cwd=hook_cwd, session_id=hook_session_id)
+    ad = select_ad(ads, context_tags)
 
     if update_spinner_verbs(ad["text"]):
         log_impression(ad, surface="spinner")

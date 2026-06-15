@@ -16,6 +16,7 @@ import urllib.request
 from pathlib import Path
 
 import certifi
+import context as _ctx
 import earnings as _earnings
 
 BASE      = Path(__file__).parent
@@ -26,7 +27,7 @@ SSL_CTX   = ssl.create_default_context(cafile=certifi.where())
 CLICK_PORT = 54323
 SESSION_CAP = 3  # max impressions per ad per terminal session
 
-# Session file keyed by PID of the shell so each new terminal = new session
+# Session file keyed by terminal session so each new terminal = fresh cap
 _sid = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
 SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
 
@@ -39,28 +40,6 @@ def load_config():
             return json.load(f)
     except Exception:
         return {}
-
-
-# ── Context detection ─────────────────────────────────────────────────────────
-
-CONTEXT_CHECKS = {
-    "javascript": ["package.json", "node_modules", ".eslintrc.js", ".eslintrc.json"],
-    "typescript": ["tsconfig.json"],
-    "python":     ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"],
-    "rust":       ["Cargo.toml"],
-    "go":         ["go.mod"],
-    "docker":     ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"],
-    "infra":      [".terraform", "serverless.yml", "pulumi.yaml", "cdk.json"],
-    "database":   [".env"],  # broad signal — refined by ad tags
-}
-
-def detect_context():
-    cwd = Path.cwd()
-    tags = set()
-    for tag, files in CONTEXT_CHECKS.items():
-        if any((cwd / f).exists() for f in files):
-            tags.add(tag)
-    return tags
 
 
 # ── Session frequency cap ─────────────────────────────────────────────────────
@@ -83,32 +62,13 @@ def increment_session(ad_id):
     return counts[ad_id]
 
 
-# ── Ad selection ──────────────────────────────────────────────────────────────
+# ── Ad selection (context-boosted) ───────────────────────────────────────────
 
-def weighted_sample(pool):
-    total = sum(a.get("weight", 1) for a in pool)
-    r = random.random() * total
-    for ad in pool:
-        r -= ad.get("weight", 1)
-        if r <= 0:
-            return ad
-    return pool[-1]
-
-def select_ad(ads, context_tags):
-    counts = session_counts()
-
-    # Eligible: under cap AND (no tags on ad, or tags overlap context)
-    eligible = [
-        a for a in ads
-        if counts.get(a["id"], 0) < SESSION_CAP
-        and (not a.get("tags") or not context_tags or context_tags & set(a.get("tags", [])))
-    ]
-
-    # If everything is capped or nothing matches context, open up to all
-    if not eligible:
-        eligible = [a for a in ads if counts.get(a["id"], 0) < SESSION_CAP] or ads
-
-    return weighted_sample(eligible)
+def select_ad(ads, context_tags=None):
+    counts   = session_counts()
+    eligible = [a for a in ads if counts.get(a["id"], 0) < SESSION_CAP]
+    pool     = eligible or ads
+    return _ctx.weighted_sample(pool, context_tags)
 
 
 # ── Analytics ─────────────────────────────────────────────────────────────────
@@ -199,7 +159,7 @@ def main():
         sys.exit(0)
 
     cfg          = load_config()
-    context_tags = detect_context()
+    context_tags = _ctx.get_context()
     ad           = select_ad(ads, context_tags)
 
     log_impression(ad, cfg)
