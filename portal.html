@@ -62,7 +62,7 @@
 <main>
   <div class="eyebrow">Developer portal</div>
   <h1>Your earnings</h1>
-  <p class="sub">Enter your referral code — or paste your portal link — to see what your terminal has earned. Get yours with <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code> (it prints a one-click link you can bookmark, so you never type the code again).</p>
+  <p class="sub">See what your terminal has earned, and cash out. Paste your code or portal link below — lost it? Run <code style="font-family:var(--mono);color:var(--hi)">python3 ~/.claude/ads/referral.py</code> for a one-click link to bookmark.</p>
 
   <div class="codebar">
     <input id="code" type="text" placeholder="referral code or portal link" autocomplete="off" spellcheck="false">
@@ -82,7 +82,7 @@
     <div class="grid">
       <div class="stat"><div class="v" id="imps">0</div><div class="l">impressions served</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">referrals</div></div>
-      <div class="stat"><div class="v" id="milestone">—</div><div class="l">$5 milestone</div></div>
+      <div class="stat"><div class="v" id="milestone">—</div><div class="l">referral bonus</div></div>
     </div>
 
     <div class="sec">
@@ -134,6 +134,17 @@
   const $ = id => document.getElementById(id);
   const fmt = n => n.toLocaleString();
 
+  // Friendly money: $1,234.56 normally; a few decimals only when under a dollar.
+  const amt   = n => n >= 1 ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : (n > 0 ? n.toFixed(4) : '0.00');
+  const money = n => '$' + amt(n || 0);
+
+  // Plain-English names for ad placements (no internal jargon).
+  const SURFACE_NAMES = {
+    statusline:'Status bar', vscode_statusbar:'Editor status bar', vscode_panel:'Editor panel',
+    vscode_click:'Editor clicks', scrollback:'After each reply', completion:'After long tasks',
+    spinner:'Thinking spinner', click:'Clicks', unknown:'Other',
+  };
+
   function copy(id, btn){ navigator.clipboard.writeText($(id).textContent).then(()=>{const t=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=t,1500);}); }
 
   // Accept a raw code OR a pasted link (portal.html?code=, invite.html?ref=, /?ref=).
@@ -168,6 +179,7 @@
     code = extractCode(code);
     if(!code) return;
     $('err').style.display='none';
+    const go = $('go'); go.textContent = 'Loading…'; go.disabled = true;
     try{
       const d = await fetch(`${SUPA}/functions/v1/dev-portal?code=${encodeURIComponent(code)}`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
       localStorage.setItem('cca_code', code);
@@ -176,7 +188,7 @@
       $('who').style.display='block';
       $('who').innerHTML = `signed in as <b style="color:var(--hi)">${d.referral_code}</b> · <a href="#" id="logout" style="color:var(--blue);text-decoration:none">log out</a>`;
       $('logout').onclick = (e)=>{ e.preventDefault(); logout(); };
-      $('earned').textContent = d.total_dollars.toFixed(4);
+      $('earned').textContent = amt(d.total_dollars);
       $('payout-bar').style.width = d.payout_pct + '%';
       $('payout-pct').textContent = d.payout_pct + '%';
       $('payout-target').textContent = d.payout_target_dollars;
@@ -184,7 +196,7 @@
       $('refs').textContent = d.referral_count;
       $('milestone').innerHTML = d.milestone_hit ? '<span style="color:var(--green)">unlocked ✓</span>' : 'locked';
       $('surfaces').innerHTML = (d.by_surface.length ? d.by_surface : [{surface:'—',impressions:0,dollars:0}]).map(s=>
-        `<div class="row"><span class="k">${s.surface}</span><span class="v">${fmt(s.impressions)} imps · $${s.dollars.toFixed(4)}</span></div>`).join('');
+        `<div class="row"><span class="k">${SURFACE_NAMES[s.surface]||s.surface}</span><span class="v">${fmt(s.impressions)} views · ${money(s.dollars)}</span></div>`).join('');
       const siteRoot = SITE.replace(/portal\.html.*/,'');
       const inviteUrl = `${siteRoot}invite.html?ref=${d.referral_code}`;
       $('ref-link').textContent = inviteUrl;
@@ -206,9 +218,9 @@
       $('bonus-paid').textContent = '$'+d.bonus_paid_dollars.toFixed(2);
 
       // ── Cash out ──────────────────────────────────────────────────────────
-      $('avail').textContent          = '$'+(d.available_dollars||0).toFixed(2);
-      $('pending-payout').textContent = '$'+(d.pending_payout_dollars||0).toFixed(2);
-      $('paidout').textContent        = '$'+(d.paid_out_dollars||0).toFixed(2);
+      $('avail').textContent          = money(d.available_dollars);
+      $('pending-payout').textContent = money(d.pending_payout_dollars);
+      $('paidout').textContent        = money(d.paid_out_dollars);
       let note;
       if (!d.connected)        note = `Set up payouts to withdraw your earnings (minimum $${d.min_payout_dollars}).`;
       else if (d.can_cash_out) note = `You can withdraw $${(d.available_dollars).toFixed(2)} now.`;
@@ -217,13 +229,15 @@
       $('connect-btn').style.display = d.connected ? 'none' : 'block';
       $('cashout-btn').style.display = (d.connected && d.can_cash_out) ? 'block' : 'none';
       $('payout-hist').innerHTML = (d.payouts||[]).map(p=>
-        `<div class="row"><span class="k">${new Date(p.created).toLocaleDateString()}</span><span class="v">$${p.dollars.toFixed(2)} · ${p.status}</span></div>`).join('');
+        `<div class="row"><span class="k">${new Date(p.created).toLocaleDateString()}</span><span class="v">${money(p.dollars)} · ${p.status}</span></div>`).join('');
 
       $('panel').style.display='block';
     }catch(e){
       $('panel').style.display='none';
       $('err').style.display='block';
       $('err').textContent = e.message==='404' ? 'No earnings found for that code yet. Double-check it with referral.py.' : 'Could not load — try again.';
+    } finally {
+      go.textContent = 'View'; go.disabled = false;
     }
   }
 
