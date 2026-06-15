@@ -38,7 +38,9 @@ mkdir -p "$ADS_DIR"
 
 # ── 2. Download scripts ───────────────────────────────────────────────────────
 FILES=(ad.py update_spinner.py click_server.py start_click_server.sh
-       earnings.py setup.py referral.py stats.py ads.json)
+       earnings.py setup.py referral.py stats.py ads.json
+       context.py feed.py click_ad.py completion_ad.py record_tool_start.py
+       context_hook.py context_uploader.py optin.py)
 
 for f in "${FILES[@]}"; do
   curl -fsSL "$REPO/$f" -o "$ADS_DIR/$f"
@@ -94,12 +96,25 @@ data["statusLine"] = {
 }
 
 data.setdefault("hooks", {})
+# SessionStart: ensure the click server is up + seed the spinner ad
 data["hooks"]["SessionStart"] = [{"hooks": [
     {"type": "command", "command": f"bash {ADS}/start_click_server.sh", "async": True},
     {"type": "command", "command": f"python3 {ADS}/update_spinner.py",  "async": True},
 ]}]
+# PreToolUse: record tool start time so completion_ad can detect >30s tools
+data["hooks"]["PreToolUse"] = [{"hooks": [
+    {"type": "command", "command": f"python3 {ADS}/record_tool_start.py", "async": True},
+]}]
+# PostToolUse: capture tech-stack context + fire completion ad after long tools
+data["hooks"]["PostToolUse"] = [{"hooks": [
+    {"type": "command", "command": f"python3 {ADS}/context_hook.py",   "async": True},
+    {"type": "command", "command": f"python3 {ADS}/completion_ad.py",  "async": True},
+]}]
+# Stop: rotate the spinner ad + print the clickable scrollback ad,
+# milestone notifications, and the earnings progress bar
 data["hooks"]["Stop"] = [{"hooks": [
     {"type": "command", "command": f"python3 {ADS}/update_spinner.py", "async": True},
+    {"type": "command", "command": f"python3 {ADS}/click_ad.py"},
 ]}]
 
 tmp = SETTINGS.with_suffix(".tmp")

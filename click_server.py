@@ -71,13 +71,19 @@ def log_click(ad_id):
 
     cfg = load_config()
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
-        url     = f"{cfg['supabase_url']}/rest/v1/events"
-        payload = json.dumps({"ad_id": ad_id, "ad_text": "", "event": "click", "surface": "click"}).encode()
+        # Route through track-event (anon INSERT on events is revoked).
+        url     = f"{cfg['supabase_url']}/functions/v1/track-event"
+        payload = json.dumps({
+            "ad_id":   ad_id,
+            "ad_text": "",
+            "event":   "click",
+            "surface": "click",
+            "user_id": cfg.get("user_id"),
+        }).encode()
         req = urllib.request.Request(url, data=payload, headers={
             "apikey":        cfg["supabase_key"],
             "Authorization": f"Bearer {cfg['supabase_key']}",
             "Content-Type":  "application/json",
-            "Prefer":        "return=minimal",
         }, method="POST")
         try:
             urllib.request.urlopen(req, timeout=4, context=SSL_CTX)

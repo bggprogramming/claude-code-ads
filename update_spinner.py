@@ -80,21 +80,21 @@ def init_db(conn):
         pass
     conn.commit()
 
-def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
-    url     = f"{cfg['supabase_url']}/rest/v1/events"
+def push_supabase(ad_id, ad_text, event_type, surface, cfg, variant="default"):
+    # Route through track-event — earnings computed server-side.
+    url     = f"{cfg['supabase_url']}/functions/v1/track-event"
     payload = json.dumps({
-        "ad_id":               ad_id,
-        "ad_text":             ad_text,
-        "event":               event_type,
-        "surface":             surface,
-        "user_id":             cfg.get("user_id"),
-        "earnings_millicents": mc,
+        "ad_id":   ad_id,
+        "ad_text": ad_text,
+        "event":   event_type,
+        "surface": surface,
+        "user_id": cfg.get("user_id"),
+        "variant": variant,
     }).encode()
     req = urllib.request.Request(url, data=payload, headers={
         "apikey":        cfg["supabase_key"],
         "Authorization": f"Bearer {cfg['supabase_key']}",
         "Content-Type":  "application/json",
-        "Prefer":        "return=minimal",
     }, method="POST")
     try:
         urllib.request.urlopen(req, timeout=4, context=SSL_CTX)
@@ -103,7 +103,6 @@ def push_supabase(ad_id, ad_text, event_type, surface, cfg, mc=0):
 
 def log_impression(ad, surface="spinner", ad_text=None, variant="default"):
     cfg      = load_config()
-    mc       = _earnings.impression_mc(ad, surface)
     log_text = ad_text or ad.get("text", "")
 
     try:
@@ -122,7 +121,7 @@ def log_impression(ad, surface="spinner", ad_text=None, variant="default"):
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
         t = threading.Thread(
             target=push_supabase,
-            args=(ad["id"], log_text, "impression", surface, cfg, mc),
+            args=(ad["id"], log_text, "impression", surface, cfg, variant),
             daemon=True
         )
         t.start()

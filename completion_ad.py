@@ -95,22 +95,21 @@ def init_db(conn):
     conn.commit()
 
 
-def push_supabase(ad_id, ad_text, cfg, mc, variant):
-    url     = f"{cfg['supabase_url']}/rest/v1/events"
+def push_supabase(ad_id, ad_text, cfg, variant):
+    # Route through track-event — earnings computed server-side.
+    url     = f"{cfg['supabase_url']}/functions/v1/track-event"
     payload = json.dumps({
-        "ad_id":               ad_id,
-        "ad_text":             ad_text,
-        "event":               "impression",
-        "surface":             "completion",
-        "user_id":             cfg.get("user_id"),
-        "earnings_millicents": mc,
-        "variant":             variant,
+        "ad_id":   ad_id,
+        "ad_text": ad_text,
+        "event":   "impression",
+        "surface": "completion",
+        "user_id": cfg.get("user_id"),
+        "variant": variant,
     }).encode()
     req = urllib.request.Request(url, data=payload, headers={
         "apikey":        cfg["supabase_key"],
         "Authorization": f"Bearer {cfg['supabase_key']}",
         "Content-Type":  "application/json",
-        "Prefer":        "return=minimal",
     }, method="POST")
     try:
         urllib.request.urlopen(req, timeout=4, context=SSL_CTX)
@@ -119,8 +118,6 @@ def push_supabase(ad_id, ad_text, cfg, mc, variant):
 
 
 def log_impression(ad, variant, cfg):
-    mc = _earnings.impression_mc(ad, "completion")
-
     try:
         conn = sqlite3.connect(DB_FILE)
         init_db(conn)
@@ -135,7 +132,7 @@ def log_impression(ad, variant, cfg):
         pass
 
     if cfg.get("supabase_url") and cfg.get("supabase_key"):
-        threading.Thread(target=push_supabase, args=(ad["id"], ad.get("text", ""), cfg, mc, variant), daemon=True).start()
+        threading.Thread(target=push_supabase, args=(ad["id"], ad.get("text", ""), cfg, variant), daemon=True).start()
 
     _earnings.track(ad, "completion")
 

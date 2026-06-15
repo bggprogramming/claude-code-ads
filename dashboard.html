@@ -353,7 +353,7 @@
     // Fetch advertiser record
     let advRows;
     try {
-      advRows = await apiFetch(`advertisers?dashboard_key=eq.${encodeURIComponent(key)}&select=*`);
+      advRows = await apiFetch(`advertisers?dashboard_key=eq.${encodeURIComponent(key)}&select=id,ad_id,company,ad_text,url,cpm_cents,daily_budget_cents,status,dashboard_key,created_at,logo_url,use_variants,copy_variants`);
     } catch (e) {
       showError();
       return;

@@ -384,23 +384,15 @@ def main():
                          proc2.returncode == 0,
                          proc2.stderr[:80] if proc2.stderr else "ok"))
 
-    # Verify the row landed in Supabase
+    # Privacy: opted-in context is uploaded, but is NOT readable via the public
+    # anon key — RLS has no SELECT policy on session_contexts (prompt snippets must
+    # not be world-readable). So an anon read-back must return nothing.
+    # (Content correctness is verified server-side / out of band, not via anon.)
     time.sleep(1)
     rows = api(cfg, "GET", "session_contexts",
-               params=f"?session_id=eq.{uploader_sid}&select=session_id,tech_stack,prompt_snippet,tools_used")
-    results.append(check("Row uploaded to session_contexts",
-                         bool(rows), f"{len(rows) if rows else 0} rows"))
-    if rows:
-        row = rows[0]
-        results.append(check("tech_stack contains typescript",
-                             "typescript" in (row.get("tech_stack") or []),
-                             str(row.get("tech_stack"))))
-        results.append(check("prompt_snippet captured from transcript",
-                             bool(row.get("prompt_snippet")) and "binary search" in row.get("prompt_snippet", ""),
-                             repr(row.get("prompt_snippet", "")[:60])))
-        results.append(check("tools_used recorded",
-                             bool(row.get("tools_used")),
-                             str(row.get("tools_used"))))
+               params=f"?session_id=eq.{uploader_sid}&select=session_id")
+    results.append(check("session_contexts NOT readable via anon (privacy)",
+                         not rows, f"{len(rows) if rows else 0} rows visible to anon"))
 
     # Cleanup Supabase test row
     try:
@@ -437,10 +429,10 @@ def main():
     results.append(check("session_contexts insert via anon key works", schema_ok))
 
     rows2 = api(cfg, "GET", "session_contexts",
-                params=f"?session_id=eq.{test_ctx_sid}&select=*")
-    results.append(check("session_contexts select works",
-                         bool(rows2) and rows2[0]["session_id"] == test_ctx_sid,
-                         f"{len(rows2) if rows2 else 0} rows"))
+                params=f"?session_id=eq.{test_ctx_sid}&select=session_id")
+    results.append(check("session_contexts NOT readable via anon (privacy)",
+                         not rows2,
+                         f"{len(rows2) if rows2 else 0} rows visible to anon"))
 
     # Cleanup
     try:
