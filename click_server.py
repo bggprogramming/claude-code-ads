@@ -3,6 +3,9 @@
 Local click-tracking redirect server.
 GET /click?ad_id=X&dest=URL → log click → 302 to dest
 GET /health                  → 200 ok
+
+Writes a heartbeat file every 60s so external monitors can detect
+a silently-dead server without making an HTTP call.
 """
 import json
 import os
@@ -10,16 +13,19 @@ import sqlite3
 import ssl
 import sys
 import threading
+import time
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-BASE     = Path(__file__).parent
-DB_FILE  = BASE / "analytics.db"
-CFG_FILE = BASE / "config.json"
-PID_FILE = BASE / "click_server.pid"
-PORT     = 54323
+BASE           = Path(__file__).parent
+DB_FILE        = BASE / "analytics.db"
+CFG_FILE       = BASE / "config.json"
+PID_FILE       = BASE / "click_server.pid"
+LOG_FILE       = BASE / "click_server.log"
+HEARTBEAT_FILE = Path("/tmp/claude-ads-server-heartbeat.json")
+PORT           = 54323
 
 import certifi
 SSL_CTX = ssl.create_default_context(cafile=certifi.where())
@@ -105,10 +111,37 @@ class ClickHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
 
+def _heartbeat_loop():
+    """Write a liveness timestamp every 60s so the health-check script can
+    detect a silently-dead server without an HTTP round-trip."""
+    pid = os.getpid()
+    while True:
+        try:
+            HEARTBEAT_FILE.write_text(json.dumps({
+                "ts":   int(time.time()),
+                "port": PORT,
+                "pid":  pid,
+            }))
+        except Exception:
+            pass
+        time.sleep(60)
+
+
 if __name__ == "__main__":
-    PID_FILE.write_text(str(os.getpid()))
+    pid = os.getpid()
+    PID_FILE.write_text(str(pid))
+
+    # Start heartbeat background thread
+    threading.Thread(target=_heartbeat_loop, daemon=True).start()
+
     try:
         server = HTTPServer(("127.0.0.1", PORT), ClickHandler)
+        LOG_FILE.write_text(f"started pid={pid} port={PORT}\n")
+        HEARTBEAT_FILE.write_text(json.dumps({"ts": int(time.time()), "port": PORT, "pid": pid}))
         server.serve_forever()
+    except OSError as e:
+        LOG_FILE.write_text(f"FAILED to bind port {PORT}: {e}\n")
+        sys.exit(1)
     finally:
         PID_FILE.unlink(missing_ok=True)
+        HEARTBEAT_FILE.unlink(missing_ok=True)

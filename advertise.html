@@ -174,6 +174,29 @@
     .cpm-desc { font-size: 11px; color: var(--muted); margin-top: 6px; }
     .cpm-card.selected .cpm-name { color: var(--accent); }
 
+    /* Ultra tier */
+    .cpm-ultra {
+      position: relative; border: 1px solid rgba(180,255,105,0.35); border-radius: 8px;
+      padding: 20px 20px; cursor: pointer; transition: border-color 0.15s;
+      background: rgba(180,255,105,0.02); margin-top: 10px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .cpm-ultra:hover { border-color: rgba(180,255,105,0.55); }
+    .cpm-ultra.selected { border-color: var(--accent); background: rgba(180,255,105,0.05); }
+    .cpm-ultra-left { flex: 1; }
+    .cpm-ultra-right { text-align: right; flex-shrink: 0; }
+    .cpm-ultra-badge {
+      display: inline-block; background: rgba(180,255,105,0.12);
+      color: var(--accent); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 4px; margin-bottom: 8px;
+    }
+    .cpm-ultra .cpm-name { color: var(--accent); font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .cpm-ultra .cpm-desc { font-size: 12px; color: var(--muted); }
+    .cpm-ultra .cpm-price { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.03em; line-height: 1; }
+    .cpm-ultra .cpm-price span { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .cpm-ultra .cpm-weight { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
     /* Daily budget */
     .budget-input-wrap { position: relative; }
     .budget-prefix {
@@ -271,12 +294,12 @@
 
   <div class="stats">
     <div class="stat">
-      <div class="stat-val">$25</div>
-      <div class="stat-label">Avg CPM</div>
+      <div class="stat-val">2.1%</div>
+      <div class="stat-label">Avg CTR</div>
     </div>
     <div class="stat">
-      <div class="stat-val">2×</div>
-      <div class="stat-label">Placements per session</div>
+      <div class="stat-val">14×</div>
+      <div class="stat-label">vs web display</div>
     </div>
     <div class="stat">
       <div class="stat-val">0%</div>
@@ -397,6 +420,19 @@
               <div class="cpm-desc">1.75× rotation weight</div>
             </div>
           </div>
+
+          <!-- Ultra tier — full width, CTR-story focused -->
+          <div class="cpm-ultra" data-cpm="7500" id="ultra-card">
+            <div class="cpm-ultra-left">
+              <div class="cpm-ultra-badge">Ultra — highest CTR placement</div>
+              <div class="cpm-name">Ultra</div>
+              <div class="cpm-desc">Priority queue + first impression each session + dedicated spinner slot. In-terminal ads deliver 2.1% avg CTR — 14× web display. At Ultra, your ad shows first, every time.</div>
+            </div>
+            <div class="cpm-ultra-right">
+              <div class="cpm-price">$75 <span>/ 1K imps</span></div>
+              <div class="cpm-weight">3.75× rotation weight</div>
+            </div>
+          </div>
         </div>
 
         <div class="field">
@@ -457,14 +493,19 @@
   let selectedCpm = 2500;
   let dashUrl = '';
 
-  // CPM tier selection
+  // CPM tier selection (regular cards + ultra card)
+  function selectCpm(el) {
+    document.querySelectorAll('.cpm-card, .cpm-ultra').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCpm = parseInt(el.dataset.cpm, 10);
+    updateReach();
+  }
+
   document.querySelectorAll('.cpm-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.cpm-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedCpm = parseInt(card.dataset.cpm, 10);
-      updateReach();
-    });
+    card.addEventListener('click', () => selectCpm(card));
+  });
+  document.getElementById('ultra-card').addEventListener('click', function() {
+    selectCpm(this);
   });
 
   function updateReach() {

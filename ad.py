@@ -16,11 +16,12 @@ import urllib.request
 from pathlib import Path
 
 import certifi
-import context as _ctx
+import context  as _ctx
 import earnings as _earnings
+import feed     as _feed
 
 BASE      = Path(__file__).parent
-ADS_FILE  = BASE / "ads.json"
+ADS_FILE  = BASE / "ads.json"   # fallback; _feed.load_ads() is primary
 DB_FILE   = BASE / "analytics.db"
 CFG_FILE  = BASE / "config.json"
 SSL_CTX   = ssl.create_default_context(cafile=certifi.where())
@@ -149,12 +150,7 @@ def make_clickable(text, ad_id, dest_url):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    try:
-        with open(ADS_FILE) as f:
-            ads = json.load(f)
-    except Exception:
-        sys.exit(0)
-
+    ads = _feed.load_ads()
     if not ads:
         sys.exit(0)
 

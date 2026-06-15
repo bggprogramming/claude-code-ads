@@ -217,6 +217,7 @@
         <div class="stat-card">
           <div class="stat-val" id="s-ctr">—</div>
           <div class="stat-label">CTR</div>
+          <div class="stat-sub" id="s-ctr-bench"></div>
         </div>
         <div class="stat-card">
           <div class="stat-val" id="s-spend">—</div>
@@ -397,6 +398,12 @@
     document.getElementById('s-impressions').textContent = fmt(totalImp);
     document.getElementById('s-clicks').textContent      = fmt(totalClk);
     document.getElementById('s-ctr').textContent         = fmt(ctr, 2) + '%';
+    // Show CTR vs web display benchmark when there's actual data
+    if (totalImp > 0) {
+      const webCtr = 0.15;
+      const mult   = ctr > 0 ? (ctr / webCtr).toFixed(1) + '× web display' : '0% so far';
+      document.getElementById('s-ctr-bench').textContent = mult;
+    }
     document.getElementById('s-spend').textContent       = '$' + fmt(spendDollars, 2);
     if (monthlyBudget > 0) {
       document.getElementById('s-budget-pct').textContent =

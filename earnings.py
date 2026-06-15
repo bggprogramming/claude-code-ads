@@ -29,8 +29,58 @@ SSL_CTX       = ssl.create_default_context(cafile=certifi.where())
 MILESTONE_MC       = 500_000    # $5.00 — referral unlock trigger
 REFERRAL_BONUS_MC  = 1_000_000  # $10.00 — bonus paid to each party
 
+# Ordered list of (millicent threshold, unique key, terminal message).
+# Messages use ANSI codes safe for modern terminals.
+NOTIFY_MILESTONES = [
+    (
+        1_000,
+        "first_cent",
+        "\033[32m✓ First ad served — the terminal is now making you money.\033[0m",
+    ),
+    (
+        100_000,
+        "one_dollar",
+        "\033[1;32m✓ $1.00 earned!\033[0m You just made your first dollar while coding. "
+        "Refer a friend and you both get $10 → \033[2mpython3 ~/.claude/ads/referral.py\033[0m",
+    ),
+    (
+        500_000,
+        "five_dollars",
+        "\033[1;32m✓ $5.00 milestone!\033[0m Referral bonuses are now unlocked. "
+        "Share your link → \033[2mpython3 ~/.claude/ads/referral.py\033[0m",
+    ),
+    (
+        1_000_000,
+        "ten_dollars",
+        "\033[1;32m✓ $10.00 earned!\033[0m Your first payout is ready. "
+        "Check earnings → \033[2mpython3 ~/.claude/ads/stats.py\033[0m",
+    ),
+]
+
 
 # ── Local state ───────────────────────────────────────────────────────────────
+
+def pending_notifications() -> list:
+    """
+    Returns un-announced milestone messages and marks them as seen.
+    Safe to call multiple times — each message appears at most once.
+    """
+    state = load_earnings()
+    mc    = state.get("total_mc", 0)
+    done  = set(state.get("notified", []))
+
+    triggered = []
+    for threshold_mc, key, msg in NOTIFY_MILESTONES:
+        if mc >= threshold_mc and key not in done:
+            triggered.append(msg)
+            done.add(key)
+
+    if triggered:
+        state["notified"] = list(done)
+        save_earnings(state)
+
+    return triggered
+
 
 def load_earnings():
     try:
