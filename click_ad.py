@@ -233,10 +233,15 @@ def earnings_progress_line(cfg):
         f" \033[2m[{bar}] ${target:g} · share: {ref_url}\033[0m"
     )
 
-    # Nudge: if not at the top earnings tier, show the upside (drives opt-in).
-    if int(cfg.get("share_level", 0)) < 3:
-        line += ("\n\033[2m  └ \033[0m\033[38;5;205myou're leaving up to 2.5× on the table\033[0m"
-                 "\033[2m — unlock it: \033[0m\033[38;5;156mpython3 ~/.claude/ads/optin.py\033[0m")
+    # Nudge: if not at the top earnings tier, show the concrete upside (drives opt-in).
+    lvl = int(cfg.get("share_level", 0))
+    if lvl < 3:
+        share_mult = [1.0, 1.3, 1.7, 2.5]
+        per1k = (mc / total_imp / 100) if total_imp else 0.0
+        extra = per1k * (2.5 / share_mult[max(0, min(3, lvl))] - 1) if per1k else 0.0
+        upside = f"≈ +${extra:,.2f}/1k" if extra > 0 else "up to 2.5×"
+        line += (f"\n\033[2m  └ \033[0m\033[38;5;205m{upside} more at Max\033[0m"
+                 f"\033[2m → \033[0m\033[38;5;156mpython3 ~/.claude/ads/optin.py\033[0m")
     return line
 
 

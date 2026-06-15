@@ -15,6 +15,7 @@ uploads only what the chosen tier permits; track-event applies the multiplier.
 """
 import json
 import sys
+import time
 from pathlib import Path
 
 BASE     = Path(__file__).parent
@@ -97,6 +98,31 @@ def _bar(mult):
     return "▓" * n + "░" * (12 - n)
 
 
+_SHARE_MULT = [1.0, 1.3, 1.7, 2.5]
+
+
+def _base_per_imp_mc():
+    """Estimate the developer's PRIVATE-tier earning per impression (millicents),
+    from real history when available, normalized for whatever tier they ran at."""
+    try:
+        e = json.loads((BASE / "earnings.json").read_text())
+    except Exception:
+        e = {}
+    ti = sum(e.get(k, 0) for k in
+             ("imp_statusline", "imp_spinner", "imp_completion", "imp_scrollback", "imp_vscode_statusbar"))
+    mc = e.get("total_mc", 0)
+    cfg = load_cfg()
+    cur = max(0, min(3, int(cfg.get("share_level", 1 if cfg.get("optin_enabled") else 0))))
+    per = (mc / ti) if ti > 0 else 2000.0          # mc per impression (~$20 / 1k default)
+    return per / _SHARE_MULT[cur]                  # normalize to the private baseline
+
+
+def _per1k(mult, base=None):
+    """Estimated developer earnings, in dollars, per 1,000 ads at this multiplier."""
+    base = _base_per_imp_mc() if base is None else base
+    return base * mult / 100.0
+
+
 def _ask(prompt):
     """Read one line, preferring the controlling terminal so this works even when
     stdin is a pipe (e.g. during `curl ... | bash`). Raises EOFError if no TTY."""
@@ -116,16 +142,23 @@ def _ask(prompt):
 def interactive():
     cfg = load_cfg()
     cur = max(0, min(3, int(cfg.get("share_level", 1 if cfg.get("optin_enabled") else 0))))
+    base = _base_per_imp_mc()
+    base1k = _per1k(1.0, base)
     print()
     print(f"  {B}Earn more by sharing a little context{R}")
     print(f"  {GREY}More context → advertisers can target you → they bid more → you earn more.{R}")
     print()
     for i, t in enumerate(TIERS):
-        col = PINK if t["key"] == "max" else (GREEN if i > 0 else GREY)
+        col   = PINK if t["key"] == "max" else (GREEN if i > 0 else GREY)
+        est   = _per1k(t["mult"], base)
+        delta = est - base1k
+        money = (f"{GREEN}≈ ${est:,.2f}/1k{R}  {GREEN}+${delta:,.2f}{R}"
+                 if i > 0 else f"{GREY}≈ ${est:,.2f}/1k  base{R}")
         cur_tag = f"  {GREEN}← current{R}" if i == cur else ""
-        star = f"  {PINK}🔥 top earners{R}" if t["key"] == "max" else ""
-        print(f"   {B}{i+1}{R}  {col}{t['name']:<8} {t['mult']:.1f}×{R}  {DIM}[{_bar(t['mult'])}]{R}  "
-              f"{GREY}{t['desc'].splitlines()[0]}{R}{cur_tag}{star}")
+        star    = f"  {PINK}🔥{R}" if t["key"] == "max" else ""
+        print(f"   {B}{i+1}{R}  {col}{t['name']:<8} {t['mult']:.1f}×{R}  {money}{cur_tag}{star}")
+        print(f"       {GREY}{t['desc'].splitlines()[0]}{R}")
+    print(f"\n  {DIM}≈ per 1,000 ads shown, based on your current pace.{R}")
     print()
     rec = TIERS[DEFAULT_LEVEL]
     try:
@@ -142,11 +175,42 @@ def interactive():
     _confirm(mapping[ans])
 
 
+def _animate(target):
+    """Fun level-up: climb private → … → target, bar growing and $ rising."""
+    if not sys.stdout.isatty():
+        return
+    base = _per1k(1.0)
+    W = 18
+    cols = [GREY, GREEN, GREEN, PINK]
+    try:
+        for lvl in range(target + 1):
+            t = TIERS[lvl]
+            amt  = base * t["mult"]
+            fill = max(1, int(t["mult"] / 2.5 * W))
+            bar  = "▓" * fill + "░" * (W - fill)
+            c    = cols[lvl]
+            sys.stdout.write(f"\r   {c}[{bar}]{R} {c}{B}{t['name']:<8}{R} {c}{t['mult']:.1f}×{R}  "
+                             f"{GREEN}${amt:,.2f}/1k{R}        ")
+            sys.stdout.flush()
+            time.sleep(0.012 + 0.20)
+        if target == 3:
+            for s in ("💸", "💸💸", "💸💸💸", "💰 MAX PAYOUT"):
+                sys.stdout.write(f"\r   {PINK}[{'▓' * W}]{R} {PINK}{B}max     {R} {PINK}2.5×{R}  "
+                                 f"{GREEN}${base * 2.5:,.2f}/1k{R}  {PINK}{s}{R}        ")
+                sys.stdout.flush()
+                time.sleep(0.16)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    except Exception:
+        pass
+
+
 def _confirm(level):
     level = apply_level(level)
     t = TIERS[level]
     mcol = PINK if t["key"] == "max" else GREEN
     print()
+    _animate(level)
     if level == 0:
         print(f"  {GREY}Sharing off — base rate.{R} Run optin.py anytime to earn more.")
     else:
