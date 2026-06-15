@@ -90,7 +90,8 @@
     </div>
 
     <div class="sec">
-      <div class="sec-title">Your referral link — you both get $10</div>
+      <div class="sec-title">Invite friends — you both get $10</div>
+      <button id="invite-btn" style="width:100%;background:var(--accent);border:none;border-radius:999px;color:#0a0c08;font-weight:700;font-size:15px;padding:15px;cursor:pointer;margin-bottom:14px">Send invite via Messages →</button>
       <div class="share"><code id="ref-link"></code><button onclick="copy('ref-link',this)">Copy</button></div>
       <div class="share" style="margin-top:10px"><code id="install-cmd"></code><button onclick="copy('install-cmd',this)">Copy</button></div>
       <div class="sec-title" style="margin:20px 0 8px">GitHub README badge</div>
@@ -135,9 +136,16 @@
       $('milestone').innerHTML = d.milestone_hit ? '<span style="color:var(--green)">unlocked ✓</span>' : 'locked';
       $('surfaces').innerHTML = (d.by_surface.length ? d.by_surface : [{surface:'—',impressions:0,dollars:0}]).map(s=>
         `<div class="row"><span class="k">${s.surface}</span><span class="v">${fmt(s.impressions)} imps · $${s.dollars.toFixed(4)}</span></div>`).join('');
-      const link = `${SITE}?ref=${d.referral_code}`.replace('portal.html','');
       const siteRoot = SITE.replace(/portal\.html.*/,'');
-      $('ref-link').textContent = `${siteRoot}?ref=${d.referral_code}`;
+      const inviteUrl = `${siteRoot}invite.html?ref=${d.referral_code}`;
+      $('ref-link').textContent = inviteUrl;
+      // Wire the native share / copy invite
+      const ib = $('invite-btn');
+      const shareText = "i'm getting paid to code — the ads in my terminal pay me 50%. join w/ my link and we both get $10:";
+      ib.onclick = async () => {
+        if (navigator.share) { try { await navigator.share({ title:'Get paid to code', text: shareText, url: inviteUrl }); return; } catch(e){} }
+        navigator.clipboard.writeText(`${shareText} ${inviteUrl}`).then(()=>{ ib.textContent='✓ Invite copied — paste in Messages'; setTimeout(()=>ib.textContent='Send invite via Messages →',2200); });
+      };
       $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${d.referral_code}`;
       const shields = `https://img.shields.io/endpoint?url=${SUPA}/functions/v1/badge/${d.referral_code}&style=flat`;
       $('badge-md').textContent = `[![Earned with Claude Code Ads](${shields})](${siteRoot})`;

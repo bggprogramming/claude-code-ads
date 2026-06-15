@@ -97,16 +97,36 @@ def main():
         f"curl -fsSL https://raw.githubusercontent.com/bggprogramming/"
         f"claude-code-ads/main/install.sh | bash -s -- --ref {code}"
     )
+    invite_url   = f"{SITE_BASE}/invite.html?ref={code}"
     site_link    = f"{SITE_BASE}/?ref={code}"
     badge_url    = f"{BADGE_FN_BASE}/{code}"
     shields_url  = f"{SHIELDS_BASE}?url={badge_url}&style=flat"
     badge_md     = f"[![Earned with Claude Code Ads]({shields_url})]({site_link})"
 
+    earned_str = f"${earned:.2f}" if earned >= 0.01 else "money"
+    invite_msg = (
+        f"i'm getting paid to code — the ads in my terminal pay me 50% "
+        f"(made {earned_str} so far). join with my link and we both get $10:\n{invite_url}"
+    )
+
     print(f"  Referral code: {code}")
-    print(f"  Share this:")
-    print(f"  {install_cmd}")
     print()
-    print("  When someone you refer earns their first $5, you both get $10.")
+    print("  ── Invite a friend (you both get $10) ───────────────────────────")
+    print("  Send this on iMessage — the link shows a rich preview:")
+    print()
+    for line in invite_msg.split("\n"):
+        print(f"    {line}")
+    print()
+
+    # Copy the invite message straight to the clipboard on macOS.
+    try:
+        import subprocess
+        subprocess.run(["pbcopy"], input=invite_msg.encode(), check=True, timeout=3)
+        print("  ✓ Copied to your clipboard — just paste it into Messages.")
+    except Exception:
+        print(f"  Direct install link: {invite_url}")
+    print()
+    print(f"  (raw install command: {install_cmd})")
     print()
     print("  ── GitHub README badge ─────────────────────────────────────────")
     print("  Add this to your README to show live earnings and drive referrals:")

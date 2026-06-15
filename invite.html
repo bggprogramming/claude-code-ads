@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're invited — get paid to code</title>
+
+  <!-- Rich link preview (iMessage / Twitter / Slack / etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Claude Code Ads">
+  <meta property="og:title" content="You're invited — get paid to code">
+  <meta property="og:description" content="Your terminal already runs ads while Claude works. Join with my link and we both get $10.">
+  <meta property="og:image" content="https://bggprogramming.github.io/claude-code-ads/assets/og-invite.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://bggprogramming.github.io/claude-code-ads/invite.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="You're invited — get paid to code">
+  <meta name="twitter:description" content="Your terminal already runs ads while Claude works. Join with my link and we both get $10.">
+  <meta name="twitter:image" content="https://bggprogramming.github.io/claude-code-ads/assets/og-invite.png">
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#080809;--surface:#0f0f11;--border:rgba(255,255,255,0.08);--text:#e7e7e9;--muted:#6a6a72;--hi:#9a9aa2;--accent:#b4ff69;--green:#28c840;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--mono:'SF Mono','Fira Code','Cascadia Code',monospace}
+    html{-webkit-text-size-adjust:100%}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5;-webkit-font-smoothing:antialiased;
+      background-image:radial-gradient(120% 80% at 0% 0%, rgba(180,255,105,0.07), transparent 55%);min-height:100vh}
+    .wrap{max-width:520px;margin:0 auto;padding:40px 22px 64px}
+    .brand{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--hi);font-weight:500;margin-bottom:40px}
+    .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+    .brand em{color:var(--accent);font-style:normal}
+    .eyebrow{font-size:12px;font-family:var(--mono);color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px}
+    h1{font-size:clamp(32px,9vw,42px);font-weight:800;letter-spacing:-0.04em;line-height:1.05;color:#fff;margin-bottom:16px}
+    h1 .hl{color:var(--accent)}
+    .lede{font-size:17px;color:var(--hi);margin-bottom:22px}
+    .lede b{color:var(--text);font-weight:600}
+    .proof{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:26px}
+    .proof .amt{font-size:24px;font-weight:700;color:var(--accent);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+    .proof .lbl{font-size:13px;color:var(--muted);line-height:1.35}
+    .bonus{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text);background:rgba(180,255,105,0.07);border:1px solid rgba(180,255,105,0.2);border-radius:12px;padding:13px 15px;margin-bottom:30px}
+    .bonus .pill{background:var(--accent);color:#0a0c08;font-weight:700;font-size:13px;padding:3px 9px;border-radius:7px;white-space:nowrap}
+    .step-label{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+    .cmd{position:relative;background:#0c0c0e;border:1px solid var(--border);border-radius:12px;padding:15px 16px;font-family:var(--mono);font-size:12.5px;color:var(--accent);line-height:1.55;word-break:break-all;margin-bottom:12px}
+    .cmd .pfx{color:var(--muted)}
+    .btn{display:block;width:100%;text-align:center;border:none;border-radius:999px;font-family:var(--font);font-weight:700;font-size:16px;padding:16px;cursor:pointer;transition:transform .08s,opacity .15s}
+    .btn:active{transform:scale(0.985)}
+    .btn-primary{background:var(--accent);color:#0a0c08;margin-bottom:10px}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:rgba(255,255,255,0.2)}
+    .copied{color:var(--green)!important}
+    .steps{margin:36px 0 30px}
+    .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+    .step:last-child{border-bottom:none}
+    .step .n{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(180,255,105,0.12);color:var(--accent);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+    .step .t{font-size:15px;color:var(--text)} .step .t span{color:var(--muted);font-size:13px;display:block;margin-top:2px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:34px}
+    .chip{font-size:12px;color:var(--hi);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+    .foot{text-align:center;font-size:13px;color:var(--muted)}
+    .foot a{color:var(--hi);text-decoration:none;border-bottom:1px solid var(--border)}
+    .terminal{background:#0b0b0d;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:30px}
+    .tbar{display:flex;gap:6px;padding:11px 13px;border-bottom:1px solid var(--border)}
+    .tbar i{width:10px;height:10px;border-radius:50%}.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+    .tbody{padding:15px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.9}
+    .tbody .p{color:#3a3a3a}.tbody .ad{color:var(--accent)}.tbody .th{color:#555}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>claude code <em>ads</em></div>
+
+    <div class="eyebrow" id="eyebrow">You've been invited</div>
+    <h1 id="headline">Get paid to <span class="hl">code.</span></h1>
+    <p class="lede" id="lede">Your terminal already runs sponsored messages while Claude works. This pays you <b>50% of every one</b> — passively, while you do what you already do.</p>
+
+    <div class="proof" id="proof" style="display:none">
+      <div class="amt" id="proof-amt">$0.00</div>
+      <div class="lbl" id="proof-lbl">earned so far by the friend who invited you</div>
+    </div>
+
+    <div class="bonus">
+      <span class="pill">+$10 each</span>
+      <span>When you hit your first <b>$5</b>, you <b>and</b> the friend who invited you each get <b>$10</b>.</span>
+    </div>
+
+    <!-- live terminal taste -->
+    <div class="terminal">
+      <div class="tbar"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+      <div class="tbody">
+        <div><span class="p">~ $ </span>claude</div>
+        <div class="ad" id="t-ad">✦ Cursor — Tab to accept any suggestion. cursor.com</div>
+        <div class="th">◌ Thinking… <span style="color:#3a3a3a">(you just earned $0.025)</span></div>
+      </div>
+    </div>
+
+    <div class="step-label">Install — paste this in your terminal</div>
+    <div class="cmd" id="cmd"><span class="pfx">$ </span><span id="cmd-text">curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash</span></div>
+    <button class="btn btn-primary" id="copy-btn">Copy install command</button>
+    <button class="btn btn-ghost" id="share-btn">Send to a friend →</button>
+
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="t">Paste the command<span>One line. Works on macOS &amp; Linux, any terminal that runs Claude Code.</span></div></div>
+      <div class="step"><div class="n">2</div><div class="t">Keep coding with Claude<span>A tasteful sponsor line shows in your status bar &amp; spinner.</span></div></div>
+      <div class="step"><div class="n">3</div><div class="t">Get paid — and you both get $10<span>50% of every impression is yours. Hit $5 and the bonus unlocks.</span></div></div>
+    </div>
+
+    <div class="chips">
+      <span class="chip">Open source</span>
+      <span class="chip">No code or data leaves your machine</span>
+      <span class="chip">Uninstall in one command</span>
+    </div>
+
+    <div class="foot">Curious how it works? <a href="index.html">See the full breakdown →</a></div>
+  </div>
+
+<script>
+  const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
+  const params = new URLSearchParams(location.search);
+  const ref = (params.get('ref') || '').trim().toLowerCase();
+  const from = (params.get('from') || '').trim();
+  const ROOT = location.href.replace(/invite\.html.*$/, '');
+
+  const installCmd = ref
+    ? `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${ref}`
+    : `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash`;
+  document.getElementById('cmd-text').textContent = installCmd;
+
+  if (from) {
+    document.getElementById('eyebrow').textContent = `${from} invited you`;
+    document.getElementById('headline').innerHTML = `${escapeHtml(from)} pays their terminal to <span class="hl">work for them.</span>`;
+  }
+
+  // Social proof: pull the inviter's real earnings.
+  if (ref) {
+    fetch(`${SUPA}/functions/v1/dev-portal?code=${encodeURIComponent(ref)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || d.total_dollars == null) return;
+        document.getElementById('proof-amt').textContent = '$' + d.total_dollars.toFixed(2);
+        document.getElementById('proof-lbl').textContent = from
+          ? `earned by ${from} just by coding` : 'earned by the friend who invited you';
+        document.getElementById('proof').style.display = 'flex';
+      }).catch(()=>{});
+  }
+
+  // rotate the terminal taste ad
+  const taste = [
+    '✦ Cursor — Tab to accept any suggestion. cursor.com',
+    '⚡ Warp — Search 10,000 past commands in a second. warp.dev',
+    '◆ Linear — Close issues 3× faster than Jira. linear.app',
+  ];
+  let ti = 0; setInterval(() => { ti=(ti+1)%taste.length; document.getElementById('t-ad').textContent = taste[ti]; }, 2600);
+
+  // Copy install command
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(installCmd).then(() => {
+      copyBtn.textContent = '✓ Copied — paste it in your terminal';
+      copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy install command'; copyBtn.classList.remove('copied'); }, 2600);
+    });
+  });
+
+  // Share (native share sheet → Messages on iOS/macOS; copy fallback)
+  const shareBtn = document.getElementById('share-btn');
+  const shareUrl = ref ? `${ROOT}invite.html?ref=${ref}` : `${ROOT}invite.html`;
+  const shareText = "i'm getting paid to code — the ads in my terminal pay me 50%. join w/ my link and we both get $10:";
+  shareBtn.addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Get paid to code', text: shareText, url: shareUrl }); return; } catch (e) {}
+    }
+    navigator.clipboard.writeText(`${shareText} ${shareUrl}`).then(() => {
+      shareBtn.textContent = '✓ Invite link copied';
+      setTimeout(() => shareBtn.textContent = 'Send to a friend →', 2200);
+    });
+  });
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
