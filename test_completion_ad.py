@@ -29,7 +29,7 @@ AD_CURSOR = {
     "text": "✦ Cursor — AI pair programmer. cursor.com",
     "url": "https://cursor.com",
     "cpm": 25,
-    "completion_text": "─── Sponsored by Cursor · AI pair programmer · cursor.com ────",
+    "completion_text": "─── Cursor — AI pair programmer ↗ ────",
 }
 
 AD_NO_COMPLETION = {

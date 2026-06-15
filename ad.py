@@ -188,7 +188,7 @@ def main():
 
     # Always render the status line; only count it as an impression when the
     # terminal window is actually visible (not covered by another window).
-    print(make_clickable(ad_text, ad["id"], ad["url"]))
+    print(make_clickable(f"{ad_text} ↗", ad["id"], ad["url"]))
 
     # Count once per window, and only when the window is actually visible.
     if impression_due() and _view.is_viewable():

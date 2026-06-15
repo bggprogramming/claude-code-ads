@@ -25,7 +25,7 @@ const HOUSE = [
       go: '✦ Cursor — Go autocomplete without the boilerplate. cursor.com',
       javascript: '✦ Cursor — JavaScript that autocompletes exactly how you think. cursor.com',
     },
-    completion_text: '──── Sponsored by Cursor · AI pair programmer that actually ships · cursor.com ────',
+    completion_text: '──── Cursor — AI pair programmer that actually ships ↗ ────',
   },
   {
     id: 'ad_warp',
@@ -39,13 +39,13 @@ const HOUSE = [
       python: '⚡ Warp — pip install, venv activate, run — all remembered. warp.dev',
       javascript: '⚡ Warp — npm scripts that actually make sense. Searchable history. warp.dev',
     },
-    completion_text: '──── Sponsored by Warp · The terminal built for developers · warp.dev ────',
+    completion_text: '──── Warp — the terminal built for developers ↗ ────',
   },
   {
     id: 'ad_linear',
     text: '◆ Linear — Close issues 3× faster than Jira. Free for small teams. linear.app',
     url: 'https://linear.app', weight: 2, cpm: 20, logo_url: null, tags: [], use_variants: false, copy_variants: {},
-    completion_text: '──── Sponsored by Linear · Issue tracking built for speed · linear.app ────',
+    completion_text: '──── Linear — issue tracking built for speed ↗ ────',
   },
 ]
 
@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
     use_variants: !!c.use_variants,
     copy_variants: c.copy_variants || {},
     logo_url: c.logo_path ? `${baseUrl}${STORAGE_PUBLIC}${c.logo_path}` : (c.logo_url || null),
-    completion_text: `──── Sponsored by ${c.company || c.ad_text} · ${c.url} ────`,
+    completion_text: `──── ${c.company ? c.company + ' — ' : ''}${c.ad_text || c.url} ↗ ────`,
   }))
 
   const ads = [...advAds, ...HOUSE]

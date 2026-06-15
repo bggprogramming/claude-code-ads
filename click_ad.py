@@ -255,7 +255,7 @@ def main():
 
     encoded  = urllib.parse.quote(ad["url"], safe="")
     track    = f"http://127.0.0.1:{CLICK_PORT}/click?ad_id={ad['id']}&dest={encoded}"
-    link     = osc8(ad_text, track)
+    link     = osc8(f"{ad_text} ↗", track)
     logo     = render_logo(ad)
     ad_line  = f"{logo}\033[2m{link}\033[0m\n"
 

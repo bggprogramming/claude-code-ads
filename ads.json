@@ -15,7 +15,7 @@
       "go":         "✦ Cursor — Go autocomplete without the boilerplate. cursor.com",
       "javascript": "✦ Cursor — JavaScript that autocompletes exactly how you think. cursor.com"
     },
-    "completion_text": "──── Sponsored by Cursor · AI pair programmer that actually ships · cursor.com ────"
+    "completion_text": "──── Cursor — AI pair programmer that actually ships ↗ ────"
   },
   {
     "id": "ad_warp",
@@ -32,7 +32,7 @@
       "python":     "⚡ Warp — pip install, venv activate, run — all remembered. warp.dev",
       "javascript": "⚡ Warp — npm scripts that actually make sense. Searchable history. warp.dev"
     },
-    "completion_text": "──── Sponsored by Warp · The terminal built for developers · warp.dev ────"
+    "completion_text": "──── Warp — the terminal built for developers ↗ ────"
   },
   {
     "id": "ad_linear",
@@ -43,6 +43,6 @@
     "tags": [],
     "use_variants": false,
     "copy_variants": {},
-    "completion_text": "──── Sponsored by Linear · Issue tracking built for speed · linear.app ────"
+    "completion_text": "──── Linear — issue tracking built for speed ↗ ────"
   }
 ]

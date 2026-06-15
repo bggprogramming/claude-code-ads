@@ -204,7 +204,7 @@ async function activate(context) {
 
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
   statusBar.command = 'claude-code-ads.openAd';
-  statusBar.tooltip = 'Sponsored — click to visit · Claude Code Ads';
+  statusBar.tooltip = 'Click to visit · Claude Code Ads';
   context.subscriptions.push(statusBar);
 
   let currentAd   = null;
@@ -248,7 +248,7 @@ async function activate(context) {
 
     // Truncate to fit status bar
     const display = currentText.length > 70 ? currentText.slice(0, 69) + '…' : currentText;
-    statusBar.text  = `$(megaphone) ${display}`;
+    statusBar.text  = `$(megaphone) ${display} ↗`;
     statusBar.show();
 
     // Count an impression only when the window is actually on screen. VS Code's
