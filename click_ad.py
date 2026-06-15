@@ -107,9 +107,11 @@ def render_logo(ad):
     """
     Return a terminal representation of the advertiser's brand logo.
 
-    - iTerm2 / kitty: the real uploaded image, inline.
-    - Everything else (incl. Apple Terminal, which can't show images): a small
-      colored brand chip so there's still a visual marker.
+    1. iTerm2 / kitty: the real uploaded image, inline (crisp).
+    2. Any other terminal (incl. Apple Terminal, VS Code/Cursor): the actual logo
+       rendered as colored Unicode half-blocks — low-res but recognizable, using
+       truecolor when available, else the 256-color cube.
+    3. No logo / no Pillow / fetch fails: a small colored brand chip.
     Returns '' if there's nothing to show.
     """
     logo_url = ad.get("logo_url")
@@ -117,23 +119,69 @@ def render_logo(ad):
     is_iterm = term == "iTerm.app"
     is_kitty = "kitty" in os.environ.get("TERM", "") or bool(os.environ.get("KITTY_WINDOW_ID"))
 
-    if logo_url and (is_iterm or is_kitty):
+    data = None
+    if logo_url:
         try:
-            req = urllib.request.Request(logo_url, headers={"User-Agent": "claude-code-ads/2.0"})
+            req  = urllib.request.Request(logo_url, headers={"User-Agent": "claude-code-ads/2.0"})
             data = urllib.request.urlopen(req, timeout=1.5, context=SSL_CTX).read()
-            if data and len(data) <= 256 * 1024:
-                b64 = base64.b64encode(data).decode()
-                if is_iterm:
-                    # iTerm2 inline image protocol
-                    return (f"\033]1337;File=inline=1;preserveAspectRatio=1;height=2:"
-                            f"{b64}\a ")
-                if is_kitty:
-                    # kitty graphics protocol (direct transmission + display)
-                    return f"\033_Gf=100,a=T,t=d;{b64}\033\\ "
+            if not data or len(data) > 256 * 1024:
+                data = None
         except Exception:
-            pass
+            data = None
 
-    # Fallback chip (works in Apple Terminal and anywhere with 256-color).
+    if data:
+        b64 = base64.b64encode(data).decode()
+        if is_iterm:
+            return f"\033]1337;File=inline=1;preserveAspectRatio=1;height=2:{b64}\a "
+        if is_kitty:
+            return f"\033_Gf=100,a=T,t=d;{b64}\033\\ "
+        art = _blocks_art(data)        # real logo as colored blocks (Apple Terminal etc.)
+        if art:
+            return art
+
+    return _chip(ad)
+
+
+def _blocks_art(data, cells_tall=6, max_wide=24):
+    """Render image bytes as colored half-block art (▀: fg=top px, bg=bottom px)."""
+    try:
+        import io
+        from PIL import Image
+    except Exception:
+        return None
+    try:
+        im = Image.open(io.BytesIO(data)).convert("RGBA")
+        bgc = Image.new("RGBA", im.size, (11, 11, 13, 255))   # flatten alpha on terminal bg
+        im  = Image.alpha_composite(bgc, im).convert("RGB")
+        ph  = cells_tall * 2
+        aspect = (im.width / im.height) if im.height else 1.0
+        pw  = max(2, min(max_wide, round(ph * aspect)))
+        im  = im.resize((pw, ph))
+        px  = im.load()
+        truecolor = os.environ.get("COLORTERM", "") in ("truecolor", "24bit")
+
+        def code(rgb, fg):
+            r, g, b = rgb
+            lead = 38 if fg else 48
+            if truecolor:
+                return f"\033[{lead};2;{r};{g};{b}m"
+            n = 16 + 36 * round(r / 255 * 5) + 6 * round(g / 255 * 5) + round(b / 255 * 5)
+            return f"\033[{lead};5;{n}m"
+
+        lines = []
+        for cy in range(cells_tall):
+            line = "  "
+            for x in range(pw):
+                top = px[x, cy * 2]
+                bot = px[x, cy * 2 + 1]
+                line += code(top, True) + code(bot, False) + "▀"
+            lines.append(line + "\033[0m")
+        return "\n".join(lines) + "\n"
+    except Exception:
+        return None
+
+
+def _chip(ad):
     label = ""
     for ch in ad.get("text", ""):
         if ch.isalnum():
@@ -141,7 +189,7 @@ def render_logo(ad):
             break
     if not label:
         return ""
-    palette = [39, 170, 213, 220, 48, 203, 141]  # pleasant 256-color hues
+    palette = [39, 170, 213, 220, 48, 203, 141]
     color = palette[sum(ord(c) for c in ad.get("id", "x")) % len(palette)]
     return f"\033[48;5;{color}m\033[38;5;232m {label} \033[0m "
 

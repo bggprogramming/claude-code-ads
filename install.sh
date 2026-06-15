@@ -161,6 +161,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
   pip3 install --quiet pyobjc-framework-Quartz 2>/dev/null \
     || python3 -m pip install --quiet pyobjc-framework-Quartz 2>/dev/null || true
 fi
+# Optional: Pillow lets the brand logo render as colored blocks in terminals
+# without an image protocol (Apple Terminal, VS Code). Falls back to a chip.
+pip3 install --quiet Pillow 2>/dev/null || python3 -m pip install --quiet Pillow 2>/dev/null || true
 
 # ── 4. Register account ───────────────────────────────────────────────────────
 info "Setting up your account…"
