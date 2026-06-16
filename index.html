@@ -137,6 +137,13 @@
     .mini-copy.done { color: #fff; background: var(--accent); border-color: var(--accent); }
     .cta-note { margin-top: 16px; font-size: 13px; color: var(--muted); }
 
+    /* Dual CTA (Claude Code + editors) */
+    .cta-row { display: inline-flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; }
+    .cta-secondary { background: var(--surface); color: var(--accent-d); border: 1.5px solid rgba(245,115,26,0.35); box-shadow: var(--shadow-sm); text-decoration: none; }
+    .cta-secondary:hover { box-shadow: var(--shadow-md); border-color: var(--accent); }
+    .cta-secondary::after { display: none; }
+    .cta-secondary svg { width: 20px; height: 20px; }
+
     /* Trust row */
     .trust { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 22px; margin-top: 40px; font-size: 13.5px; color: var(--hi); }
     .trust span { display: inline-flex; align-items: center; gap: 7px; }
@@ -353,16 +360,22 @@
     <p class="hero-sub rise d4">The sponsor line your AI terminal already shows while it thinks — now it pays <strong>you</strong>. Keep <strong>90%</strong> of every dollar.</p>
 
     <div class="rise d5">
-      <button class="cta" onclick="installCTA(this)">
-        <span class="mark"><svg><use href="#mango-glyph"/></svg></span>
-        Install Mango
-      </button>
+      <div class="cta-row">
+        <button class="cta" onclick="installCTA(this)">
+          <span class="mark"><svg><use href="#mango-glyph"/></svg></span>
+          Install for Claude Code
+        </button>
+        <a class="cta cta-secondary" href="https://open-vsx.org/extension/bggprogramming/mango" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18l-6-6 6-6"/><path d="M16 6l6 6-6 6"/></svg>
+          Add to VS Code / Cursor
+        </a>
+      </div>
       <div class="cta-cmd">
         <span class="prompt">$</span>
         <code>curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash</code>
         <button class="mini-copy" onclick="copyInstall(this)">Copy</button>
       </div>
-      <p class="cta-note">Requires Claude Code · No credit card · 30 seconds</p>
+      <p class="cta-note">Claude Code: paste the command · VS Code / Cursor / Windsurf: one-click from Open VSX · free · 30s</p>
     </div>
 
     <div class="trust rise d6">
@@ -567,11 +580,17 @@
 <!-- Bottom CTA -->
 <div class="bottom-cta">
   <h2>Start earning <span class="grad">while you code.</span></h2>
-  <button class="cta" onclick="installCTA(this)">
-    <span class="mark"><svg><use href="#mango-glyph"/></svg></span>
-    Install Mango
-  </button>
-  <div class="cta-cmd" style="margin-left:auto;margin-right:auto;">
+  <div class="cta-row">
+    <button class="cta" onclick="installCTA(this)">
+      <span class="mark"><svg><use href="#mango-glyph"/></svg></span>
+      Install for Claude Code
+    </button>
+    <a class="cta cta-secondary" href="https://open-vsx.org/extension/bggprogramming/mango" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18l-6-6 6-6"/><path d="M16 6l6 6-6 6"/></svg>
+      Add to VS Code / Cursor
+    </a>
+  </div>
+  <div class="cta-cmd" style="margin-left:auto;margin-right:auto;margin-top:18px;">
     <span class="prompt">$</span>
     <code>curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash</code>
     <button class="mini-copy" onclick="copyInstall(this)">Copy</button>
