@@ -1,7 +1,7 @@
 {
   "name": "claude-code-ads",
-  "displayName": "Claude Code Ads — Earn while you code",
-  "description": "Earn while you code: a sponsored message in the VS Code / Cursor / Windsurf status bar. Same network + account as the Claude Code CLI — you keep 90% of every impression.",
+  "displayName": "Earn While You Code — passive income for developers",
+  "description": "Turn AI coding wait-time into passive income. A small brand message appears in your status bar while your agent works, and you keep 90% of the revenue. Same account as the CLI; cash out via Stripe.",
   "version": "1.0.0",
   "publisher": "adthink",
   "license": "MIT",
@@ -17,7 +17,7 @@
     "vscode": "^1.70.0"
   },
   "categories": ["Other"],
-  "keywords": ["ads", "earnings", "monetization", "passive income", "sponsored"],
+  "keywords": ["earnings", "passive income", "rewards", "cashback", "developer", "side income"],
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#080808",
@@ -29,11 +29,11 @@
     "commands": [
       {
         "command": "claude-code-ads.openAd",
-        "title": "Claude Code Ads: Open current sponsor"
+        "title": "Earn While You Code: Open current sponsor"
       },
       {
         "command": "claude-code-ads.showEarnings",
-        "title": "Claude Code Ads: Show earnings"
+        "title": "Earn While You Code: Show earnings"
       }
     ]
   }

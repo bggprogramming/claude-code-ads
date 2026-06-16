@@ -1,33 +1,32 @@
-# Claude Code Ads — Earn while you code
+# Earn While You Code
 
 Your AI coding agent already shows a status line while it works. This turns that
-line into a tiny sponsored message — and pays you for it. **You keep 90% of every
-impression.**
+idle line into **passive income** — a small brand message that pays you. **You keep
+90% of the revenue.**
 
-A clean, one-line sponsor appears in your status bar (bottom-right). Click it to
-visit the sponsor; ignore it and keep coding. That's the whole thing.
+A clean, one-line message appears in your status bar (bottom-right). Tap it to learn
+more, or ignore it and keep coding. That's the whole thing.
 
 ## How it works
 
-- A single sponsored line rotates in your **VS Code / Cursor / Windsurf status bar**.
-- Ads are **contextual** — matched to your stack (TypeScript, Rust, Docker, …),
-  detected **entirely on your machine**. Nothing about your code or files leaves
-  your device.
-- Earnings are computed **server-side** and credited to your account. Higher-bidding
-  sponsors and clicks pay more.
-- Same account + network as the [Claude Code Ads CLI](https://bggprogramming.github.io/claude-code-ads/),
-  so impressions from your terminal and your editor add up together.
+- A single brand message rotates in your **VS Code / Cursor / Windsurf status bar**.
+- Messages are **matched to your stack** (TypeScript, Rust, Docker, …), detected
+  **entirely on your machine** — nothing about your code or files leaves your device.
+- Earnings are computed **server-side** and credited to your account. Higher-value
+  sponsors and taps pay more.
+- Same account as the [companion CLI](https://bggprogramming.github.io/claude-code-ads/),
+  so what you earn in your terminal and your editor add up together.
 
 ## Earnings & payouts
 
-- See your balance anytime: **Command Palette → “Claude Code Ads: Show earnings.”**
+- See your balance anytime: **Command Palette → “Show earnings.”**
 - Track everything (and cash out) in your [portal](https://bggprogramming.github.io/claude-code-ads/portal.html).
 - **Invite a friend — you both get $10.**
 
 ## Privacy
 
 - Project context (language/tooling tags) is detected locally and used only to pick
-  a relevant ad. It is **not uploaded** unless you explicitly opt into a higher
+  a relevant message. It is **not uploaded** unless you explicitly opt into a higher
   earnings tier in the CLI.
 - Identity is a pseudonymous ID; email is optional (for payouts/recovery).
 
