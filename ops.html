@@ -68,7 +68,7 @@
     } catch(e){}
 
     try {
-      const rows = await get('funnel_summary?select=*');
+      const rows = await get('rpc/funnel_summary');
       const by = {}; rows.forEach(r => by[r.step] = r);
       const steps = ORDER.filter(s => by[s]);
       if (!steps.length) { $('funnel').innerHTML = '<div class="empty">No funnel events yet.</div>'; return; }
