@@ -219,11 +219,11 @@ if [[ "$DO_CODEX" == "1" ]]; then
 fi
 
 # ── 5c. Install the editor status-bar extension ──────────────────────────────
-# Cursor / Windsurf / VSCodium pull from OpenVSX, where adthink.mango
+# Cursor / Windsurf / VSCodium pull from OpenVSX, where bggprogramming.mango
 # is published — install via their CLI (auto-updates). VS Code's Marketplace
 # doesn't carry it, so VS Code is folder-sideloaded. Sideload is the fallback
 # everywhere a CLI/registry install isn't available.
-EXT_ID="adthink.mango-1.0.0"
+EXT_ID="bggprogramming.mango-1.0.0"
 for triple in "VS Code:code:$HOME/.vscode/extensions" \
               "Cursor:cursor:$HOME/.cursor/extensions" \
               "Windsurf:windsurf:$HOME/.windsurf/extensions" \
@@ -231,8 +231,8 @@ for triple in "VS Code:code:$HOME/.vscode/extensions" \
   ename="${triple%%:*}"; rest="${triple#*:}"; cli="${rest%%:*}"; edir="${rest#*:}"
   # OpenVSX editors: install from the registry via CLI (skip VS Code — not listed).
   if [[ "$cli" != "code" ]] && command -v "$cli" >/dev/null 2>&1 && \
-     "$cli" --install-extension adthink.mango --force >/dev/null 2>&1; then
-    info "✓ Installed adthink.mango into $ename from OpenVSX (auto-updates)"
+     "$cli" --install-extension bggprogramming.mango --force >/dev/null 2>&1; then
+    info "✓ Installed bggprogramming.mango into $ename from OpenVSX (auto-updates)"
     continue
   fi
   # Fallback: folder-sideload (only if that editor is actually installed).
