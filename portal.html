@@ -105,6 +105,16 @@
     </div>
 
     <div class="sec">
+      <div class="sec-title">Using Mango on another machine? <span id="device-count" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+      <div style="font-size:13px;color:var(--hi);margin-bottom:12px">Each install starts its own code. Link your other device's code here and its earnings roll into this account — past and future. Find it on that machine with <code style="font-family:var(--mono);color:var(--accent)">python3 ~/.claude/ads/referral.py</code>.</div>
+      <div class="codebar" style="margin-bottom:0">
+        <input id="device-code" type="text" placeholder="other device's referral code (e.g. g2nqqm)" autocomplete="off" spellcheck="false">
+        <button id="link-device-btn">Link</button>
+      </div>
+      <div id="link-msg" class="hint" style="margin:10px 0 0;display:none"></div>
+    </div>
+
+    <div class="sec">
       <div class="sec-title">Cash out</div>
       <div class="row"><span class="k">Available to withdraw</span><span class="v" id="avail">$0.00</span></div>
       <div class="row"><span class="k">Pending</span><span class="v" id="pending-payout">$0.00</span></div>
@@ -213,6 +223,7 @@
       $('payout-target').textContent = d.payout_target_dollars;
       $('imps').textContent = fmt(d.total_impressions);
       $('refs').textContent = d.referral_count;
+      $('device-count').textContent = d.linked_devices > 1 ? `· ${d.linked_devices} devices linked` : '';
       $('milestone').innerHTML = d.milestone_hit ? '<span style="color:var(--green)">unlocked ✓</span>' : 'locked';
       $('surfaces').innerHTML = (d.by_surface.length ? d.by_surface : [{surface:'—',impressions:0,dollars:0}]).map(s=>
         `<div class="row"><span class="k">${SURFACE_NAMES[s.surface]||s.surface}</span><span class="v">${fmt(s.impressions)} views · ${money(s.dollars)}</span></div>`).join('');
@@ -279,6 +290,30 @@
     }catch(e){ $('cashout-note').textContent='Could not request cash-out — try again.'; }
     b.disabled=false;
   });
+
+  // Link another device's account into this one (earnings then aggregate here).
+  async function linkDevice(){
+    const dc = ($('device-code').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    const msg = $('link-msg'); msg.style.display='block';
+    if(!dc){ msg.textContent='Enter the other device’s referral code.'; return; }
+    if(!CODE){ msg.textContent='Sign in first.'; return; }
+    const b=$('link-device-btn'); const t=b.textContent; b.textContent='Linking…'; b.disabled=true;
+    try{
+      const r = await fetch(`${SUPA}/functions/v1/link-device`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:CODE,device_code:dc})}).then(r=>r.json());
+      if(r.ok){
+        msg.textContent = `✓ Linked ${r.linked} — ${r.devices} device${r.devices>1?'s':''} now roll up here.`;
+        $('device-code').value='';
+        load(CODE);   // refresh the unified totals
+      } else {
+        msg.textContent = r.error==='device code not found' ? 'That code wasn’t found — check it on the other machine.'
+          : r.error==='already the same account' ? 'That device is already linked here.'
+          : (r.error || 'Could not link — try again.');
+      }
+    }catch(e){ msg.textContent='Could not link — try again.'; }
+    b.textContent=t; b.disabled=false;
+  }
+  $('link-device-btn').addEventListener('click', linkDevice);
+  $('device-code').addEventListener('keydown', e=>{ if(e.key==='Enter') linkDevice(); });
 
   $('go').addEventListener('click', ()=>load($('code').value));
   $('code').addEventListener('keydown', e=>{ if(e.key==='Enter') load($('code').value); });

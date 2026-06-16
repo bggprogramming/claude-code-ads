@@ -2,6 +2,12 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 // Developer portal data, keyed by referral code: lifetime earnings (impressions +
 // clicks), payout progress, impressions by surface, clicks, referrals + bonuses.
+//
+// Multi-device: a developer can link several device accounts into one (see the
+// link-device function / users.linked_to). The portal resolves the signed-in
+// code to its *primary* account and aggregates events/payouts across the primary
+// and every device linked to it — so earnings show as one unified total no
+// matter which device's code you sign in with.
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -21,13 +27,30 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { persistSession: false } })
 
-  const { data: user } = await supabase
-    .from('users').select('id, referral_code, referred_by, milestone_hit, created_at, stripe_account_id, payouts_enabled')
+  const { data: signedIn } = await supabase
+    .from('users').select('id, referral_code, referred_by, milestone_hit, created_at, stripe_account_id, payouts_enabled, linked_to')
     .eq('referral_code', code).maybeSingle()
-  if (!user) return json(404, { error: 'not found', code })
+  if (!signedIn) return json(404, { error: 'not found', code })
 
+  // Resolve to the primary account (the signed-in code may itself be a linked device).
+  const primaryId = signedIn.linked_to ?? signedIn.id
+  const { data: primary } = await supabase
+    .from('users').select('id, referral_code, referred_by, milestone_hit, created_at, stripe_account_id, payouts_enabled')
+    .eq('id', primaryId).maybeSingle()
+  const acct = primary ?? signedIn
+
+  // All device accounts in this household: the primary + everything linked to it.
+  const { data: devices } = await supabase
+    .from('users').select('id, referral_code')
+    .or(`id.eq.${acct.id},linked_to.eq.${acct.id}`)
+  const deviceIds   = (devices ?? []).map(d => d.id)
+  const deviceCodes = (devices ?? []).map(d => d.referral_code).filter(Boolean)
+  const ids   = deviceIds.length   ? deviceIds   : [acct.id]
+  const codes = deviceCodes.length ? deviceCodes : [acct.referral_code]
+
+  // Earnings across every linked device.
   const { data: evs } = await supabase
-    .from('events').select('event, surface, earnings_millicents').eq('user_id', user.id)
+    .from('events').select('event, surface, earnings_millicents').in('user_id', ids)
 
   const bySurface: Record<string, { impressions: number; mc: number }> = {}
   let totalMc = 0, totalImp = 0, totalClicks = 0, clickMc = 0
@@ -41,10 +64,10 @@ Deno.serve(async (req: Request) => {
     bySurface[s].impressions++; bySurface[s].mc += amt
   }
 
-  // Payout history + available balance (lifetime earnings − already requested/paid).
+  // Payout history + available balance, across linked devices.
   const { data: pays } = await supabase
     .from('payouts').select('amount_millicents, status, created_at, paid_at')
-    .eq('user_id', user.id).order('created_at', { ascending: false })
+    .in('user_id', ids).order('created_at', { ascending: false })
   let paidOutMc = 0, pendingPayoutMc = 0
   for (const p of pays ?? []) {
     if (p.status === 'paid') paidOutMc += p.amount_millicents ?? 0
@@ -53,13 +76,14 @@ Deno.serve(async (req: Request) => {
   const MIN_PAYOUT_MC = 1_000_000   // $10 minimum cash-out
   const availableMc   = Math.max(0, totalMc - paidOutMc - pendingPayoutMc)
 
+  // Referrals + bonuses across every code this household owns.
   const { data: refs } = await supabase
     .from('users').select('referral_code, milestone_hit, created_at')
-    .eq('referred_by', code).order('created_at', { ascending: false })
+    .in('referred_by', codes).order('created_at', { ascending: false })
 
   const { data: bonuses } = await supabase
     .from('referral_bonuses').select('amount_millicents, status, recipient')
-    .eq('referrer_code', code)
+    .in('referrer_code', codes)
   let pendingMc = 0, paidMc = 0
   for (const b of bonuses ?? []) {
     if (b.recipient !== 'referrer') continue
@@ -68,10 +92,11 @@ Deno.serve(async (req: Request) => {
   }
 
   return json(200, {
-    referral_code: user.referral_code,
-    referred_by: user.referred_by,
-    milestone_hit: user.milestone_hit,
-    created_at: user.created_at,
+    referral_code: acct.referral_code,          // the canonical code to share
+    referred_by: acct.referred_by,
+    milestone_hit: acct.milestone_hit || totalMc >= PAYOUT_MC / 2,
+    created_at: acct.created_at,
+    linked_devices: ids.length,                  // how many devices roll up here
     total_millicents: totalMc,
     total_dollars: totalMc / 100_000,
     total_impressions: totalImp,
@@ -85,8 +110,8 @@ Deno.serve(async (req: Request) => {
     bonus_pending_dollars: pendingMc / 100_000,
     bonus_paid_dollars: paidMc / 100_000,
     // Cash-out
-    payouts_enabled: !!user.payouts_enabled,
-    connected: !!user.stripe_account_id,
+    payouts_enabled: !!acct.payouts_enabled,
+    connected: !!acct.stripe_account_id,
     available_dollars: availableMc / 100_000,
     paid_out_dollars: paidOutMc / 100_000,
     pending_payout_dollars: pendingPayoutMc / 100_000,
