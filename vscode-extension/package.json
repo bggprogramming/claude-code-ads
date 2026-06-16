@@ -29,11 +29,11 @@
     "commands": [
       {
         "command": "mango.openAd",
-        "title": "Earn While You Code: Open current sponsor"
+        "title": "Mango: Open current sponsor"
       },
       {
         "command": "mango.showEarnings",
-        "title": "Earn While You Code: Show earnings"
+        "title": "Mango: Show earnings"
       }
     ]
   }

@@ -9,7 +9,7 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-ID="bggprogramming.mango-1.0.0"
+ID="adthink.mango-1.0.0"
 FILES=(package.json extension.js icon.png)
 
 UNINSTALL=0

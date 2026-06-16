@@ -1,4 +1,8 @@
-# Earn While You Code
+# Mango — Get Paid to Code
+
+> ⚠️ **Preview release.** Mango is an early preview. Earnings, balances, and referral
+> bonuses shown are for demonstration only — **this version does not pay out real money yet.**
+> Payouts will be enabled in a future release.
 
 Your AI coding agent already shows a status line while it works. This turns that
 idle line into **passive income** — a small brand message that pays you. **You keep
