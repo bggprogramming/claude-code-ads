@@ -233,18 +233,26 @@ def _invite_cta():
 
 
 def _capture_email():
-    """Optional email — for payouts + so earnings are never lost with the code.
-    Pseudonymous stays the default; this is opt-in."""
+    """Recovery email — required so payouts can reach you and your earnings are
+    never lost with the referral code. (Pseudonymous analytics stay the default;
+    this is just your payout/recovery address.)"""
     cfg = load_cfg()
     if cfg.get("email") or not cfg.get("referral_code"):
         return
-    try:
-        ans = _ask(f"  {DIM}Optional — email for payouts & recovery "
-                   f"(so you never lose your earnings). Enter to skip:{R} ").strip()
-    except (EOFError, KeyboardInterrupt):
-        return
-    if not ans or "@" not in ans or " " in ans:
-        return
+    print(f"  {DIM}Add a recovery email — it's how your payouts reach you and "
+          f"how you get back in if you lose the code.{R}")
+    ans = ""
+    while True:
+        try:
+            ans = _ask(f"  {B}Email{R} {DIM}(required):{R} ").strip()
+        except (EOFError, KeyboardInterrupt):
+            # No terminal available (or the user aborted) — collect it later.
+            print(f"  {GREY}Add it anytime in your portal: {SITE_BASE}/portal.html{R}\n")
+            return
+        # Require a plausible address; re-prompt instead of skipping on empty/invalid.
+        if ans and "@" in ans and " " not in ans and "." in ans.split("@")[-1]:
+            break
+        print(f"  {GREY}That doesn't look like an email — please try again.{R}")
     try:
         import ssl, urllib.request
         import certifi
