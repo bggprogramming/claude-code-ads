@@ -34,6 +34,10 @@
       {
         "command": "mango.showEarnings",
         "title": "Mango: Show earnings"
+      },
+      {
+        "command": "mango.signIn",
+        "title": "Mango: Sign in with your code (link this machine)"
       }
     ]
   }

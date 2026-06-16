@@ -6,8 +6,10 @@ Generates a unique user_id and referral_code, writes them to config.json,
 and registers the user in Supabase. Idempotent — safe to run multiple times.
 
 Usage:
-  python3 setup.py                   # fresh install
-  python3 setup.py --ref abc123      # install via referral link
+  python3 setup.py                   # fresh install (asks to sign in if you
+                                     #   already use Mango on another machine)
+  python3 setup.py --ref abc123      # install via a friend's referral link
+  python3 setup.py --signin abc123   # link THIS device to your existing account
 """
 import argparse
 import json
@@ -15,6 +17,7 @@ import random
 import ssl
 import string
 import sys
+import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
@@ -91,19 +94,78 @@ def validate_ref_code(ref_code, cfg):
         return True   # be lenient on network failure
 
 
+def _ask(prompt):
+    """Read one line, preferring the controlling terminal so it works even under
+    `curl ... | bash`. Returns '' when there is no terminal."""
+    try:
+        if sys.stdin.isatty():
+            return input(prompt)
+        with open("/dev/tty") as tty:
+            sys.stdout.write(prompt); sys.stdout.flush()
+            return tty.readline()
+    except Exception:
+        return ""
+
+
+def link_device(cfg, account_code):
+    """Fold this freshly-registered device into an existing account so earnings
+    aggregate in the portal. Both codes are required (each is that account's
+    credential), so you can only link your own devices."""
+    url  = f"{cfg['supabase_url']}/functions/v1/link-device"
+    body = json.dumps({"code": account_code, "device_code": cfg["referral_code"]}).encode()
+    req  = urllib.request.Request(url, data=body,
+                                  headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        return json.loads(urllib.request.urlopen(req, timeout=8, context=SSL_CTX).read())
+    except urllib.error.HTTPError as e:
+        try:    return json.loads(e.read())
+        except Exception: return {"error": f"http {e.code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def do_signin(cfg, account_code):
+    """Link this device into `account_code` and remember the canonical account."""
+    account_code = "".join(c for c in (account_code or "").lower() if c.isalnum())
+    if not account_code:
+        return False
+    if account_code == cfg.get("referral_code"):
+        print("  That's this device's own code — nothing to link.")
+        return False
+    res = link_device(cfg, account_code)
+    if res.get("ok"):
+        cfg["account_code"] = res.get("into", account_code)
+        save_config(cfg)
+        print(f"  ✓ Signed in — this device now rolls up into "
+              f"{cfg['account_code']} ({res.get('devices', '?')} devices, "
+              f"${float(res.get('total_dollars', 0)):.2f} total).")
+        return True
+    err = res.get("error", "unknown error")
+    if err == "device code not found":
+        err = "this device isn't registered yet — try again in a moment"
+    print(f"  Couldn't sign in to '{account_code}' ({err}). This device will track "
+          f"on its own; you can link it anytime in your portal.")
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref", default="", help="Referral code from the person who sent you here")
+    parser.add_argument("--signin", default="", help="Your own Mango code, to link this device to your existing account")
     args = parser.parse_args()
 
     cfg = load_config()
 
-    # Already registered — just show info
+    # Already registered — show info, and honour an explicit --signin to link this
+    # already-installed device into your account.
     if cfg.get("user_id") and cfg.get("referral_code"):
         print(f"  Already set up.")
-        print(f"  User ID:       {cfg['user_id']}")
         print(f"  Referral code: {cfg['referral_code']}")
-        _show_link(cfg["referral_code"])
+        if cfg.get("account_code"):
+            print(f"  Linked to:     {cfg['account_code']}")
+        elif args.signin:
+            do_signin(cfg, args.signin)
+        _show_link(cfg.get("account_code") or cfg["referral_code"])
         return
 
     if not cfg.get("supabase_url") or not cfg.get("supabase_key"):
@@ -138,7 +200,17 @@ def main():
     except Exception:
         pass
 
-    _show_link(cfg["referral_code"])
+    # Sign in: if this is one of your own machines, link it to your existing
+    # account so all your devices' earnings show as one total. (Skipped for
+    # referral installs — those are genuinely new accounts.)
+    signin_code = args.signin.strip().lower()
+    if not signin_code and not ref_code:
+        signin_code = _ask("  Already use Mango on another machine? Enter your code to "
+                           "link this device to it (or press Enter to start fresh): ")
+    if signin_code.strip():
+        do_signin(cfg, signin_code)
+
+    _show_link(cfg.get("account_code") or cfg["referral_code"])
 
 
 def _show_link(code):

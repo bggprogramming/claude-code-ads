@@ -86,6 +86,28 @@ function supabasePost(path, body) {
   });
 }
 
+// POST JSON to an edge function and resolve the parsed JSON body (for link-device).
+function postJson(path, body) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(body);
+    const url     = new URL(SUPABASE_URL + path);
+    const req = https.request({
+      hostname: url.hostname, port: 443, path: url.pathname, method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload),
+      },
+    }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); } });
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
 // ── Ad feed ──────────────────────────────────────────────────────────────────
 
 async function loadAds() {
@@ -293,7 +315,41 @@ async function activate(context) {
     });
   });
 
-  context.subscriptions.push(openAdCmd, showEarningsCmd);
+  // Sign in: link this machine into your existing Mango account (by referral
+  // code) so every device's earnings show as one total in the portal.
+  const signInCmd = vscode.commands.registerCommand('mango.signIn', async () => {
+    const input = await vscode.window.showInputBox({
+      title: 'Sign in to Mango',
+      prompt: 'Enter your Mango referral code to link this machine to your account (find it in your portal or with referral.py).',
+      placeHolder: 'e.g. p5lvaf',
+      ignoreFocusOut: true,
+      validateInput: v => /^[a-z0-9]{4,12}$/i.test((v || '').trim()) ? null : 'Codes are 4–12 letters/numbers.',
+    });
+    const code = (input || '').trim().toLowerCase();
+    if (!code) return;
+    if (code === (referralCode || '').toLowerCase()) {
+      vscode.window.showInformationMessage('Mango: that’s already this machine’s code.');
+      return;
+    }
+    try {
+      const r = await postJson('/functions/v1/link-device', { code, device_code: referralCode });
+      if (r.ok) {
+        vscode.window.showInformationMessage(
+          `Mango: this machine is now linked to ${r.into} — ${r.devices} devices, $${(+r.total_dollars || 0).toFixed(2)} total.`,
+          'Open portal'
+        ).then(s => { if (s === 'Open portal') vscode.env.openExternal(vscode.Uri.parse(`https://bggprogramming.github.io/mango/portal.html?code=${r.into}`)); });
+      } else {
+        const msg = r.error === 'primary code not found' ? 'That code wasn’t found — double-check it.'
+          : r.error === 'device code not found' ? 'This machine isn’t registered yet — try again in a moment.'
+          : (r.error || 'Could not link — try again.');
+        vscode.window.showWarningMessage(`Mango: ${msg}`);
+      }
+    } catch {
+      vscode.window.showWarningMessage('Mango: could not reach the server — try again.');
+    }
+  });
+
+  context.subscriptions.push(openAdCmd, showEarningsCmd, signInCmd);
 
   async function updateAd() {
     const ads = await loadAds();

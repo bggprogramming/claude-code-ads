@@ -4,6 +4,8 @@
 # Install (auto-detects Claude Code + Codex):
 #   curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash
 # With a referral code:        ... | bash -s -- --ref abc123
+# Sign in (your own account):  ... | bash -s -- --signin yourcode   (links this
+#                              device to your existing account so earnings merge)
 # Force a specific agent:      ... | bash -s -- --codex     (or --claude)
 # Uninstall (keeps earnings):  ... | bash -s -- --uninstall
 #
@@ -21,14 +23,15 @@ ADS_DIR="$HOME/.claude/ads"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="$HOME/.codex/config.toml"
 
-REF_CODE=""; UNINSTALL=0; FORCE_CLAUDE=0; FORCE_CODEX=0; FORCED=0
+REF_CODE=""; SIGNIN_CODE=""; UNINSTALL=0; FORCE_CLAUDE=0; FORCE_CODEX=0; FORCED=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --ref)       REF_CODE="${2:-}"; shift 2 ;;
-    --uninstall) UNINSTALL=1; shift ;;
-    --claude)    FORCE_CLAUDE=1; FORCED=1; shift ;;
-    --codex)     FORCE_CODEX=1;  FORCED=1; shift ;;
-    *)           shift ;;
+    --ref)            REF_CODE="${2:-}"; shift 2 ;;
+    --signin|--code)  SIGNIN_CODE="${2:-}"; shift 2 ;;
+    --uninstall)      UNINSTALL=1; shift ;;
+    --claude)         FORCE_CLAUDE=1; FORCED=1; shift ;;
+    --codex)          FORCE_CODEX=1;  FORCED=1; shift ;;
+    *)                shift ;;
   esac
 done
 
@@ -173,7 +176,9 @@ fi
 
 # ── 4. Register account ───────────────────────────────────────────────────────
 info "Setting up your account…"
-if [[ -n "$REF_CODE" ]]; then python3 "$ADS_DIR/setup.py" --ref "$REF_CODE"; else python3 "$ADS_DIR/setup.py"; fi
+if   [[ -n "$SIGNIN_CODE" ]]; then python3 "$ADS_DIR/setup.py" --signin "$SIGNIN_CODE"
+elif [[ -n "$REF_CODE"    ]]; then python3 "$ADS_DIR/setup.py" --ref "$REF_CODE"
+else python3 "$ADS_DIR/setup.py"; fi
 
 # ── 5a. Wire Claude Code (statusLine + hooks, merged) ────────────────────────
 if [[ "$DO_CLAUDE" == "1" ]]; then
