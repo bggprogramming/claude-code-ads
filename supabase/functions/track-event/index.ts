@@ -73,6 +73,24 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false } }
   )
 
+  // Test-data cleanup. ONLY ever removes rows whose ad_id carries a test prefix,
+  // so it is safe to expose: it can never touch real campaigns, earnings, or
+  // users. The test harness calls this to undo the rows it created (anon DELETE
+  // on `events` is revoked by RLS, so the test cannot clean up by itself).
+  if (body.action === 'cleanup_test') {
+    if (!/^(adv_test_|ad_test_)/.test(adId)) {
+      return json(400, { error: 'cleanup_test only removes test-prefixed ad_ids' })
+    }
+    const { error: evErr,  count: evCount  } =
+      await supabase.from('events').delete({ count: 'exact' }).eq('ad_id', adId)
+    const { error: advErr, count: advCount } =
+      await supabase.from('advertisers').delete({ count: 'exact' }).eq('ad_id', adId)
+    if (evErr || advErr) {
+      return json(500, { error: 'cleanup failed', detail: (evErr ?? advErr)?.message })
+    }
+    return json(200, { ok: true, cleaned: adId, events_deleted: evCount ?? 0, advertisers_deleted: advCount ?? 0 })
+  }
+
   let adv: any = null
   if (BUILTIN_CPM[adId] == null) {
     const { data } = await supabase
