@@ -219,19 +219,20 @@ if [[ "$DO_CODEX" == "1" ]]; then
 fi
 
 # ── 5c. Install the editor status-bar extension ──────────────────────────────
-# Prefer each editor's own registry via its CLI (auto-updates): VS Code →
-# Marketplace; Cursor / Windsurf / VSCodium → OpenVSX (adthink.claude-code-ads).
-# Fall back to folder-sideloading the files when no CLI / registry is available.
+# Cursor / Windsurf / VSCodium pull from OpenVSX, where adthink.claude-code-ads
+# is published — install via their CLI (auto-updates). VS Code's Marketplace
+# doesn't carry it, so VS Code is folder-sideloaded. Sideload is the fallback
+# everywhere a CLI/registry install isn't available.
 EXT_ID="adthink.claude-code-ads-1.0.0"
 for triple in "VS Code:code:$HOME/.vscode/extensions" \
               "Cursor:cursor:$HOME/.cursor/extensions" \
               "Windsurf:windsurf:$HOME/.windsurf/extensions" \
               "VSCodium:codium:$HOME/.vscode-oss/extensions"; do
   ename="${triple%%:*}"; rest="${triple#*:}"; cli="${rest%%:*}"; edir="${rest#*:}"
-  # Try the editor's CLI first (marketplace / OpenVSX install — auto-updates).
-  if command -v "$cli" >/dev/null 2>&1 && \
+  # OpenVSX editors: install from the registry via CLI (skip VS Code — not listed).
+  if [[ "$cli" != "code" ]] && command -v "$cli" >/dev/null 2>&1 && \
      "$cli" --install-extension adthink.claude-code-ads --force >/dev/null 2>&1; then
-    info "✓ Installed adthink.claude-code-ads into $ename (auto-updates)"
+    info "✓ Installed adthink.claude-code-ads into $ename from OpenVSX (auto-updates)"
     continue
   fi
   # Fallback: folder-sideload (only if that editor is actually installed).
