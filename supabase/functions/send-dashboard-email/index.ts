@@ -11,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const SITE_BASE  = Deno.env.get('SITE_BASE')  ?? 'https://bggprogramming.github.io/claude-code-ads'
+const SITE_BASE  = Deno.env.get('SITE_BASE')  ?? 'https://bggprogramming.github.io/mango'
 const EMAIL_FROM = Deno.env.get('EMAIL_FROM') ?? 'Claude Code Ads <onboarding@resend.dev>'
 
 const json = (status: number, body: unknown) =>

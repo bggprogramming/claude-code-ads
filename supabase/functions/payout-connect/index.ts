@@ -10,7 +10,7 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
-const SITE_BASE = Deno.env.get('SITE_BASE') ?? 'https://bggprogramming.github.io/claude-code-ads'
+const SITE_BASE = Deno.env.get('SITE_BASE') ?? 'https://bggprogramming.github.io/mango'
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } })
 

@@ -109,7 +109,7 @@ The `from` address's domain **must** match the verified domain. No redeploy need
 
 ### B5. (If the marketing site ever moves to a custom domain)
 The email links use `SITE_BASE`, default
-`https://bggprogramming.github.io/claude-code-ads`. If the site moves, update it:
+`https://bggprogramming.github.io/mango`. If the site moves, update it:
 ```bash
 supabase secrets set SITE_BASE="https://yournewsite.com" --project-ref gpbrzpyvzlzwvvymgeyk
 ```

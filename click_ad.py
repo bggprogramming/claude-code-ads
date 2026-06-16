@@ -25,7 +25,7 @@ import certifi
 BASE        = Path(__file__).parent
 CLICK_PORT  = 54323
 SESSION_CAP = 3
-SITE_BASE   = "https://bggprogramming.github.io/claude-code-ads"
+SITE_BASE   = "https://bggprogramming.github.io/mango"
 SSL_CTX     = ssl.create_default_context(cafile=certifi.where())
 CODEX       = "--codex" in sys.argv   # Codex CLI: emit JSON systemMessage, not /dev/tty
 

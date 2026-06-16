@@ -2,7 +2,7 @@
 # Claude Code Ads — installer (works with Claude Code AND Codex CLI)
 #
 # Install (auto-detects Claude Code + Codex):
-#   curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash
 # With a referral code:        ... | bash -s -- --ref abc123
 # Force a specific agent:      ... | bash -s -- --codex     (or --claude)
 # Uninstall (keeps earnings):  ... | bash -s -- --uninstall
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO="https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main"
+REPO="https://raw.githubusercontent.com/bggprogramming/mango/main"
 ADS_DIR="$HOME/.claude/ads"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="$HOME/.codex/config.toml"
@@ -277,7 +277,7 @@ echo ""
 CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
 if [[ -n "$CODE" ]]; then
   info "  💸 DOUBLE YOUR EARNINGS — invite a friend, you BOTH get \$10:"
-  info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
+  info "     https://bggprogramming.github.io/mango/invite.html?ref=$CODE"
   info "     (this is the #1 way people earn here — share it once)"
   echo ""
 fi
@@ -287,7 +287,7 @@ info "  1. Start a new session — that's it. Ads show up on their own."
 if [[ -n "$CODE" ]]; then
   echo ""
   info "  2. Your earnings portal (bookmark it — one click, no code to type):"
-  info "     https://bggprogramming.github.io/claude-code-ads/portal.html?code=$CODE"
+  info "     https://bggprogramming.github.io/mango/portal.html?code=$CODE"
 fi
 echo ""
 info "  Earn more anytime:  python3 ~/.claude/ads/optin.py"

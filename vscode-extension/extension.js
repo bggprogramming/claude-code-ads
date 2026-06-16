@@ -13,7 +13,7 @@ const crypto  = require('crypto');
 
 const SUPABASE_URL  = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
-const FEED_URL      = 'https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/ads.json';
+const FEED_URL      = 'https://raw.githubusercontent.com/bggprogramming/mango/main/ads.json';
 const REFRESH_MS    = 30_000;
 const IDLE_MS       = 5 * 60_000; // stop counting impressions after 5 min of no activity
 const CLAUDE_CFG    = path.join(os.homedir(), '.claude', 'ads', 'config.json');
@@ -282,14 +282,14 @@ async function activate(context) {
   const showEarningsCmd = vscode.commands.registerCommand('claude-code-ads.showEarnings', async () => {
     const dollars = await fetchEarnings(userId);
     const invite = referralCode
-      ? `https://bggprogramming.github.io/claude-code-ads/invite.html?ref=${referralCode}`
-      : 'https://bggprogramming.github.io/claude-code-ads/';
+      ? `https://bggprogramming.github.io/mango/invite.html?ref=${referralCode}`
+      : 'https://bggprogramming.github.io/mango/';
     vscode.window.showInformationMessage(
       `Claude Code Ads: $${dollars.toFixed(2)} earned. Invite a friend — you both get $10.`,
       'Copy invite link', 'Open portal'
     ).then(sel => {
       if (sel === 'Copy invite link') vscode.env.clipboard.writeText(invite);
-      else if (sel === 'Open portal') vscode.env.openExternal(vscode.Uri.parse('https://bggprogramming.github.io/claude-code-ads/portal.html'));
+      else if (sel === 'Open portal') vscode.env.openExternal(vscode.Uri.parse('https://bggprogramming.github.io/mango/portal.html'));
     });
   });
 

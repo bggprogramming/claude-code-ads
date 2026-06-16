@@ -10,14 +10,14 @@
   <meta property="og:site_name" content="Claude Code Ads">
   <meta property="og:title" content="You're invited — get paid to code">
   <meta property="og:description" content="Your terminal already runs ads while Claude works. Join with my link and we both get $10.">
-  <meta property="og:image" content="https://bggprogramming.github.io/claude-code-ads/assets/og-invite.png">
+  <meta property="og:image" content="https://bggprogramming.github.io/mango/assets/og-invite.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://bggprogramming.github.io/claude-code-ads/invite.html">
+  <meta property="og:url" content="https://bggprogramming.github.io/mango/invite.html">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="You're invited — get paid to code">
   <meta name="twitter:description" content="Your terminal already runs ads while Claude works. Join with my link and we both get $10.">
-  <meta name="twitter:image" content="https://bggprogramming.github.io/claude-code-ads/assets/og-invite.png">
+  <meta name="twitter:image" content="https://bggprogramming.github.io/mango/assets/og-invite.png">
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -93,7 +93,7 @@
     </div>
 
     <div class="step-label">Install — paste this in your terminal</div>
-    <div class="cmd" id="cmd"><span class="pfx">$ </span><span id="cmd-text">curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash</span></div>
+    <div class="cmd" id="cmd"><span class="pfx">$ </span><span id="cmd-text">curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash</span></div>
     <button class="btn btn-primary" id="copy-btn">Copy install command</button>
     <button class="btn btn-ghost" id="share-btn">Send to a friend →</button>
 
@@ -120,8 +120,8 @@
   const ROOT = location.href.replace(/invite\.html.*$/, '');
 
   const installCmd = ref
-    ? `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${ref}`
-    : `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash`;
+    ? `curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash -s -- --ref ${ref}`
+    : `curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash`;
   document.getElementById('cmd-text').textContent = installCmd;
 
   if (from) {

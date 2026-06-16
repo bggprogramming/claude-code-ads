@@ -7,11 +7,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bggprogramming/claude-code-ads"
+    "url": "https://github.com/bggprogramming/mango"
   },
-  "homepage": "https://bggprogramming.github.io/claude-code-ads/",
+  "homepage": "https://bggprogramming.github.io/mango/",
   "bugs": {
-    "url": "https://github.com/bggprogramming/claude-code-ads/issues"
+    "url": "https://github.com/bggprogramming/mango/issues"
   },
   "engines": {
     "vscode": "^1.70.0"

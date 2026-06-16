@@ -23,7 +23,7 @@ BONUS_DOLLARS = REFERRAL_BONUS_MC / 100_000            # $10 each way
 SUPABASE_URL_BASE = "https://gpbrzpyvzlzwvvymgeyk.supabase.co"
 BADGE_FN_BASE     = f"{SUPABASE_URL_BASE}/functions/v1/badge"
 SHIELDS_BASE      = "https://img.shields.io/endpoint"
-SITE_BASE         = "https://bggprogramming.github.io/claude-code-ads"
+SITE_BASE         = "https://bggprogramming.github.io/mango"
 
 
 def load_config():

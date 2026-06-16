@@ -22,7 +22,7 @@ BASE      = Path(__file__).parent
 CFG_FILE  = BASE / "config.json"
 SETTINGS  = Path.home() / ".claude" / "settings.json"
 UPLOADER  = str(BASE / "context_uploader.py")
-SITE_BASE = "https://bggprogramming.github.io/claude-code-ads"
+SITE_BASE = "https://bggprogramming.github.io/mango"
 
 
 def _funnel(step, meta=None):

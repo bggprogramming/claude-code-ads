@@ -14,13 +14,13 @@ more, or ignore it and keep coding. That's the whole thing.
   **entirely on your machine** — nothing about your code or files leaves your device.
 - Earnings are computed **server-side** and credited to your account. Higher-value
   sponsors and taps pay more.
-- Same account as the [companion CLI](https://bggprogramming.github.io/claude-code-ads/),
+- Same account as the [companion CLI](https://bggprogramming.github.io/mango/),
   so what you earn in your terminal and your editor add up together.
 
 ## Earnings & payouts
 
 - See your balance anytime: **Command Palette → “Show earnings.”**
-- Track everything (and cash out) in your [portal](https://bggprogramming.github.io/claude-code-ads/portal.html).
+- Track everything (and cash out) in your [portal](https://bggprogramming.github.io/mango/portal.html).
 - **Invite a friend — you both get $10.**
 
 ## Privacy
@@ -32,8 +32,8 @@ more, or ignore it and keep coding. That's the whole thing.
 
 ## Links
 
-- Home: https://bggprogramming.github.io/claude-code-ads/
-- Advertise: https://bggprogramming.github.io/claude-code-ads/advertise.html
-- Source: https://github.com/bggprogramming/claude-code-ads
+- Home: https://bggprogramming.github.io/mango/
+- Advertise: https://bggprogramming.github.io/mango/advertise.html
+- Source: https://github.com/bggprogramming/mango
 
 MIT licensed.

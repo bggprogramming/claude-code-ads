@@ -226,7 +226,7 @@
         if (navigator.share) { try { await navigator.share({ title:'Get paid to code', text: shareText, url: inviteUrl }); return; } catch(e){} }
         navigator.clipboard.writeText(`${shareText} ${inviteUrl}`).then(()=>{ ib.textContent='✓ Invite copied — paste in Messages'; setTimeout(()=>ib.textContent='Send invite via Messages →',2200); });
       };
-      $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${d.referral_code}`;
+      $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash -s -- --ref ${d.referral_code}`;
       const shields = `https://img.shields.io/endpoint?url=${SUPA}/functions/v1/badge/${d.referral_code}&style=flat`;
       $('badge-md').textContent = `[![Earned with Claude Code Ads](${shields})](${siteRoot})`;
       $('ref-rows').innerHTML = d.referrals.length ? d.referrals.map(r=>
