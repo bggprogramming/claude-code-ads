@@ -1,17 +1,17 @@
 {
-  "name": "claude-code-ads",
-  "displayName": "Earn While You Code — passive income for developers",
+  "name": "mango",
+  "displayName": "Mango — Get Paid to Code",
   "description": "Turn AI coding wait-time into passive income. A small brand message appears in your status bar while your agent works, and you keep 90% of the revenue. Same account as the CLI; cash out via Stripe.",
   "version": "1.0.0",
   "publisher": "adthink",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bggprogramming/claude-code-ads"
+    "url": "https://github.com/bggprogramming/mango"
   },
-  "homepage": "https://bggprogramming.github.io/claude-code-ads/",
+  "homepage": "https://bggprogramming.github.io/mango/",
   "bugs": {
-    "url": "https://github.com/bggprogramming/claude-code-ads/issues"
+    "url": "https://github.com/bggprogramming/mango/issues"
   },
   "engines": {
     "vscode": "^1.70.0"
@@ -20,19 +20,19 @@
   "keywords": ["earnings", "passive income", "rewards", "cashback", "developer", "side income"],
   "icon": "icon.png",
   "galleryBanner": {
-    "color": "#080808",
-    "theme": "dark"
+    "color": "#FFF3E0",
+    "theme": "light"
   },
   "activationEvents": ["onStartupFinished"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "claude-code-ads.openAd",
+        "command": "mango.openAd",
         "title": "Earn While You Code: Open current sponsor"
       },
       {
-        "command": "claude-code-ads.showEarnings",
+        "command": "mango.showEarnings",
         "title": "Earn While You Code: Show earnings"
       }
     ]

@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your earnings — Claude Code Ads</title>
+  <title>Your earnings — Mango</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#080808;--surface:#0f0f0f;--border:rgba(255,255,255,0.07);--text:#e2e2e2;--muted:#4a4a4a;--hi:#717171;--accent:#b4ff69;--green:#28c840;--blue:#5b8cff;--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SF Mono','Fira Code',monospace}
+    :root{--bg:#fdf8f2;--surface:#ffffff;--border:rgba(0,0,0,0.07);--text:#2a2620;--muted:#8a8378;--hi:#5a5347;--accent:#e8770a;--green:#28c840;--blue:#5b8cff;--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SF Mono','Fira Code',monospace}
     body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
-    nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,8,8,0.92);backdrop-filter:blur(12px);z-index:10}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(255,250,242,0.95);backdrop-filter:blur(12px);z-index:10}
     .logo{font-size:13px;font-weight:500;color:var(--text);text-decoration:none}.logo em{color:var(--accent);font-style:normal}
     .nav-link{font-size:13px;color:var(--muted);text-decoration:none}.nav-link:hover{color:var(--text)}
     main{max-width:680px;margin:0 auto;padding:56px 24px 90px}
     .eyebrow{font-size:11px;font-family:var(--mono);color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:14px}
-    h1{font-size:34px;font-weight:700;letter-spacing:-0.04em;color:#fff;margin-bottom:10px}
+    h1{font-size:34px;font-weight:700;letter-spacing:-0.04em;color:#2a2620;margin-bottom:10px}
     .sub{font-size:15px;color:var(--hi);margin-bottom:34px}
     .codebar{display:flex;gap:10px;margin-bottom:36px}
     .codebar input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:var(--mono);padding:13px 15px;outline:none}
-    .codebar input:focus{border-color:rgba(255,255,255,0.22)}
+    .codebar input:focus{border-color:rgba(0,0,0,0.22)}
     .codebar button{background:var(--accent);border:none;border-radius:10px;color:#0a0a0a;font-weight:600;font-size:14px;padding:0 22px;cursor:pointer}
     .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;color:#1a1a1a;border:none;border-radius:10px;font-size:15px;font-weight:600;padding:13px;cursor:pointer;margin-bottom:14px}
     .gbtn:hover{opacity:0.92}.gbtn:disabled{opacity:0.6;cursor:default}
@@ -25,16 +25,16 @@
     .or{text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.1em}
     .hint{font-size:12px;color:var(--muted);margin:-26px 0 36px;font-family:var(--mono)}
     #panel{display:none}
-    .earn-card{border:1px solid var(--border);border-radius:16px;padding:28px;background:linear-gradient(180deg,rgba(180,255,105,0.05),rgba(40,200,64,0.02));margin-bottom:18px}
+    .earn-card{border:1px solid var(--border);border-radius:16px;padding:28px;background:linear-gradient(180deg,rgba(232,119,10,0.05),rgba(40,200,64,0.02));margin-bottom:18px}
     .earn-label{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-    .earn-big{font-size:52px;font-weight:700;letter-spacing:-0.04em;color:#fff;line-height:1}
+    .earn-big{font-size:52px;font-weight:700;letter-spacing:-0.04em;color:#2a2620;line-height:1}
     .earn-big span{font-size:22px;color:var(--green)}
-    .bar{height:8px;border-radius:5px;background:rgba(255,255,255,0.08);overflow:hidden;margin:20px 0 8px}
+    .bar{height:8px;border-radius:5px;background:rgba(0,0,0,0.08);overflow:hidden;margin:20px 0 8px}
     .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--green))}
     .bar-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
     .stat{border:1px solid var(--border);border-radius:12px;padding:18px}
-    .stat .v{font-size:24px;font-weight:600;color:#fff;letter-spacing:-0.03em}
+    .stat .v{font-size:24px;font-weight:600;color:#2a2620;letter-spacing:-0.03em}
     .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
     .sec{border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
     .sec-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
@@ -109,7 +109,7 @@
       <div class="row"><span class="k">Pending</span><span class="v" id="pending-payout">$0.00</span></div>
       <div class="row"><span class="k">Paid out</span><span class="v" id="paidout">$0.00</span></div>
       <div class="empty" id="cashout-note" style="text-align:left;padding:12px 0 4px"></div>
-      <button id="connect-btn" style="width:100%;background:var(--blue);border:none;border-radius:999px;color:#fff;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Set up payouts →</button>
+      <button id="connect-btn" style="width:100%;background:var(--blue);border:none;border-radius:999px;color:#2a2620;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Set up payouts →</button>
       <button id="cashout-btn" style="width:100%;background:var(--accent);border:none;border-radius:999px;color:#0a0c08;font-weight:700;font-size:15px;padding:14px;cursor:pointer;margin-top:6px;display:none">Cash out</button>
       <div class="share" style="margin-top:12px">
         <input id="email-in" type="email" placeholder="email — get paid & never lose your earnings (optional)" autocomplete="email" spellcheck="false" style="flex:1;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
@@ -143,7 +143,7 @@
     </div>
   </div>
 </main>
-<footer><span>Claude Code Ads</span><a href="index.html">For developers</a><a href="terms.html" style="margin-left:18px">Terms</a><a href="privacy.html" style="margin-left:18px">Privacy</a></footer>
+<footer><span>Mango</span><a href="index.html">For developers</a><a href="terms.html" style="margin-left:18px">Terms</a><a href="privacy.html" style="margin-left:18px">Privacy</a></footer>
 
 <script>
   const SUPA = "https://gpbrzpyvzlzwvvymgeyk.supabase.co";
@@ -226,9 +226,9 @@
         if (navigator.share) { try { await navigator.share({ title:'Get paid to code', text: shareText, url: inviteUrl }); return; } catch(e){} }
         navigator.clipboard.writeText(`${shareText} ${inviteUrl}`).then(()=>{ ib.textContent='✓ Invite copied — paste in Messages'; setTimeout(()=>ib.textContent='Send invite via Messages →',2200); });
       };
-      $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash -s -- --ref ${d.referral_code}`;
+      $('install-cmd').textContent = `curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash -s -- --ref ${d.referral_code}`;
       const shields = `https://img.shields.io/endpoint?url=${SUPA}/functions/v1/badge/${d.referral_code}&style=flat`;
-      $('badge-md').textContent = `[![Earned with Claude Code Ads](${shields})](${siteRoot})`;
+      $('badge-md').textContent = `[![Earned with Mango](${shields})](${siteRoot})`;
       $('ref-rows').innerHTML = d.referrals.length ? d.referrals.map(r=>
         `<tr><td style="font-family:var(--mono)">${r.code}</td><td><span class="pill ${r.milestone_hit?'hit':'wait'}">${r.milestone_hit?'milestone hit ✓':'in progress…'}</span></td><td style="text-align:right;color:var(--muted)">${new Date(r.joined).toLocaleDateString()}</td></tr>`).join('')
         : `<tr><td colspan="3" class="empty">No referrals yet — share your link above.</td></tr>`;

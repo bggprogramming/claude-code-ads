@@ -121,7 +121,7 @@ def _cache_path(session_id=None):
     sid = session_id or _session_id()
     # Sanitize for safe filename
     safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(sid))
-    return Path(f"/tmp/claude-ads-ctx-{safe}.json")
+    return Path(f"/tmp/mango-ctx-{safe}.json")
 
 
 # ── Filesystem detection ──────────────────────────────────────────────────────

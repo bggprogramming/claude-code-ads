@@ -13,10 +13,10 @@ const crypto  = require('crypto');
 
 const SUPABASE_URL  = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
-const FEED_URL      = 'https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/ads.json';
+const FEED_URL      = 'https://raw.githubusercontent.com/bggprogramming/mango/main/ads.json';
 const REFRESH_MS    = 30_000;
 const CLAUDE_CFG    = path.join(os.homedir(), '.claude', 'ads', 'config.json');
-const VSCODE_CFG    = path.join(os.homedir(), '.claude-code-ads.json');
+const VSCODE_CFG    = path.join(os.homedir(), '.mango.json');
 const STATUSBAR_CPM = 25; // default CPM for VS Code status bar
 
 // ── User identity ────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ function supabasePost(path, body) {
 
 async function loadAds() {
   // Auction feed: built-in house ads + live paid campaigns, bid-ordered.
-  const cache = path.join(os.tmpdir(), 'claude-ads-feed.json');
+  const cache = path.join(os.tmpdir(), 'mango-feed.json');
   try {
     const st = fs.statSync(cache);
     if (Date.now() - st.mtimeMs < 60_000) {           // 60s cache
@@ -249,32 +249,32 @@ async function activate(context) {
   const { userId, referralCode } = getOrCreateUser();
 
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
-  statusBar.command = 'claude-code-ads.openAd';
-  statusBar.tooltip = 'Click to visit · Claude Code Ads';
+  statusBar.command = 'mango.openAd';
+  statusBar.tooltip = 'Click to visit · Mango';
   context.subscriptions.push(statusBar);
 
   let currentAd   = null;
   let currentText = '';
   let currentVariant = 'default';
 
-  const openAdCmd = vscode.commands.registerCommand('claude-code-ads.openAd', () => {
+  const openAdCmd = vscode.commands.registerCommand('mango.openAd', () => {
     if (currentAd) {
       vscode.env.openExternal(vscode.Uri.parse(currentAd.url));
       logClick(currentAd.id, userId);
     }
   });
 
-  const showEarningsCmd = vscode.commands.registerCommand('claude-code-ads.showEarnings', async () => {
+  const showEarningsCmd = vscode.commands.registerCommand('mango.showEarnings', async () => {
     const dollars = await fetchEarnings(userId);
     const invite = referralCode
-      ? `https://bggprogramming.github.io/claude-code-ads/invite.html?ref=${referralCode}`
-      : 'https://bggprogramming.github.io/claude-code-ads/';
+      ? `https://bggprogramming.github.io/mango/invite.html?ref=${referralCode}`
+      : 'https://bggprogramming.github.io/mango/';
     vscode.window.showInformationMessage(
-      `Claude Code Ads: $${dollars.toFixed(2)} earned. Invite a friend — you both get $10.`,
+      `Mango: $${dollars.toFixed(2)} earned. Invite a friend — you both get $10.`,
       'Copy invite link', 'Open portal'
     ).then(sel => {
       if (sel === 'Copy invite link') vscode.env.clipboard.writeText(invite);
-      else if (sel === 'Open portal') vscode.env.openExternal(vscode.Uri.parse('https://bggprogramming.github.io/claude-code-ads/portal.html'));
+      else if (sel === 'Open portal') vscode.env.openExternal(vscode.Uri.parse('https://bggprogramming.github.io/mango/portal.html'));
     });
   });
 

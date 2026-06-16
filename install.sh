@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Claude Code Ads — installer (works with Claude Code AND Codex CLI)
+# Mango — installer (works with Claude Code AND Codex CLI)
 #
 # Install (auto-detects Claude Code + Codex):
-#   curl -fsSL https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash
 # With a referral code:        ... | bash -s -- --ref abc123
 # Force a specific agent:      ... | bash -s -- --codex     (or --claude)
 # Uninstall (keeps earnings):  ... | bash -s -- --uninstall
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO="https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main"
+REPO="https://raw.githubusercontent.com/bggprogramming/mango/main"
 ADS_DIR="$HOME/.claude/ads"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="$HOME/.codex/config.toml"
@@ -54,7 +54,7 @@ codex_patch() {  # $1 = mode: install | uninstall
 import sys, re
 from pathlib import Path
 cfg, ads, mode = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
-START, END = "# >>> claude-code-ads >>>", "# <<< claude-code-ads <<<"
+START, END = "# >>> mango >>>", "# <<< mango <<<"
 text = ""
 if cfg.exists():
     text = cfg.read_text()
@@ -98,7 +98,7 @@ PYEOF
 
 # ── Uninstall ─────────────────────────────────────────────────────────────────
 if [[ "$UNINSTALL" == "1" ]]; then
-  echo ""; info "Removing Claude Code Ads…"
+  echo ""; info "Removing Mango…"
   python3 - "$CLAUDE_SETTINGS" "$ADS_DIR" <<'PYEOF'
 import json, sys
 from pathlib import Path
@@ -125,7 +125,7 @@ PYEOF
   echo ""; exit 0
 fi
 
-echo ""; info "Installing Claude Code Ads…"; echo ""
+echo ""; info "Installing Mango…"; echo ""
 # Transparency — say exactly what this touches before changing anything.
 info "This will:"
 info "  • copy scripts to ~/.claude/ads/   (self-contained; nothing global)"
@@ -219,11 +219,11 @@ if [[ "$DO_CODEX" == "1" ]]; then
 fi
 
 # ── 5c. Install the editor status-bar extension ──────────────────────────────
-# Cursor / Windsurf / VSCodium pull from OpenVSX, where adthink.claude-code-ads
+# Cursor / Windsurf / VSCodium pull from OpenVSX, where adthink.mango
 # is published — install via their CLI (auto-updates). VS Code's Marketplace
 # doesn't carry it, so VS Code is folder-sideloaded. Sideload is the fallback
 # everywhere a CLI/registry install isn't available.
-EXT_ID="adthink.claude-code-ads-1.0.0"
+EXT_ID="adthink.mango-1.0.0"
 for triple in "VS Code:code:$HOME/.vscode/extensions" \
               "Cursor:cursor:$HOME/.cursor/extensions" \
               "Windsurf:windsurf:$HOME/.windsurf/extensions" \
@@ -231,8 +231,8 @@ for triple in "VS Code:code:$HOME/.vscode/extensions" \
   ename="${triple%%:*}"; rest="${triple#*:}"; cli="${rest%%:*}"; edir="${rest#*:}"
   # OpenVSX editors: install from the registry via CLI (skip VS Code — not listed).
   if [[ "$cli" != "code" ]] && command -v "$cli" >/dev/null 2>&1 && \
-     "$cli" --install-extension adthink.claude-code-ads --force >/dev/null 2>&1; then
-    info "✓ Installed adthink.claude-code-ads into $ename from OpenVSX (auto-updates)"
+     "$cli" --install-extension adthink.mango --force >/dev/null 2>&1; then
+    info "✓ Installed adthink.mango into $ename from OpenVSX (auto-updates)"
     continue
   fi
   # Fallback: folder-sideload (only if that editor is actually installed).
@@ -277,7 +277,7 @@ echo ""
 CODE=$(python3 -c "import json;print(json.load(open('$ADS_DIR/config.json')).get('referral_code',''))" 2>/dev/null || true)
 if [[ -n "$CODE" ]]; then
   info "  💸 DOUBLE YOUR EARNINGS — invite a friend, you BOTH get \$10:"
-  info "     https://bggprogramming.github.io/claude-code-ads/invite.html?ref=$CODE"
+  info "     https://bggprogramming.github.io/mango/invite.html?ref=$CODE"
   info "     (this is the #1 way people earn here — share it once)"
   echo ""
 fi
@@ -287,7 +287,7 @@ info "  1. Start a new session — that's it. Ads show up on their own."
 if [[ -n "$CODE" ]]; then
   echo ""
   info "  2. Your earnings portal (bookmark it — one click, no code to type):"
-  info "     https://bggprogramming.github.io/claude-code-ads/portal.html?code=$CODE"
+  info "     https://bggprogramming.github.io/mango/portal.html?code=$CODE"
 fi
 echo ""
 info "  Earn more anytime:  python3 ~/.claude/ads/optin.py"

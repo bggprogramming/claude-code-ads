@@ -41,7 +41,7 @@ def _sid():
 
 def _cache_path():
     safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in _sid())
-    return Path(f"/tmp/claude-ads-view-{safe}.json")
+    return Path(f"/tmp/mango-view-{safe}.json")
 
 
 def _owner_candidates():

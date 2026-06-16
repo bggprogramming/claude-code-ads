@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the Claude Code Ads status-bar extension into Cursor / VS Code / Windsurf.
+# Install the Mango status-bar extension into Cursor / VS Code / Windsurf.
 #
 # Sideloads by copying the (unpacked) extension into each editor's extensions
 # folder — no npm, no vsce, no build step. Reload the editor to activate.
@@ -9,7 +9,7 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-ID="bggprogramming.claude-code-ads-1.0.0"
+ID="bggprogramming.mango-1.0.0"
 FILES=(package.json extension.js icon.png)
 
 UNINSTALL=0
@@ -42,6 +42,6 @@ if [[ "$UNINSTALL" != "1" ]]; then
   echo ""
   echo "  Done! Fully quit and reopen the editor to activate."
   echo "  A sponsored line shows bottom-right; click it to visit. Run"
-  echo "  \"Claude Code Ads: Show earnings\" from the command palette to see earnings."
+  echo "  \"Mango: Show earnings\" from the command palette to see earnings."
   echo "  Same account as the CLI — you keep 90% of every impression."
 fi

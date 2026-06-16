@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
   const badgeResponse = (message: string, color: string, cached = true) =>
     new Response(JSON.stringify({
       schemaVersion: 1,
-      label:         'earned · claude code ads',
+      label:         'earned · mango',
       message,
       color,
       logoSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23b4ff69"><circle cx="12" cy="12" r="10"/></svg>',

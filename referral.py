@@ -23,7 +23,7 @@ BONUS_DOLLARS = REFERRAL_BONUS_MC / 100_000            # $10 each way
 SUPABASE_URL_BASE = "https://gpbrzpyvzlzwvvymgeyk.supabase.co"
 BADGE_FN_BASE     = f"{SUPABASE_URL_BASE}/functions/v1/badge"
 SHIELDS_BASE      = "https://img.shields.io/endpoint"
-SITE_BASE         = "https://bggprogramming.github.io/claude-code-ads"
+SITE_BASE         = "https://bggprogramming.github.io/mango"
 
 
 def load_config():
@@ -96,13 +96,13 @@ def main():
     # ── Your referral link ────────────────────────────────────────────────────
     install_cmd = (
         f"curl -fsSL https://raw.githubusercontent.com/bggprogramming/"
-        f"claude-code-ads/main/install.sh | bash -s -- --ref {code}"
+        f"mango/main/install.sh | bash -s -- --ref {code}"
     )
     invite_url   = f"{SITE_BASE}/invite.html?ref={code}"
     site_link    = f"{SITE_BASE}/?ref={code}"
     badge_url    = f"{BADGE_FN_BASE}/{code}"
     shields_url  = f"{SHIELDS_BASE}?url={badge_url}&style=flat"
-    badge_md     = f"[![Earned with Claude Code Ads]({shields_url})]({site_link})"
+    badge_md     = f"[![Earned with Mango]({shields_url})]({site_link})"
 
     earned_str = f"${earned:.2f}" if earned >= 0.01 else "money"
     invite_msg = (

@@ -32,13 +32,13 @@ SESSION_CAP = 3  # max impressions per ad per terminal session
 
 # Session file keyed by terminal session so each new terminal = fresh cap
 _sid = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
-SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
+SESSION_FILE = Path(f"/tmp/mango-{_sid}.json")
 
 # Claude Code re-renders the statusLine very frequently. Count at most ONE
 # impression per window (a viewable "refresh"), not one per render — otherwise
 # earnings balloon and diverge from the server.
 IMPRESSION_WINDOW = 30   # seconds
-IMP_TS_FILE = Path(f"/tmp/claude-ads-imp-{_sid}.json")
+IMP_TS_FILE = Path(f"/tmp/mango-imp-{_sid}.json")
 
 
 def impression_due():

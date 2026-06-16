@@ -5,9 +5,9 @@ Codex panel injector (opt-in, reversible) — the "kickback" in-panel surface.
 Injects a clickable sponsor bar into OpenAI's Codex VS Code extension webview by:
   1. appending our Supabase origin to the webview CSP `connect-src` (so the
      injected script may call ad-feed / track-event),
-  2. writing webview/cca-inject.js (renders the bar; your user_id baked in so
+  2. writing webview/mango-inject.js (renders the bar; your user_id baked in so
      earnings credit you; logs impression + vscode_click),
-  3. adding one <script type="module" src="./cca-inject.js"> to webview/index.html.
+  3. adding one <script type="module" src="./mango-inject.js"> to webview/index.html.
 
 SAFE: every edited file is backed up to <file>.cca-bak before the first change,
 the patch is marker-guarded (idempotent), and `--revert` restores everything.
@@ -42,16 +42,16 @@ EXT_ROOTS = [Path.home() / ".vscode" / "extensions",
 
 CSP_FIND = 'connect-src ${n.join(" ")}'
 CSP_REPL = 'connect-src ${n.join(" ")} ' + SUPA
-HTML_MARK = "<!-- cca-inject -->"
-HTML_TAG  = '    <script type="module" crossorigin src="./cca-inject.js"></script>\n    ' + HTML_MARK + "\n"
+HTML_MARK = "<!-- mango-inject -->"
+HTML_TAG  = '    <script type="module" crossorigin src="./mango-inject.js"></script>\n    ' + HTML_MARK + "\n"
 
-INJECT_JS = r"""// claude-code-ads — injected Codex panel sponsor bar (remove via inject_codex_panel.py --revert)
+INJECT_JS = r"""// mango — injected Codex panel sponsor bar (remove via inject_codex_panel.py --revert)
 (function(){
   try {
-    if (window.__ccaLoaded) return; window.__ccaLoaded = true;
+    if (window.__mangoLoaded) return; window.__mangoLoaded = true;
     var SUPA=%SUPA%, KEY=%KEY%, UID=%UID%, LVL=%LVL%;
     var FEED=SUPA+"/functions/v1/ad-feed", TRACK=SUPA+"/functions/v1/track-event";
-    var bar=document.createElement("div"); bar.setAttribute("data-cca","1");
+    var bar=document.createElement("div"); bar.setAttribute("data-mango","1");
     bar.style.cssText="position:fixed;left:0;right:0;bottom:0;z-index:2147483647;"
       +"display:flex;align-items:center;gap:8px;padding:6px 10px;box-sizing:border-box;"
       +"font:12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
@@ -77,7 +77,7 @@ INJECT_JS = r"""// claude-code-ads — injected Codex panel sponsor bar (remove 
 
 
 def load_identity():
-    for f in (BASE / "config.json", Path.home() / ".claude-code-ads.json"):
+    for f in (BASE / "config.json", Path.home() / ".mango.json"):
         try:
             c = json.loads(f.read_text())
             if c.get("user_id"):
@@ -114,7 +114,7 @@ def find_other_agents():
             continue
         for g in OTHER_AGENT_GLOBS:
             for d in sorted(root.glob(g)):
-                if d not in out and "claude-code-ads" not in d.name:   # not our own extension
+                if d not in out and "mango" not in d.name:   # not our own extension
                     out.append(d)
     return out
 
@@ -138,7 +138,7 @@ def patch(ext: Path):
     uid, lvl = load_identity()
     extjs = ext / "out" / "extension.js"
     html  = ext / "webview" / "index.html"
-    inj   = ext / "webview" / "cca-inject.js"
+    inj   = ext / "webview" / "mango-inject.js"
 
     # 1. CSP connect-src
     js = extjs.read_text(encoding="utf-8", errors="replace")
@@ -180,9 +180,9 @@ def revert(ext: Path):
     for p in (ext / "out" / "extension.js", ext / "webview" / "index.html"):
         if _restore(p):
             n += 1; print(f"  ✓ restored {p.name}")
-    inj = ext / "webview" / "cca-inject.js"
+    inj = ext / "webview" / "mango-inject.js"
     if inj.exists():
-        inj.unlink(); print("  ✓ removed cca-inject.js")
+        inj.unlink(); print("  ✓ removed mango-inject.js")
     print(f"  Reverted {n} file(s). Reload the editor window." if n else "  Nothing to revert.")
 
 
@@ -192,7 +192,7 @@ def status(ext: Path):
     print(f"  extension: {ext.name}")
     print(f"  CSP patched:   {SUPA in js}")
     print(f"  HTML injected: {HTML_MARK in html}")
-    print(f"  inject.js:     {(ext / 'webview' / 'cca-inject.js').exists()}")
+    print(f"  inject.js:     {(ext / 'webview' / 'mango-inject.js').exists()}")
 
 
 def main():

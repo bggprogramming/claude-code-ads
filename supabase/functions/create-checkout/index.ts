@@ -12,7 +12,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
-const SITE_BASE = Deno.env.get('SITE_BASE') ?? 'https://bggprogramming.github.io/claude-code-ads'
+const SITE_BASE = Deno.env.get('SITE_BASE') ?? 'https://bggprogramming.github.io/mango'
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
   form.set('line_items[0][price_data][currency]', 'usd')
   form.set('line_items[0][price_data][unit_amount]', String(amount))
   form.set('line_items[0][price_data][product_data][name]',
-    `Claude Code Ads — ${adv.blocks} block${adv.blocks > 1 ? 's' : ''} (${(adv.blocks * 1000).toLocaleString()} impressions)`)
+    `Mango — ${adv.blocks} block${adv.blocks > 1 ? 's' : ''} (${(adv.blocks * 1000).toLocaleString()} impressions)`)
   form.set('line_items[0][price_data][product_data][description]',
     (adv.ad_text || adv.company || 'Spinner campaign').slice(0, 120))
 

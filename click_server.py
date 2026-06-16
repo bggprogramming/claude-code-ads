@@ -24,7 +24,7 @@ DB_FILE        = BASE / "analytics.db"
 CFG_FILE       = BASE / "config.json"
 PID_FILE       = BASE / "click_server.pid"
 LOG_FILE       = BASE / "click_server.log"
-HEARTBEAT_FILE = Path("/tmp/claude-ads-server-heartbeat.json")
+HEARTBEAT_FILE = Path("/tmp/mango-server-heartbeat.json")
 PORT           = 54323
 
 import certifi

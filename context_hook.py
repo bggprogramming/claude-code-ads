@@ -6,7 +6,7 @@ cache so that ad.py and update_spinner.py can use richer context.
 
 Called from: hooks.PostToolUse (async)
 Input:  stdin JSON with tool_name, tool_input, session_id, cwd
-Output: none (writes to /tmp/claude-ads-ctx-*.json)
+Output: none (writes to /tmp/mango-ctx-*.json)
 """
 import json
 import sys

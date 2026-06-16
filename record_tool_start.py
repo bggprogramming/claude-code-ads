@@ -20,7 +20,7 @@ except Exception:
 session_id = data.get("session_id") or os.environ.get("TERM_SESSION_ID") or "unknown"
 safe_sid   = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(session_id))
 
-tool_file = Path(f"/tmp/claude-ads-tool-start-{safe_sid}.json")
+tool_file = Path(f"/tmp/mango-tool-start-{safe_sid}.json")
 try:
     tool_file.write_text(json.dumps({
         "ts":   time.time(),

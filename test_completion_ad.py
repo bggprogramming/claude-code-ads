@@ -92,7 +92,7 @@ def test_elapsed_returns_seconds_when_file_present():
     with tempfile.TemporaryDirectory() as tmp:
         sid  = "testsession123"
         safe = "testsession123"
-        tool_file = Path(tmp) / f"claude-ads-tool-start-{safe}.json"
+        tool_file = Path(tmp) / f"mango-tool-start-{safe}.json"
         start_ts = time.time() - 45  # pretend tool started 45s ago
         tool_file.write_text(json.dumps({"ts": start_ts, "tool": "Bash"}))
 
@@ -105,7 +105,7 @@ def test_elapsed_returns_seconds_when_file_present():
 def test_elapsed_returns_none_on_corrupt_file():
     with tempfile.TemporaryDirectory() as tmp:
         sid = "badsession"
-        tool_file = Path(tmp) / f"claude-ads-tool-start-{sid}.json"
+        tool_file = Path(tmp) / f"mango-tool-start-{sid}.json"
         tool_file.write_text("not valid json {{{{")
         with patch.object(_ca, '_TOOL_START_DIR', tmp):
             elapsed = _ca.elapsed_since_tool_start(sid)

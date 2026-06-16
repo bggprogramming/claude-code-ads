@@ -1,6 +1,6 @@
 # Supabase backend (source of truth)
 
-The whole backend for Claude Code Ads, reproducible from this directory:
+The whole backend for Mango, reproducible from this directory:
 
 - `migrations/0001_init.sql` — full schema: tables, RLS, auction model, triggers,
   storage bucket, grants, `public_stats` view.
@@ -39,7 +39,7 @@ supabase functions deploy track-event --no-verify-jwt
 
 ```bash
 supabase secrets set RESEND_API_KEY=re_...                 # enables advertiser dashboard email
-supabase secrets set EMAIL_FROM="Claude Code Ads <ads@yourdomain.com>"   # after domain verification
+supabase secrets set EMAIL_FROM="Mango <ads@yourdomain.com>"   # after domain verification
 supabase secrets set STRIPE_SECRET_KEY=sk_...              # flips checkout to real payment
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...       # enables the paid→active webhook
 supabase secrets set SITE_BASE="https://your-site"         # if the marketing site moves

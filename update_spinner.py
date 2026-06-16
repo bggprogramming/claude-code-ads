@@ -29,7 +29,7 @@ SETTINGS   = Path.home() / ".claude" / "settings.json"
 SSL_CTX    = ssl.create_default_context(cafile=certifi.where())
 
 _sid = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
-SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
+SESSION_FILE = Path(f"/tmp/mango-{_sid}.json")
 SESSION_CAP  = 3
 
 

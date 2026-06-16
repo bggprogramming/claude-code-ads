@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Campaign Analytics — Claude Code Ads</title>
+  <title>Campaign Analytics — Mango</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #080808;
-      --surface: #0f0f0f;
-      --border:  rgba(255,255,255,0.07);
-      --text:    #e2e2e2;
-      --muted:   #4a4a4a;
-      --hi:      #717171;
-      --accent:  #b4ff69;
+      --bg:      #fdf8f2;
+      --surface: #ffffff;
+      --border:  rgba(0,0,0,0.07);
+      --text:    #2a2620;
+      --muted:   #8a8378;
+      --hi:      #5a5347;
+      --accent:  #e8770a;
       --font:    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       --mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
     }
@@ -28,7 +28,7 @@
     nav {
       display: flex; align-items: center; justify-content: space-between;
       padding: 18px 32px; border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; background: rgba(8,8,8,0.92);
+      position: sticky; top: 0; background: rgba(255,250,242,0.95);
       backdrop-filter: blur(12px); z-index: 10;
     }
     .logo { font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
@@ -41,7 +41,7 @@
 
     /* ── Loading / Error ── */
     .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; gap: 12px; }
-    .center-state h2 { font-size: 20px; font-weight: 500; color: #fff; }
+    .center-state h2 { font-size: 20px; font-weight: 500; color: #2a2620; }
     .center-state p  { font-size: 14px; color: var(--muted); }
     .spinner {
       width: 28px; height: 28px; border: 2px solid var(--border);
@@ -67,7 +67,7 @@
       border-radius: 12px; border: 1px solid var(--border); background: var(--surface);
       flex-shrink: 0;
     }
-    .campaign-company { font-size: clamp(24px, 4vw, 32px); font-weight: 600; letter-spacing: -0.04em; color: #fff; }
+    .campaign-company { font-size: clamp(24px, 4vw, 32px); font-weight: 600; letter-spacing: -0.04em; color: #2a2620; }
     .campaign-meta { font-size: 13px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
 
     .status-badge {
@@ -76,7 +76,7 @@
       border-radius: 100px; border: 1px solid; flex-shrink: 0; margin-top: 4px;
     }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .status-active  { color: var(--accent); border-color: rgba(180,255,105,0.3); background: rgba(180,255,105,0.05); }
+    .status-active  { color: var(--accent); border-color: rgba(232,119,10,0.3); background: rgba(232,119,10,0.05); }
     .status-active .status-dot  { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 2s ease-in-out infinite; }
     .status-pending { color: #febc2e; border-color: rgba(254,188,46,0.3); background: rgba(254,188,46,0.05); }
     .status-pending .status-dot { background: #febc2e; }
@@ -91,7 +91,7 @@
     /* ── Stats Grid ── */
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 40px; }
     .stat-card { background: var(--bg); padding: 24px 20px; }
-    .stat-val { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; color: #fff; line-height: 1; }
+    .stat-val { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; color: #2a2620; line-height: 1; }
     .stat-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
     .stat-sub { font-size: 12px; color: var(--hi); margin-top: 4px; }
 
@@ -100,11 +100,11 @@
     .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
 
     .terminal {
-      background: #0b0b0b; border: 1px solid var(--border);
+      background: #fdf8f2; border: 1px solid var(--border);
       border-radius: 10px; overflow: hidden;
     }
     .term-bar {
-      background: #131313; border-bottom: 1px solid var(--border);
+      background: #ffffff; border-bottom: 1px solid var(--border);
       padding: 10px 14px; display: flex; align-items: center; gap: 7px;
     }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -121,7 +121,7 @@
     .surface-bars { display: flex; flex-direction: column; gap: 12px; }
     .surface-row { display: flex; align-items: center; gap: 12px; }
     .surface-label { font-size: 13px; color: var(--hi); width: 90px; flex-shrink: 0; }
-    .bar-track { flex: 1; background: rgba(255,255,255,0.04); border-radius: 3px; height: 6px; overflow: hidden; }
+    .bar-track { flex: 1; background: rgba(0,0,0,0.04); border-radius: 3px; height: 6px; overflow: hidden; }
     .bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.6s ease; }
     .surface-count { font-size: 13px; color: var(--text); font-family: var(--mono); width: 80px; text-align: right; flex-shrink: 0; }
 
@@ -178,7 +178,7 @@
 
     <div id="dashboard" style="display:none">
 
-      <a id="all-campaigns-link" href="campaigns.html" style="display:inline-block;font-size:13px;color:var(--muted,#6a6a72);text-decoration:none;margin-bottom:18px">← All campaigns</a>
+      <a id="all-campaigns-link" href="campaigns.html" style="display:inline-block;font-size:13px;color:var(--muted,#8a8378);text-decoration:none;margin-bottom:18px">← All campaigns</a>
 
       <div class="campaign-header">
         <div class="header-top">
@@ -232,11 +232,11 @@
       <div class="section" id="manage-section">
         <div class="section-title">Auction &amp; management</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
-          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-rank" style="font-size:22px;font-weight:600;color:#fff;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">market rank</div></div>
-          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-status" style="font-size:22px;font-weight:600;color:#fff;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">status</div></div>
-          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-remaining" style="font-size:22px;font-weight:600;color:#fff;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">impressions left</div></div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-rank" style="font-size:22px;font-weight:600;color:#2a2620;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">market rank</div></div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-status" style="font-size:22px;font-weight:600;color:#2a2620;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">status</div></div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px"><div id="m-remaining" style="font-size:22px;font-weight:600;color:#2a2620;letter-spacing:-0.02em">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px">impressions left</div></div>
         </div>
-        <div style="height:6px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden;margin-bottom:20px"><div id="m-deliver" style="height:100%;width:0%;background:linear-gradient(90deg,#b4ff69,#28c840)"></div></div>
+        <div style="height:6px;border-radius:4px;background:rgba(0,0,0,0.08);overflow:hidden;margin-bottom:20px"><div id="m-deliver" style="height:100%;width:0%;background:linear-gradient(90deg,#e8770a,#28c840)"></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:end">
           <div>
             <label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Bid / 1,000 imps ($)</label>
@@ -333,11 +333,11 @@
 </div>
 
 <footer>
-  <span>Claude Code Ads</span>
+  <span>Mango</span>
   <div class="footer-links">
     <a href="index.html">For developers</a>
     <a href="advertise.html">Advertise</a>
-    <a href="https://github.com/bggprogramming/claude-code-ads" target="_blank">GitHub</a>
+    <a href="https://github.com/bggprogramming/mango" target="_blank">GitHub</a>
   </div>
 </footer>
 
@@ -435,7 +435,7 @@
 
     // Ad preview
     document.getElementById('ad-preview-text').textContent = adv.ad_text;
-    document.title = `${adv.company} Analytics — Claude Code Ads`;
+    document.title = `${adv.company} Analytics — Mango`;
 
     // Aggregate
     const impressions = events.filter(e => e.event === 'impression');

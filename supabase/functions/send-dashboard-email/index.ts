@@ -11,8 +11,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const SITE_BASE  = Deno.env.get('SITE_BASE')  ?? 'https://bggprogramming.github.io/claude-code-ads'
-const EMAIL_FROM = Deno.env.get('EMAIL_FROM') ?? 'Claude Code Ads <onboarding@resend.dev>'
+const SITE_BASE  = Deno.env.get('SITE_BASE')  ?? 'https://bggprogramming.github.io/mango'
+const EMAIL_FROM = Deno.env.get('EMAIL_FROM') ?? 'Mango <onboarding@resend.dev>'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
 
   const html = `<!doctype html><html><body style="margin:0;background:#0b0b0c;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#e7e7e9;padding:32px">
   <div style="max-width:520px;margin:0 auto;background:#151517;border:1px solid #232327;border-radius:14px;padding:32px">
-    <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#b4ff69;font-weight:600">Claude Code Ads</div>
+    <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#b4ff69;font-weight:600">Mango</div>
     <h1 style="font-size:22px;margin:14px 0 6px;color:#fff">Your campaign is live 🎉</h1>
     <p style="font-size:15px;line-height:1.5;color:#b8b8bd;margin:0 0 22px">Hi ${company}, your ad is now in rotation across developer terminals. Track impressions, clicks, and CTR from your private dashboard — bookmark this link, it's the only way back in.</p>
     <a href="${dashUrl}" style="display:inline-block;background:#b4ff69;color:#0b0b0c;font-weight:600;font-size:15px;text-decoration:none;padding:13px 22px;border-radius:9px">Open your dashboard →</a>
@@ -71,12 +71,12 @@ Deno.serve(async (req: Request) => {
   </div>
 </body></html>`
 
-  const text = `Your Claude Code Ads campaign is live.\n\nHi ${adv.company || 'there'}, your ad is now in rotation. Track performance from your private dashboard (bookmark it):\n\n${dashUrl}\n\nYour ad: ${adv.ad_text || ''}`
+  const text = `Your Mango campaign is live.\n\nHi ${adv.company || 'there'}, your ad is now in rotation. Track performance from your private dashboard (bookmark it):\n\n${dashUrl}\n\nYour ad: ${adv.ad_text || ''}`
 
   const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: EMAIL_FROM, to: [adv.email], subject: 'Your Claude Code Ads dashboard', html, text }),
+    body: JSON.stringify({ from: EMAIL_FROM, to: [adv.email], subject: 'Your Mango dashboard', html, text }),
   })
   const result = await resp.json().catch(() => ({}))
   if (!resp.ok) return json(502, { error: 'resend send failed', status: resp.status, detail: result })

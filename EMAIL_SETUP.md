@@ -38,7 +38,7 @@ will actually arrive. Everything else 502s at Resend (harmless, logged).
 ### A1. Create a Resend account + API key
 1. Go to <https://resend.com> and sign up **using `dep224qa@gmail.com`**.
 2. Verify your email.
-3. Go to **API Keys** → **Create API Key** (name it e.g. `claude-code-ads`,
+3. Go to **API Keys** → **Create API Key** (name it e.g. `mango`,
    permission **Sending access**). Copy the `re_...` value — shown once.
 
 ### A2. Store the key as a Supabase secret
@@ -103,13 +103,13 @@ Start with `p=none` (monitor), tighten to `p=quarantine` later once clean.
 ### B4. Point the function at your domain
 Set the `EMAIL_FROM` secret (the function already reads it; defaults to the test sender):
 ```bash
-supabase secrets set EMAIL_FROM="Claude Code Ads <ads@yourdomain.com>" --project-ref gpbrzpyvzlzwvvymgeyk
+supabase secrets set EMAIL_FROM="Mango <ads@yourdomain.com>" --project-ref gpbrzpyvzlzwvvymgeyk
 ```
 The `from` address's domain **must** match the verified domain. No redeploy needed.
 
 ### B5. (If the marketing site ever moves to a custom domain)
 The email links use `SITE_BASE`, default
-`https://bggprogramming.github.io/claude-code-ads`. If the site moves, update it:
+`https://bggprogramming.github.io/mango`. If the site moves, update it:
 ```bash
 supabase secrets set SITE_BASE="https://yournewsite.com" --project-ref gpbrzpyvzlzwvvymgeyk
 ```

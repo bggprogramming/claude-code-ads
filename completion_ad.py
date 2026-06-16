@@ -50,7 +50,7 @@ def completion_due(session_id):
     a turn with several long tools can't count multiple impressions (matches the
     statusline's rate-limit and keeps local earnings in step with the server)."""
     safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(session_id))
-    f = Path(_TOOL_START_DIR) / f"claude-ads-comp-{safe}.json"
+    f = Path(_TOOL_START_DIR) / f"mango-comp-{safe}.json"
     try:
         if f.exists() and time.time() - json.loads(f.read_text()).get("ts", 0) < COMPLETION_WINDOW:
             return False
@@ -66,7 +66,7 @@ def completion_due(session_id):
 def elapsed_since_tool_start(session_id):
     """Return seconds since the current tool started, or None if unknown."""
     safe_sid  = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(session_id))
-    tool_file = Path(_TOOL_START_DIR) / f"claude-ads-tool-start-{safe_sid}.json"
+    tool_file = Path(_TOOL_START_DIR) / f"mango-tool-start-{safe_sid}.json"
     try:
         data = json.loads(tool_file.read_text())
         return time.time() - data.get("ts", time.time())

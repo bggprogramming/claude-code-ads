@@ -25,8 +25,8 @@ import certifi
 BASE      = Path(__file__).parent
 ADS_FILE  = BASE / "ads.json"
 CFG_FILE  = BASE / "config.json"
-GITHUB_URL = "https://raw.githubusercontent.com/bggprogramming/claude-code-ads/main/ads.json"
-CACHE_FILE = Path("/tmp/claude-ads-feed.json")
+GITHUB_URL = "https://raw.githubusercontent.com/bggprogramming/mango/main/ads.json"
+CACHE_FILE = Path("/tmp/mango-feed.json")
 CACHE_TTL  = 60           # seconds — snappy for the live auction, cheap enough for the status bar
 _SSL_CTX   = ssl.create_default_context(cafile=certifi.where())
 _REQUIRED  = {"id", "text", "url"}
@@ -67,7 +67,7 @@ def load_ads() -> list:
     fn_url = _feed_fn_url()
     if fn_url:
         try:
-            req  = urllib.request.Request(fn_url, headers={"User-Agent": "claude-code-ads/2.0"})
+            req  = urllib.request.Request(fn_url, headers={"User-Agent": "mango/2.0"})
             raw  = urllib.request.urlopen(req, timeout=2, context=_SSL_CTX).read()
             body = json.loads(raw)
             ads  = body.get("ads") if isinstance(body, dict) else body
@@ -82,7 +82,7 @@ def load_ads() -> list:
 
     # 3. Legacy GitHub raw feed
     try:
-        req  = urllib.request.Request(GITHUB_URL, headers={"User-Agent": "claude-code-ads/2.0"})
+        req  = urllib.request.Request(GITHUB_URL, headers={"User-Agent": "mango/2.0"})
         data = urllib.request.urlopen(req, timeout=2, context=_SSL_CTX).read()
         ads  = json.loads(data)
         if _valid(ads):

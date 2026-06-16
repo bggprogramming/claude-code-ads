@@ -25,7 +25,7 @@ import certifi
 BASE        = Path(__file__).parent
 CLICK_PORT  = 54323
 SESSION_CAP = 3
-SITE_BASE   = "https://bggprogramming.github.io/claude-code-ads"
+SITE_BASE   = "https://bggprogramming.github.io/mango"
 SSL_CTX     = ssl.create_default_context(cafile=certifi.where())
 CODEX       = "--codex" in sys.argv   # Codex CLI: emit JSON systemMessage, not /dev/tty
 
@@ -35,14 +35,14 @@ def _strip_ansi(s):
     return re.sub(r"\033\[[0-9;]*m", "", s)
 
 _sid         = os.environ.get("TERM_SESSION_ID") or os.environ.get("TMUX_PANE") or str(os.getppid())
-SESSION_FILE = Path(f"/tmp/claude-ads-{_sid}.json")
+SESSION_FILE = Path(f"/tmp/mango-{_sid}.json")
 
 # Codex CLI: show the rotating sponsor line DURING the turn (PostToolUse fires
 # between tool calls) as well as at the end (Stop) — the closest thing to
 # kickback's continuous wait-state ad. Rate-limit so a long turn refreshes
 # periodically without flooding the transcript with warning lines.
 CODEX_AD_WINDOW = 30   # seconds between Codex sponsor lines
-CODEX_TS_FILE   = Path(f"/tmp/claude-ads-codex-{_sid}.json")
+CODEX_TS_FILE   = Path(f"/tmp/mango-codex-{_sid}.json")
 
 
 def _codex_ad_due():
@@ -143,7 +143,7 @@ def render_logo(ad):
 
     if logo_url and (is_iterm or is_kitty):
         try:
-            req  = urllib.request.Request(logo_url, headers={"User-Agent": "claude-code-ads/2.0"})
+            req  = urllib.request.Request(logo_url, headers={"User-Agent": "mango/2.0"})
             data = urllib.request.urlopen(req, timeout=1.5, context=SSL_CTX).read()
             if data and len(data) <= 256 * 1024:
                 b64 = base64.b64encode(data).decode()
@@ -197,7 +197,7 @@ def earnings_progress_line(cfg):
     ref_url = f"{SITE_BASE}/?ref={code}" if code else SITE_BASE
 
     line = (
-        f"\033[2m[claude-code-ads]\033[0m \033[38;5;156m${dollars:.2f}\033[0m"
+        f"\033[2m[mango]\033[0m \033[38;5;156m${dollars:.2f}\033[0m"
         f" \033[2m[{bar}] ${target:g} · share: {ref_url}\033[0m"
     )
 
@@ -234,11 +234,11 @@ def _codex_hello(cfg):
     since the install-time opt-in only runs with a real TTY attached."""
     onboarded = cfg.get("share_level") is not None or cfg.get("optin_enabled")
     if not onboarded:
-        _codex_emit("✓ Claude Code Ads is active — you're earning while you code. "
+        _codex_emit("✓ Mango is active — you're earning while you code. "
                     "Pick how much you earn (up to 2.5×) — run:  "
                     "python3 ~/.claude/ads/optin.py")
     else:
-        _codex_emit("✓ Claude Code Ads is active — you're earning while you code. "
+        _codex_emit("✓ Mango is active — you're earning while you code. "
                     "A sponsor line shows while the agent works.")
 
 

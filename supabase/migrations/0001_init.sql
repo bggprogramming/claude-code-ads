@@ -1,4 +1,4 @@
--- Claude Code Ads — consolidated schema (reproducible from scratch).
+-- Mango — consolidated schema (reproducible from scratch).
 -- Captures the live state: tables, RLS, auction model, triggers, storage, grants.
 -- Apply with: supabase db push   (or paste into the SQL editor on a fresh project)
 
