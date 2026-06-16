@@ -263,14 +263,28 @@ def main():
     print(SEP)
 
     # ── Cleanup ───────────────────────────────────────────────────────────────
+    # anon DELETE on `events` is revoked by RLS, so we cannot clean up directly.
+    # Route through track-event's `cleanup_test` action (service role, restricted
+    # to test-prefixed ad_ids), then VERIFY the rows are actually gone — the old
+    # anon DELETE silently no-op'd and leaked test rows into production analytics.
     print()
     print("  Cleaning up test rows…")
+    cleaned = None
     try:
-        api(cfg, "DELETE", "events", params=f"?ad_id=eq.{test_ad_id}")
-        api(cfg, "DELETE", "advertisers", params=f"?ad_id=eq.{test_ad_id}")
-        print("  Cleaned.")
+        cleaned = track_event(cfg, {"action": "cleanup_test", "ad_id": test_ad_id})
     except Exception as e:
-        print(f"  Cleanup error (manual cleanup may be needed): {e}")
+        print(f"  Cleanup call error: {e}")
+
+    leftover_events = api(cfg, "GET", "events",
+                          params=f"?ad_id=eq.{test_ad_id}&select=id") or []
+    leftover_adv    = api(cfg, "GET", "advertisers",
+                          params=f"?ad_id=eq.{test_ad_id}&select=ad_id") or []
+    results.append(check(
+        "Test rows removed (no leak into production analytics)",
+        bool(cleaned and cleaned.get("ok")) and not leftover_events and not leftover_adv,
+        f"deleted {cleaned.get('events_deleted') if cleaned else '?'} events / "
+        f"{cleaned.get('advertisers_deleted') if cleaned else '?'} advertisers; "
+        f"{len(leftover_events)} events + {len(leftover_adv)} advertiser rows remain"))
 
     print()
 

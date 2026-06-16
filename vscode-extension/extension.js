@@ -15,6 +15,7 @@ const SUPABASE_URL  = 'https://gpbrzpyvzlzwvvymgeyk.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwYnJ6cHl2emx6d3Z2eW1nZXlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NjAwNDIsImV4cCI6MjA5NzAzNjA0Mn0.Wh60a8XyYCeKlOJn7HJOMpipTTHmzCRBaH3cEQ0C-vc';
 const FEED_URL      = 'https://raw.githubusercontent.com/bggprogramming/mango/main/ads.json';
 const REFRESH_MS    = 30_000;
+const IDLE_MS       = 5 * 60_000; // stop counting impressions after 5 min of no activity
 const CLAUDE_CFG    = path.join(os.homedir(), '.claude', 'ads', 'config.json');
 const VSCODE_CFG    = path.join(os.homedir(), '.mango.json');
 const STATUSBAR_CPM = 25; // default CPM for VS Code status bar
@@ -257,6 +258,20 @@ async function activate(context) {
   let currentText = '';
   let currentVariant = 'default';
 
+  // Viewability gate: only count an impression when the developer is actually
+  // present, not merely when the window holds OS focus. We treat editing,
+  // navigating, or refocusing the window as activity; after IDLE_MS of none, the
+  // status-bar ad is still shown but stops accruing impressions — this keeps an
+  // unattended-but-focused editor from minting endless impressions.
+  let lastActivity = Date.now();
+  const markActive = () => { lastActivity = Date.now(); };
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(markActive),
+    vscode.workspace.onDidChangeTextDocument(markActive),
+    vscode.window.onDidChangeActiveTextEditor(markActive),
+    vscode.window.onDidChangeWindowState(s => { if (s.focused) markActive(); }),
+  );
+
   const openAdCmd = vscode.commands.registerCommand('mango.openAd', () => {
     if (currentAd) {
       vscode.env.openExternal(vscode.Uri.parse(currentAd.url));
@@ -297,9 +312,11 @@ async function activate(context) {
     statusBar.text  = `${display} ↗`;
     statusBar.show();
 
-    // Count an impression only when the window is actually on screen. VS Code's
-    // API exposes focus (not occlusion), so we use focus as the visibility proxy.
-    if (vscode.window.state.focused) {
+    // Count an impression only when the window is on screen AND the developer
+    // has been active recently. VS Code's API exposes focus (not occlusion), so
+    // focus + recent activity is our viewability proxy; this avoids inflating
+    // impressions (and the advertiser-facing CTR) on an idle, walked-away editor.
+    if (vscode.window.state.focused && (Date.now() - lastActivity) < IDLE_MS) {
       logImpression(currentAd.id, currentText, userId, currentVariant);
     }
   }

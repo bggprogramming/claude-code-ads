@@ -7,8 +7,10 @@ GET /health                  → 200 ok
 Writes a heartbeat file every 60s so external monitors can detect
 a silently-dead server without making an HTTP call.
 """
+import errno
 import json
 import os
+import signal
 import sqlite3
 import ssl
 import sys
@@ -134,21 +136,81 @@ def _heartbeat_loop():
         time.sleep(60)
 
 
-if __name__ == "__main__":
+class ReusableHTTPServer(HTTPServer):
+    allow_reuse_address = True   # avoid TIME_WAIT bind failures on quick restarts
+
+
+def _read_pid():
+    try:
+        return int(PID_FILE.read_text().strip())
+    except Exception:
+        return None
+
+
+def _pid_alive(pid):
+    if not pid:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _health_ok(timeout=0.6):
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{PORT}/health", timeout=timeout) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def _serve():
+    """Bind first, then claim the pid/heartbeat files — so a failed start never
+    clobbers a healthy instance's files."""
+    server = ReusableHTTPServer(("127.0.0.1", PORT), ClickHandler)   # may raise OSError
     pid = os.getpid()
     PID_FILE.write_text(str(pid))
-
-    # Start heartbeat background thread
+    HEARTBEAT_FILE.write_text(json.dumps({"ts": int(time.time()), "port": PORT, "pid": pid}))
+    LOG_FILE.write_text(f"started pid={pid} port={PORT}\n")
     threading.Thread(target=_heartbeat_loop, daemon=True).start()
-
     try:
-        server = HTTPServer(("127.0.0.1", PORT), ClickHandler)
-        LOG_FILE.write_text(f"started pid={pid} port={PORT}\n")
-        HEARTBEAT_FILE.write_text(json.dumps({"ts": int(time.time()), "port": PORT, "pid": pid}))
         server.serve_forever()
-    except OSError as e:
-        LOG_FILE.write_text(f"FAILED to bind port {PORT}: {e}\n")
-        sys.exit(1)
     finally:
         PID_FILE.unlink(missing_ok=True)
         HEARTBEAT_FILE.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    try:
+        _serve()
+        sys.exit(0)
+    except OSError as e:
+        if e.errno != errno.EADDRINUSE:
+            LOG_FILE.write_text(f"FAILED to start: {e}\n")
+            sys.exit(1)
+
+    # Port is busy. If a healthy instance is already serving, we are idempotently
+    # done — exit 0 rather than dying silently (the old behaviour).
+    if _health_ok():
+        LOG_FILE.write_text(f"already running on port {PORT}; nothing to do\n")
+        sys.exit(0)
+
+    # Port held by a wedged/stale process — try to reclaim it, then rebind once.
+    stale = _read_pid()
+    if _pid_alive(stale):
+        try:
+            os.kill(stale, signal.SIGTERM)
+        except OSError:
+            pass
+        for _ in range(20):                 # wait up to ~2s for it to release the port
+            if not _pid_alive(stale):
+                break
+            time.sleep(0.1)
+
+    try:
+        _serve()
+        sys.exit(0)
+    except OSError as e:
+        LOG_FILE.write_text(f"FAILED to bind port {PORT} after reclaim attempt: {e}\n")
+        sys.exit(1)
