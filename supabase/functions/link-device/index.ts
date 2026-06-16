@@ -55,8 +55,8 @@ Deno.serve(async (req: Request) => {
   const { data: fam } = await supabase
     .from('users').select('id').or(`id.eq.${primaryId},linked_to.eq.${primaryId}`)
   const ids = (fam ?? []).map(f => f.id)
-  const { data: evs } = await supabase.from('events').select('earnings_millicents').in('user_id', ids)
-  const totalMc = (evs ?? []).reduce((s: number, r: any) => s + (r.earnings_millicents ?? 0), 0)
+  const { data: roll } = await supabase.rpc('account_rollup', { p_ids: ids })   // SQL-side, no row cap
+  const totalMc = roll?.total_mc ?? 0
 
   return json(200, {
     ok: true,

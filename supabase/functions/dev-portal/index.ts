@@ -48,21 +48,17 @@ Deno.serve(async (req: Request) => {
   const ids   = deviceIds.length   ? deviceIds   : [acct.id]
   const codes = deviceCodes.length ? deviceCodes : [acct.referral_code]
 
-  // Earnings across every linked device.
-  const { data: evs } = await supabase
-    .from('events').select('event, surface, earnings_millicents').in('user_id', ids)
-
-  const bySurface: Record<string, { impressions: number; mc: number }> = {}
-  let totalMc = 0, totalImp = 0, totalClicks = 0, clickMc = 0
-  for (const e of evs ?? []) {
-    const amt = e.earnings_millicents ?? 0
-    totalMc += amt
-    if (e.event === 'click') { totalClicks++; clickMc += amt; continue }
-    totalImp++
-    const s = e.surface || 'unknown'
-    bySurface[s] ??= { impressions: 0, mc: 0 }
-    bySurface[s].impressions++; bySurface[s].mc += amt
-  }
+  // Earnings across every linked device — aggregated in SQL (account_rollup) so
+  // accounts with >1000 events aren't truncated by PostgREST's row cap.
+  const { data: roll } = await supabase.rpc('account_rollup', { p_ids: ids })
+  const r          = roll ?? {}
+  const totalMc    = r.total_mc ?? 0
+  const totalImp   = r.impressions ?? 0
+  const totalClicks= r.clicks ?? 0
+  const clickMc    = r.click_mc ?? 0
+  const bySurface  = (r.by_surface ?? []).map((s: any) => ({
+    surface: s.surface, impressions: s.impressions, dollars: (s.mc ?? 0) / 100_000,
+  }))
 
   // Payout history + available balance, across linked devices.
   const { data: pays } = await supabase
@@ -104,7 +100,7 @@ Deno.serve(async (req: Request) => {
     click_dollars: clickMc / 100_000,
     payout_target_dollars: PAYOUT_MC / 100_000,
     payout_pct: Math.min(100, Math.round((totalMc / PAYOUT_MC) * 100)),
-    by_surface: Object.entries(bySurface).map(([surface, v]) => ({ surface, impressions: v.impressions, dollars: v.mc / 100_000 })).sort((a, b) => b.impressions - a.impressions),
+    by_surface: bySurface,
     referrals: (refs ?? []).map((r: any) => ({ code: r.referral_code, milestone_hit: r.milestone_hit, joined: r.created_at })),
     referral_count: (refs ?? []).length,
     bonus_pending_dollars: pendingMc / 100_000,
