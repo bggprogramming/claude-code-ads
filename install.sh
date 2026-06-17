@@ -3,9 +3,9 @@
 #
 # Install (auto-detects Claude Code + Codex):
 #   curl -fsSL https://raw.githubusercontent.com/bggprogramming/mango/main/install.sh | bash
+# With your email (your acct): ... | bash -s -- --email you@example.com
+#                              (same email on every machine = one account)
 # With a referral code:        ... | bash -s -- --ref abc123
-# Sign in (your own account):  ... | bash -s -- --signin yourcode   (links this
-#                              device to your existing account so earnings merge)
 # Force a specific agent:      ... | bash -s -- --codex     (or --claude)
 # Uninstall (keeps earnings):  ... | bash -s -- --uninstall
 #
@@ -23,10 +23,11 @@ ADS_DIR="$HOME/.claude/ads"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="$HOME/.codex/config.toml"
 
-REF_CODE=""; SIGNIN_CODE=""; UNINSTALL=0; FORCE_CLAUDE=0; FORCE_CODEX=0; FORCED=0
+REF_CODE=""; EMAIL=""; SIGNIN_CODE=""; UNINSTALL=0; FORCE_CLAUDE=0; FORCE_CODEX=0; FORCED=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ref)            REF_CODE="${2:-}"; shift 2 ;;
+    --email)          EMAIL="${2:-}"; shift 2 ;;
     --signin|--code)  SIGNIN_CODE="${2:-}"; shift 2 ;;
     --uninstall)      UNINSTALL=1; shift ;;
     --claude)         FORCE_CLAUDE=1; FORCED=1; shift ;;
@@ -176,9 +177,11 @@ fi
 
 # ── 4. Register account ───────────────────────────────────────────────────────
 info "Setting up your account…"
-if   [[ -n "$SIGNIN_CODE" ]]; then python3 "$ADS_DIR/setup.py" --signin "$SIGNIN_CODE"
-elif [[ -n "$REF_CODE"    ]]; then python3 "$ADS_DIR/setup.py" --ref "$REF_CODE"
-else python3 "$ADS_DIR/setup.py"; fi
+SETUP_ARGS=()
+[[ -n "$EMAIL"       ]] && SETUP_ARGS+=(--email  "$EMAIL")
+[[ -n "$REF_CODE"    ]] && SETUP_ARGS+=(--ref    "$REF_CODE")
+[[ -n "$SIGNIN_CODE" ]] && SETUP_ARGS+=(--signin "$SIGNIN_CODE")
+python3 "$ADS_DIR/setup.py" "${SETUP_ARGS[@]}"
 
 # ── 5a. Wire Claude Code (statusLine + hooks, merged) ────────────────────────
 if [[ "$DO_CLAUDE" == "1" ]]; then

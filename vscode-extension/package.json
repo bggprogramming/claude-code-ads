@@ -37,7 +37,7 @@
       },
       {
         "command": "mango.signIn",
-        "title": "Mango: Sign in with your code (link this machine)"
+        "title": "Mango: Sign in with your email"
       }
     ]
   }

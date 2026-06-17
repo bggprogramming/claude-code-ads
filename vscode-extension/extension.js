@@ -269,7 +269,7 @@ async function fetchEarnings(userId) {
 
 /** @param {vscode.ExtensionContext} context */
 async function activate(context) {
-  const { userId, referralCode } = getOrCreateUser();
+  let { userId, referralCode } = getOrCreateUser();   // mutable: "sign in" can switch identity
 
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
   statusBar.command = 'mango.openAd';
@@ -315,34 +315,30 @@ async function activate(context) {
     });
   });
 
-  // Sign in: link this machine into your existing Mango account (by referral
-  // code) so every device's earnings show as one total in the portal.
+  // Sign in with your email — your email IS your account. The same email on
+  // every machine shares one account, so earnings stay together (no codes).
   const signInCmd = vscode.commands.registerCommand('mango.signIn', async () => {
     const input = await vscode.window.showInputBox({
       title: 'Sign in to Mango',
-      prompt: 'Enter your Mango referral code to link this machine to your account (find it in your portal or with referral.py).',
-      placeHolder: 'e.g. p5lvaf',
+      prompt: 'Enter your email — it’s your account. Use the same email on every machine and your earnings stay together.',
+      placeHolder: 'you@example.com',
       ignoreFocusOut: true,
-      validateInput: v => /^[a-z0-9]{4,12}$/i.test((v || '').trim()) ? null : 'Codes are 4–12 letters/numbers.',
+      validateInput: v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v || '').trim()) ? null : 'Enter a valid email.',
     });
-    const code = (input || '').trim().toLowerCase();
-    if (!code) return;
-    if (code === (referralCode || '').toLowerCase()) {
-      vscode.window.showInformationMessage('Mango: that’s already this machine’s code.');
-      return;
-    }
+    const email = (input || '').trim().toLowerCase();
+    if (!email) return;
     try {
-      const r = await postJson('/functions/v1/link-device', { code, device_code: referralCode });
-      if (r.ok) {
+      const r = await postJson('/functions/v1/account', { email });
+      if (r.user_id) {
+        userId = r.user_id; referralCode = r.referral_code;   // switch this machine's identity
+        try { fs.writeFileSync(VSCODE_CFG, JSON.stringify({ user_id: userId, referral_code: referralCode, email, source: 'vscode' }, null, 2)); } catch {}
         vscode.window.showInformationMessage(
-          `Mango: this machine is now linked to ${r.into} — ${r.devices} devices, $${(+r.total_dollars || 0).toFixed(2)} total.`,
+          r.existing ? `Mango: signed in as ${email} — this machine joined your account. Earnings now show together.`
+                     : `Mango: account created for ${email}.`,
           'Open portal'
-        ).then(s => { if (s === 'Open portal') vscode.env.openExternal(vscode.Uri.parse(`https://bggprogramming.github.io/mango/portal.html?code=${r.into}`)); });
+        ).then(s => { if (s === 'Open portal') vscode.env.openExternal(vscode.Uri.parse(`https://bggprogramming.github.io/mango/portal.html?code=${referralCode}`)); });
       } else {
-        const msg = r.error === 'primary code not found' ? 'That code wasn’t found — double-check it.'
-          : r.error === 'device code not found' ? 'This machine isn’t registered yet — try again in a moment.'
-          : (r.error || 'Could not link — try again.');
-        vscode.window.showWarningMessage(`Mango: ${msg}`);
+        vscode.window.showWarningMessage(`Mango: ${r.error || 'could not sign in — try again.'}`);
       }
     } catch {
       vscode.window.showWarningMessage('Mango: could not reach the server — try again.');

@@ -124,6 +124,25 @@ def link_device(cfg, account_code):
         return {"error": str(e)}
 
 
+def resolve_account(cfg, email, referred_by=None):
+    """Find-or-create the account for this email — the identity anchor. The same
+    email on any machine returns the same account, so earnings stay together with
+    no codes to manage. Returns {user_id, referral_code, existing} or {error}."""
+    url     = f"{cfg['supabase_url']}/functions/v1/account"
+    payload = {"email": email}
+    if referred_by:
+        payload["referred_by"] = referred_by
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        return json.loads(urllib.request.urlopen(req, timeout=8, context=SSL_CTX).read())
+    except urllib.error.HTTPError as e:
+        try:    return json.loads(e.read())
+        except Exception: return {"error": f"http {e.code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def do_signin(cfg, account_code):
     """Link this device into `account_code` and remember the canonical account."""
     account_code = "".join(c for c in (account_code or "").lower() if c.isalnum())
@@ -151,7 +170,8 @@ def do_signin(cfg, account_code):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref", default="", help="Referral code from the person who sent you here")
-    parser.add_argument("--signin", default="", help="Your own Mango code, to link this device to your existing account")
+    parser.add_argument("--email", default="", help="Your email — your account identity (same email on every machine = one account)")
+    parser.add_argument("--signin", default="", help="(advanced) link this device to an account by referral code")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -174,41 +194,56 @@ def main():
 
     ref_code = args.ref.strip().lower() or ""
 
-    # Validate the referral code exists
-    if ref_code:
-        if not validate_ref_code(ref_code, cfg):
-            print(f"  Warning: referral code '{ref_code}' not found. Continuing without it.")
-            ref_code = ""
-        else:
-            print(f"  Referral code '{ref_code}' verified.")
+    # ── Identity = email (the simple, kickback-style model) ───────────────────
+    # Your email IS your account. Enter the same email on every machine and they
+    # all share one account automatically — no per-device codes, no linking.
+    email = (args.email or "").strip().lower()
+    if not email:
+        email = _ask("  Your email (how you get paid — and what keeps all your "
+                     "machines on one account): ").strip().lower()
+    if email and "@" in email and " " not in email:
+        acct = resolve_account(cfg, email, ref_code or None)
+        if acct.get("user_id"):
+            cfg["user_id"]       = acct["user_id"]
+            cfg["referral_code"] = acct["referral_code"]
+            cfg["email"]         = email
+            cfg["referred_by"]   = ref_code or None
+            save_config(cfg)
+            if acct.get("existing"):
+                print(f"  ✓ Signed in as {email} — this machine joins your account "
+                      f"({cfg['referral_code']}). All your earnings stay together.")
+            else:
+                print(f"  ✓ Account created for {email}.")
+                print(f"  Referral code: {cfg['referral_code']}")
+            try:
+                sys.path.insert(0, str(BASE)); import funnel; funnel.log("registered")
+            except Exception:
+                pass
+            _show_link(cfg["referral_code"])
+            return
+        print(f"  Couldn't set up by email ({acct.get('error', 'unknown')}); "
+              f"starting a local account instead.")
 
+    # ── Fallback: no email (or offline) → a local account, as before ──────────
+    # You can join it to your email later by re-running setup with --email.
+    if ref_code and not validate_ref_code(ref_code, cfg):
+        print(f"  Warning: referral code '{ref_code}' not found. Continuing without it.")
+        ref_code = ""
     cfg["user_id"]       = str(uuid.uuid4())
     cfg["referral_code"] = gen_referral_code()
     cfg["referred_by"]   = ref_code or None
-
     save_config(cfg)
-    print(f"  User ID:       {cfg['user_id']}")
     print(f"  Referral code: {cfg['referral_code']}")
-    if ref_code:
-        print(f"  Referred by:   {ref_code}")
-
-    ok = register_supabase(cfg)
-    if ok:
+    if register_supabase(cfg):
         print("  Registered.")
     try:
         sys.path.insert(0, str(BASE)); import funnel; funnel.log("registered")
     except Exception:
         pass
 
-    # Sign in: if this is one of your own machines, link it to your existing
-    # account so all your devices' earnings show as one total. (Skipped for
-    # referral installs — those are genuinely new accounts.)
-    signin_code = args.signin.strip().lower()
-    if not signin_code and not ref_code:
-        signin_code = _ask("  Already use Mango on another machine? Enter your code to "
-                           "link this device to it (or press Enter to start fresh): ")
-    if signin_code.strip():
-        do_signin(cfg, signin_code)
+    # Advanced: explicit code-based device link (email is the normal path).
+    if args.signin.strip():
+        do_signin(cfg, args.signin)
 
     _show_link(cfg.get("account_code") or cfg["referral_code"])
 
