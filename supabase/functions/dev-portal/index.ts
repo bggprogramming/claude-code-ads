@@ -77,14 +77,27 @@ Deno.serve(async (req: Request) => {
     .from('users').select('referral_code, milestone_hit, created_at')
     .in('referred_by', codes).order('created_at', { ascending: false })
 
-  const { data: bonuses } = await supabase
-    .from('referral_bonuses').select('amount_millicents, status, recipient')
-    .in('referrer_code', codes)
-  let pendingMc = 0, paidMc = 0
-  for (const b of bonuses ?? []) {
+  // Bonuses owed to this household come from BOTH sides of a referral:
+  //   • recipient='referrer' rows where one of our codes is the referrer
+  //     (people we invited who hit their milestone), and
+  //   • recipient='referred' rows where one of our codes is the referred party
+  //     (our own $10 signup bonus). The signup-bonus row's referrer_code is the
+  //     *inviter's* code, so it never matched the referrer_code query — which is
+  //     why the referred party never saw the $10 the invite promised them.
+  const [{ data: outBonuses }, { data: signupBonuses }] = await Promise.all([
+    supabase.from('referral_bonuses').select('amount_millicents, status, recipient').in('referrer_code', codes),
+    supabase.from('referral_bonuses').select('amount_millicents, status, recipient').in('referred_code', codes),
+  ])
+  let pendingMc = 0, paidMc = 0, signupPendingMc = 0, signupPaidMc = 0
+  for (const b of outBonuses ?? []) {            // bonuses for people WE referred
     if (b.recipient !== 'referrer') continue
     if (b.status === 'paid') paidMc += b.amount_millicents ?? 0
     else pendingMc += b.amount_millicents ?? 0
+  }
+  for (const b of signupBonuses ?? []) {         // OUR own signup bonus
+    if (b.recipient !== 'referred') continue
+    if (b.status === 'paid') { paidMc += b.amount_millicents ?? 0; signupPaidMc += b.amount_millicents ?? 0 }
+    else { pendingMc += b.amount_millicents ?? 0; signupPendingMc += b.amount_millicents ?? 0 }
   }
 
   return json(200, {
@@ -105,6 +118,10 @@ Deno.serve(async (req: Request) => {
     referral_count: (refs ?? []).length,
     bonus_pending_dollars: pendingMc / 100_000,
     bonus_paid_dollars: paidMc / 100_000,
+    // Your own signup bonus (the referred side), broken out so the UI can show it.
+    signup_bonus_pending_dollars: signupPendingMc / 100_000,
+    signup_bonus_paid_dollars: signupPaidMc / 100_000,
+    has_signup_bonus: (signupPendingMc + signupPaidMc) > 0,
     // Cash-out
     payouts_enabled: !!acct.payouts_enabled,
     connected: !!acct.stripe_account_id,

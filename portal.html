@@ -151,6 +151,10 @@
         <span class="k">Bonuses</span>
         <span class="v"><span id="bonus-pending" style="color:var(--accent)">$0.00</span> pending · <span id="bonus-paid" style="color:var(--green)">$0.00</span> paid</span>
       </div>
+      <div class="row" id="signup-bonus-row" style="margin-top:8px;border:none;display:none">
+        <span class="k">Signup bonus</span>
+        <span class="v" id="signup-bonus">—</span>
+      </div>
     </div>
   </div>
 </main>
@@ -246,6 +250,13 @@
         : `<tr><td colspan="3" class="empty">No referrals yet — share your link above.</td></tr>`;
       $('bonus-pending').textContent = '$'+d.bonus_pending_dollars.toFixed(2);
       $('bonus-paid').textContent = '$'+d.bonus_paid_dollars.toFixed(2);
+      if (d.has_signup_bonus) {
+        const sp = d.signup_bonus_paid_dollars || 0, pe = d.signup_bonus_pending_dollars || 0;
+        $('signup-bonus').textContent = sp > 0
+          ? '$'+sp.toFixed(2)+' paid — for joining via a friend'
+          : '$'+pe.toFixed(2)+' pending — you joined via a referral';
+        $('signup-bonus-row').style.display = 'flex';
+      }
 
       // ── Cash out ──────────────────────────────────────────────────────────
       $('avail').textContent          = money(d.available_dollars);

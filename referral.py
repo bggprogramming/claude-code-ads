@@ -93,6 +93,20 @@ def main():
         print(f"  ${remaining:.4f} to go until your milestone.")
     print()
 
+    # ── Your own signup bonus (if someone referred YOU) ───────────────────────
+    # The bonus row crediting the referred party carries the *inviter's* code as
+    # referrer_code, so it's found by referred_code (your code) + recipient.
+    signup = fetch(cfg, f"referral_bonuses?referred_code=eq.{code}"
+                        f"&recipient=eq.referred&select=status,amount_millicents")
+    if signup:
+        amt    = signup[0].get("amount_millicents", REFERRAL_BONUS_MC) / 100_000
+        status = signup[0].get("status", "pending")
+        if status == "paid":
+            print(f"  Signup bonus: ${amt:.2f} paid — thanks for joining via a friend.")
+        else:
+            print(f"  Signup bonus: ${amt:.2f} pending (you joined via a referral).")
+        print()
+
     # ── Your referral link ────────────────────────────────────────────────────
     install_cmd = (
         f"curl -fsSL https://raw.githubusercontent.com/bggprogramming/"

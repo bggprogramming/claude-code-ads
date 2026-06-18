@@ -154,27 +154,42 @@ Deno.serve(async (req: Request) => {
     await supabase.from('advertisers').update(patch).eq('id', adv.id)
   }
 
-  // Milestone / referral bonus — uses full lifetime earnings.
+  // Milestone / referral bonus — uses full lifetime earnings across the whole
+  // HOUSEHOLD (the primary account + every device linked to it), not just this
+  // one device's user_id. Earnings are aggregated per-device but the portal
+  // shows one unified total; evaluating the milestone per-device meant a
+  // developer who split <$5 across two linked machines never crossed it, so a
+  // referral that had clearly earned the threshold never paid out. Attribute the
+  // milestone + bonus to the primary account (it holds the canonical code +
+  // referred_by). Email-identity accounts (no linked devices) behave as before.
   let milestoneHit = false
   let totalMc: number | null = null
   if (userId) {
-    const { data: rows } = await supabase
-      .from('events').select('earnings_millicents').eq('user_id', userId)
-    totalMc = (rows ?? []).reduce((s: number, r: any) => s + (r.earnings_millicents ?? 0), 0)
+    const { data: me } = await supabase
+      .from('users').select('id, linked_to').eq('id', userId).maybeSingle()
+    const primaryId = me?.linked_to ?? userId
+
+    const { data: fam } = await supabase
+      .from('users').select('id').or(`id.eq.${primaryId},linked_to.eq.${primaryId}`)
+    const ids = (fam ?? []).map((f: any) => f.id)
+    const householdIds = ids.length ? ids : [userId]
+
+    const { data: roll } = await supabase.rpc('account_rollup', { p_ids: householdIds })
+    totalMc = (roll as any)?.total_mc ?? 0
 
     if (totalMc >= MILESTONE_MC) {
-      const { data: u } = await supabase
+      const { data: primary } = await supabase
         .from('users').select('referral_code, referred_by, milestone_hit')
-        .eq('id', userId).maybeSingle()
-      if (u && !u.milestone_hit) {
-        if (u.referred_by) {
+        .eq('id', primaryId).maybeSingle()
+      if (primary && !primary.milestone_hit) {
+        if (primary.referred_by) {
           await supabase.from('referral_bonuses').upsert([
-            { referrer_code: u.referred_by, referred_code: u.referral_code, amount_millicents: REFERRAL_BONUS_MC, recipient: 'referrer' },
-            { referrer_code: u.referred_by, referred_code: u.referral_code, amount_millicents: REFERRAL_BONUS_MC, recipient: 'referred' },
+            { referrer_code: primary.referred_by, referred_code: primary.referral_code, amount_millicents: REFERRAL_BONUS_MC, recipient: 'referrer' },
+            { referrer_code: primary.referred_by, referred_code: primary.referral_code, amount_millicents: REFERRAL_BONUS_MC, recipient: 'referred' },
           ], { onConflict: 'referrer_code,referred_code,recipient', ignoreDuplicates: true })
         }
-        await supabase.from('users').update({ milestone_hit: true }).eq('id', userId)
-        await supabase.from('funnel_events').insert({ code: u.referral_code, step: 'milestone' })
+        await supabase.from('users').update({ milestone_hit: true }).eq('id', primaryId)
+        await supabase.from('funnel_events').insert({ code: primary.referral_code, step: 'milestone' })
         milestoneHit = true
       }
     }
